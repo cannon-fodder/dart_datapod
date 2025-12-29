@@ -16,11 +16,11 @@ class Databases {
 
   /// Initializes the Datapod framework by loading configurations.
   ///
-  /// [databasesPath] defaults to 'databases.yml'.
-  /// [connectionsPath] defaults to 'connections.yml'.
+  /// [databasesPath] defaults to 'databases.yaml'.
+  /// [connectionsPath] defaults to 'connections.yaml'.
   static Future<void> initialize({
-    String databasesPath = 'databases.yml',
-    String connectionsPath = 'connections.yml',
+    String databasesPath = 'databases.yaml',
+    String connectionsPath = 'connections.yaml',
     bool migrate = true,
   }) async {
     final databasesFile = File(databasesPath);
