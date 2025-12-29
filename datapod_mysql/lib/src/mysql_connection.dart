@@ -24,10 +24,18 @@ class MySqlConnection implements DatabaseConnection {
       [Map<String, dynamic>? params]) async {
     try {
       // mysql1 uses ? for params, we might need a converter if we use named params
-      // For now, assuming simple positional or raw SQL if mapping isn't fully ready.
-      // TODO: Implement named parameter to positional conversion.
+      String processedSql = sql;
+      List<dynamic> positionalParams = [];
 
-      final result = await _connection.query(sql, params?.values.toList());
+      if (params != null && params.isNotEmpty) {
+        final translation = _translateSql(sql, params);
+        processedSql = translation.sql;
+        positionalParams = translation.params;
+      } else {
+        processedSql = _stripReturning(sql);
+      }
+
+      final result = await _connection.query(processedSql, positionalParams);
 
       final rows = result.map((row) => row.fields).toList();
 
@@ -39,6 +47,27 @@ class MySqlConnection implements DatabaseConnection {
     } catch (e) {
       throw QueryException('MySQL Error: $e', sql: sql);
     }
+  }
+
+  ({String sql, List<dynamic> params}) _translateSql(
+      String sql, Map<String, dynamic> params) {
+    final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
+    final positionalParams = <dynamic>[];
+    final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
+      final name = match.group(1)!;
+      positionalParams.add(params[name]);
+      return '?';
+    });
+
+    return (
+      sql: _stripReturning(translatedSql),
+      params: positionalParams,
+    );
+  }
+
+  String _stripReturning(String sql) {
+    final returningRegex = RegExp(r'\s+RETURNING\s+.*$', caseSensitive: false);
+    return sql.replaceAll(returningRegex, '');
   }
 
   @override

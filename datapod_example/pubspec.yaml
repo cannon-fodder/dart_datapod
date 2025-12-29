@@ -13,6 +13,12 @@ dependencies:
     path: ../datapod_core
   datapod_postgres:
     path: ../datapod_postgres
+  datapod_mysql:
+    path: ../datapod_mysql
+  datapod_sqlite:
+    path: ../datapod_sqlite
+  datapod_engine:
+    path: ../datapod_engine
   meta: ^1.11.0
 
 dev_dependencies:

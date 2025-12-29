@@ -23,14 +23,27 @@ class SqliteConnection implements DatabaseConnection {
   Future<QueryResult> execute(String sql,
       [Map<String, dynamic>? params]) async {
     try {
-      final isQuery = sql.trimLeft().toLowerCase().startsWith('select') ||
-          sql.trimLeft().toLowerCase().startsWith('pragma');
+      String processedSql = sql;
+      List<dynamic> positionalParams = [];
 
       if (params != null && params.isNotEmpty) {
-        final stmt = _db.prepare(sql);
+        final translation = _translateSql(sql, params);
+        processedSql = translation.sql;
+        positionalParams = translation.params;
+      } else {
+        // Even without params, we might need to strip RETURNING
+        processedSql = _stripReturning(sql);
+      }
+
+      final isQuery =
+          processedSql.trimLeft().toLowerCase().startsWith('select') ||
+              processedSql.trimLeft().toLowerCase().startsWith('pragma');
+
+      if (positionalParams.isNotEmpty) {
+        final stmt = _db.prepare(processedSql);
         try {
           if (isQuery) {
-            final result = stmt.select(params.values.toList());
+            final result = stmt.select(positionalParams);
             return QueryResult(
               rows:
                   result.map((row) => Map<String, dynamic>.from(row)).toList(),
@@ -38,7 +51,7 @@ class SqliteConnection implements DatabaseConnection {
               lastInsertId: _db.lastInsertRowId,
             );
           } else {
-            stmt.execute(params.values.toList());
+            stmt.execute(positionalParams);
             return QueryResult(
               affectedRows: _db.updatedRows,
               lastInsertId: _db.lastInsertRowId,
@@ -49,14 +62,14 @@ class SqliteConnection implements DatabaseConnection {
         }
       } else {
         if (isQuery) {
-          final result = _db.select(sql);
+          final result = _db.select(processedSql);
           return QueryResult(
             rows: result.map((row) => Map<String, dynamic>.from(row)).toList(),
             affectedRows: _db.updatedRows,
             lastInsertId: _db.lastInsertRowId,
           );
         } else {
-          _db.execute(sql);
+          _db.execute(processedSql);
           return QueryResult(
             affectedRows: _db.updatedRows,
             lastInsertId: _db.lastInsertRowId,
@@ -66,6 +79,27 @@ class SqliteConnection implements DatabaseConnection {
     } catch (e) {
       throw QueryException('SQLite Error: $e', sql: sql);
     }
+  }
+
+  ({String sql, List<dynamic> params}) _translateSql(
+      String sql, Map<String, dynamic> params) {
+    final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
+    final positionalParams = <dynamic>[];
+    final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
+      final name = match.group(1)!;
+      positionalParams.add(params[name]);
+      return '?';
+    });
+
+    return (
+      sql: _stripReturning(translatedSql),
+      params: positionalParams,
+    );
+  }
+
+  String _stripReturning(String sql) {
+    final returningRegex = RegExp(r'\s+RETURNING\s+.*$', caseSensitive: false);
+    return sql.replaceAll(returningRegex, '');
   }
 
   @override

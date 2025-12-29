@@ -200,7 +200,7 @@ packages:
     source: path
     version: "0.1.0"
   datapod_engine:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../datapod_engine"
       relative: true
@@ -213,6 +213,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  datapod_mysql:
+    dependency: "direct main"
+    description:
+      path: "../datapod_mysql"
+      relative: true
+    source: path
+    version: "0.1.0"
   datapod_postgres:
     dependency: "direct main"
     description:
@@ -220,6 +227,21 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  datapod_sqlite:
+    dependency: "direct main"
+    description:
+      path: "../datapod_sqlite"
+      relative: true
+    source: path
+    version: "0.1.0"
+  ffi:
+    dependency: transitive
+    description:
+      name: ffi
+      sha256: "289279317b4b16eb2bb7e271abccd4bf84ec9bdcbe999e278a94b804f5630418"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
   file:
     dependency: transitive
     description:
@@ -340,6 +362,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  mysql1:
+    dependency: transitive
+    description:
+      name: mysql1
+      sha256: "68aec7003d2abc85769bafa1777af3f4a390a90c31032b89636758ff8eb839e9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.0"
   node_preamble:
     dependency: transitive
     description:
@@ -460,6 +490,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.1"
+  sqlite3:
+    dependency: transitive
+    description:
+      name: sqlite3
+      sha256: "3145bd74dcdb4fd6f5c6dda4d4e4490a8087d7f286a14dee5d37087290f0f8a2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.9.4"
   stack_trace:
     dependency: transitive
     description:

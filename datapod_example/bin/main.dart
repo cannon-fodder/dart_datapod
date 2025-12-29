@@ -9,26 +9,57 @@
 import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'package:datapod_postgres/datapod_postgres.dart';
+import 'package:datapod_mysql/datapod_mysql.dart';
+import 'package:datapod_sqlite/datapod_sqlite.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/post_repository.dart';
 
-void main() async {
-  print('--- Datapod ORM Example ---');
+void main(List<String> args) async {
+  final engine = args.isNotEmpty ? args[0].toLowerCase() : 'postgres';
+  print('--- Datapod ORM Example ($engine) ---');
 
-  // 1. Initialize Database Connection (Directly for now)
-  final dbConfig = DatabaseConfig(
-      name: 'datapod', plugin: 'datapod_postgres', connection: 'datapod');
-  final connConfig = ConnectionConfig(name: 'datapod', attributes: {
-    'host': 'localhost',
-    'port': 5432,
-    'username': 'datapod',
-    'password': 'datapod_dba',
-    'database': 'datapod',
-  });
+  DatapodPlugin plugin;
+  DatabaseConfig dbConfig;
+  ConnectionConfig connConfig;
 
-  final plugin = PostgresPlugin();
+  switch (engine) {
+    case 'mysql':
+      plugin = MySqlPlugin();
+      dbConfig = DatabaseConfig(
+          name: 'datapod', plugin: 'datapod_mysql', connection: 'datapod');
+      connConfig = ConnectionConfig(name: 'datapod', attributes: {
+        'host': 'localhost',
+        'port': 3306,
+        'username': 'datapod',
+        'password': 'datapod_dba',
+        'database': 'datapod',
+      });
+      break;
+    case 'sqlite':
+      plugin = SqlitePlugin();
+      dbConfig = DatabaseConfig(
+          name: 'datapod', plugin: 'datapod_sqlite', connection: 'datapod');
+      connConfig = ConnectionConfig(name: 'datapod', attributes: {
+        'database': ':memory:',
+      });
+      break;
+    case 'postgres':
+    default:
+      plugin = PostgresPlugin();
+      dbConfig = DatabaseConfig(
+          name: 'datapod', plugin: 'datapod_postgres', connection: 'datapod');
+      connConfig = ConnectionConfig(name: 'datapod', attributes: {
+        'host': 'localhost',
+        'port': 5432,
+        'username': 'datapod',
+        'password': 'datapod_dba',
+        'database': 'datapod',
+      });
+      break;
+  }
+
   final database =
       await plugin.createDatabase(dbConfig, connConfig) as DatapodDatabaseBase;
 
@@ -47,18 +78,39 @@ void main() async {
     await database.connection.execute('DROP TABLE IF EXISTS users');
 
     print('Creating tables...');
+    String idType;
+    switch (engine) {
+      case 'mysql':
+        idType = 'INT NOT NULL AUTO_INCREMENT PRIMARY KEY';
+        break;
+      case 'sqlite':
+        idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
+        break;
+      case 'postgres':
+      default:
+        idType = 'SERIAL PRIMARY KEY';
+        break;
+    }
+
     await database.connection.execute('''
       CREATE TABLE users (
-        id SERIAL PRIMARY KEY,
+        id $idType,
         name TEXT
       )
     ''');
+
+    String fkConstraint =
+        'REFERENCES users(id) ON DELETE CASCADE'; // PostgreSQL/MySQL
+    if (engine == 'sqlite') {
+      // SQLite needs the FK at column level or table level
+    }
+
     await database.connection.execute('''
       CREATE TABLE posts (
-        id SERIAL PRIMARY KEY,
+        id $idType,
         title TEXT,
         content TEXT,
-        author_id INTEGER REFERENCES users(id)
+        author_id INTEGER $fkConstraint
       )
     ''');
 
@@ -150,6 +202,9 @@ void main() async {
 
     final bobPostsAfterDelete = await postRepo.findByAuthorId(bob.id!);
     print('Bob\'s posts after delete: ${bobPostsAfterDelete.length}');
+  } catch (e, s) {
+    print('Error: $e');
+    print(s);
   } finally {
     await database.close();
     print('\nDone.');
