@@ -63,6 +63,7 @@ class PostRepositoryImpl extends PostRepository {
     await database.connection.execute(_deleteSql, {'id': id});
   }
 
+  @override
   Future<Post?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;

@@ -6,6 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'package:logging/logging.dart';
 import 'package:datapod_api/datapod_api.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'sqlite_schema.dart';
@@ -14,6 +15,7 @@ import 'sqlite_transaction.dart';
 class SqliteConnection implements DatabaseConnection {
   final sqlite.Database _db;
   late final SqliteSchemaManager _schemaManager;
+  final _log = Logger('Datapod.SQLite');
 
   SqliteConnection(this._db) {
     _schemaManager = SqliteSchemaManager(this);
@@ -38,6 +40,13 @@ class SqliteConnection implements DatabaseConnection {
       final isQuery =
           processedSql.trimLeft().toLowerCase().startsWith('select') ||
               processedSql.trimLeft().toLowerCase().startsWith('pragma');
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Executing SQL: $processedSql');
+        if (positionalParams.isNotEmpty) {
+          _log.fine('Parameters: $positionalParams');
+        }
+      }
 
       if (positionalParams.isNotEmpty) {
         final stmt = _db.prepare(processedSql);

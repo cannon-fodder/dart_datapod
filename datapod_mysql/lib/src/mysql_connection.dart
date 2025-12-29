@@ -6,6 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'package:logging/logging.dart';
 import 'package:datapod_api/datapod_api.dart';
 import 'package:mysql1/mysql1.dart' as mysql;
 import 'mysql_schema.dart';
@@ -14,6 +15,7 @@ import 'mysql_transaction.dart';
 class MySqlConnection implements DatabaseConnection {
   final mysql.MySqlConnection _connection;
   late final MySqlSchemaManager _schemaManager;
+  final _log = Logger('Datapod.MySQL');
 
   MySqlConnection(this._connection) {
     _schemaManager = MySqlSchemaManager(this);
@@ -33,6 +35,13 @@ class MySqlConnection implements DatabaseConnection {
         positionalParams = translation.params;
       } else {
         processedSql = _stripReturning(sql);
+      }
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Executing SQL: $processedSql');
+        if (positionalParams.isNotEmpty) {
+          _log.fine('Parameters: $positionalParams');
+        }
       }
 
       final result = await _connection.query(processedSql, positionalParams);

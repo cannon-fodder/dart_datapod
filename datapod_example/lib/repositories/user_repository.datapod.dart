@@ -43,8 +43,8 @@ class UserRepositoryImpl extends UserRepository {
       await database.connection.execute(_insertSql, params);
     }
     final posts = await entity.posts;
-    if (posts != null && posts!.isNotEmpty) {
-      for (final child in posts!) {
+    if (posts != null && posts.isNotEmpty) {
+      for (final child in posts) {
         (child as dynamic).authorId = entity.id;
         await database.repositoryFor<Post>().save(child);
       }
@@ -67,7 +67,7 @@ class UserRepositoryImpl extends UserRepository {
     if (entity != null) {
       final posts = await entity.posts;
       if (posts != null) {
-        for (final child in posts!) {
+        for (final child in posts) {
           await database.repositoryFor<Post>().delete((child as dynamic).id);
         }
       }
@@ -75,6 +75,7 @@ class UserRepositoryImpl extends UserRepository {
     await database.connection.execute(_deleteSql, {'id': id});
   }
 
+  @override
   Future<User?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;
@@ -90,13 +91,5 @@ class UserRepositoryImpl extends UserRepository {
         .execute('SELECT * FROM users WHERE name = @name', params);
     if (result.isEmpty) return null;
     return ManagedUser.fromRow(result.rows.first, database);
-  }
-
-  Future<List<User>> findByPostsId(id) async {
-    final sql = 'SELECT * FROM users WHERE  = @id';
-    final result = await database.connection.execute(sql, {'id': id});
-    return result.rows
-        .map((row) => ManagedUser.fromRow(row, database))
-        .toList();
   }
 }

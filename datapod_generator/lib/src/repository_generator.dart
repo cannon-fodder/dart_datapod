@@ -162,8 +162,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           Code('final ${col.fieldName} = await entity.${col.fieldName};'),
           if (col.relationType == 'OneToMany') ...[
             Code(
-                'if (${col.fieldName} != null && ${col.fieldName}!.isNotEmpty) {'),
-            Code('  for (final child in ${col.fieldName}!) {'),
+                'if (${col.fieldName} != null && ${col.fieldName}.isNotEmpty) {'),
+            Code('  for (final child in ${col.fieldName}) {'),
             Code('    (child as dynamic).${col.mappedBy}Id = entity.id;'),
             Code(
                 '    await database.repositoryFor<${col.relatedEntityType}>().save(child);'),
@@ -217,7 +217,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             Code('  final ${col.fieldName} = await entity.${col.fieldName};'),
             if (col.relationType == 'OneToMany') ...[
               Code('  if (${col.fieldName} != null) {'),
-              Code('    for (final child in ${col.fieldName}!) {'),
+              Code('    for (final child in ${col.fieldName}) {'),
               Code(
                   '      await database.repositoryFor<${col.relatedEntityType}>().delete((child as dynamic).id);'),
               Code('    }'),
@@ -239,6 +239,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       ClassElement entityClass, DartType keyType, EntitySqlMetadata metadata) {
     return Method((m) => m
       ..name = 'findById'
+      ..annotations.add(refer('override'))
       ..returns = refer('Future<${entityClass.name}?>')
       ..requiredParameters.add(Parameter((p) => p..name = 'id'))
       ..modifier = MethodModifier.async
@@ -267,7 +268,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     }
 
     // Automatically generate findBy...Id for relationships
-    for (final col in metadata.columns.where((c) => c.relationType != null)) {
+    for (final col in metadata.columns
+        .where((c) => c.relationType != null && c.columnName.isNotEmpty)) {
       final methodName =
           'findBy${col.fieldName[0].toUpperCase()}${col.fieldName.substring(1)}Id';
       if (!methods.any((m) => m.name == methodName)) {

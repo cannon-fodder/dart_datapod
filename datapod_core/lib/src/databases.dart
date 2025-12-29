@@ -7,12 +7,14 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'dart:io';
+import 'package:logging/logging.dart';
 import 'package:datapod_api/datapod_api.dart';
 import 'package:meta/meta.dart';
 
 /// The entry point for the Datapod framework.
 class Databases {
   static final Map<String, DatapodDatabase> _databases = {};
+  static final _log = Logger('Datapod.Core');
 
   /// Initializes the Datapod framework by loading configurations.
   ///
@@ -37,6 +39,7 @@ class Databases {
 
     // TODO: Plugin system to instantiate DatapodDatabase objects
     // This will be implemented in Phase 2 & 3.
+    _log.info('Initializing Datapod with $databasesPath and $connectionsPath');
   }
 
   /// Gets a database instance by name.
@@ -51,6 +54,7 @@ class Databases {
   /// Internal method for plugins/generator to register databases.
   @internal
   static void register(String name, DatapodDatabase database) {
+    _log.info('Registering database: $name');
     _databases[name] = database;
   }
 }

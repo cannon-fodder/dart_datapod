@@ -6,6 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'package:logging/logging.dart';
 import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'package:datapod_postgres/datapod_postgres.dart';
@@ -17,6 +18,13 @@ import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/post_repository.dart';
 
 void main(List<String> args) async {
+  // Configure logging
+  Logger.root.level = Level.FINE;
+  Logger.root.onRecord.listen((record) {
+    print(
+        '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
+  });
+
   final engine = args.isNotEmpty ? args[0].toLowerCase() : 'postgres';
   print('--- Datapod ORM Example ($engine) ---');
 

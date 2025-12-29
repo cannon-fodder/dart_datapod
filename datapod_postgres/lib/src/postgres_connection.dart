@@ -6,6 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'package:logging/logging.dart';
 import 'package:datapod_api/datapod_api.dart';
 import 'package:postgres/postgres.dart' as pg;
 import 'postgres_schema.dart';
@@ -14,6 +15,7 @@ import 'postgres_transaction.dart';
 class PostgresConnection implements DatabaseConnection {
   final pg.Connection _connection;
   late final PostgresSchemaManager _schemaManager;
+  final _log = Logger('Datapod.Postgres');
 
   PostgresConnection(this._connection) {
     _schemaManager = PostgresSchemaManager(this);
@@ -30,6 +32,13 @@ class PostgresConnection implements DatabaseConnection {
           ? Map.fromEntries(
               params.entries.where((e) => usedParams.contains(e.key)))
           : null;
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Executing SQL: $sql');
+        if (filteredParams != null && filteredParams.isNotEmpty) {
+          _log.fine('Parameters: $filteredParams');
+        }
+      }
 
       final result = filteredParams != null && filteredParams.isNotEmpty
           ? await _connection.execute(pg.Sql.named(sql),
