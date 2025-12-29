@@ -1,0 +1,17 @@
+name: datapod_core
+description: Core implementation logic for the Datapod ORM framework.
+publish_to: none
+version: 0.1.0
+repository: https://github.com/aaroncosand/datapod
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  datapod_api:
+    path: ../datapod_api
+  yaml: ^3.1.2
+  meta: ^1.11.0
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0

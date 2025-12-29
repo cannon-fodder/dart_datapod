@@ -1,0 +1,23 @@
+name: datapod_example
+description: Example project for Datapod ORM.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  datapod_api:
+    path: ../datapod_api
+  datapod_core:
+    path: ../datapod_core
+  datapod_postgres:
+    path: ../datapod_postgres
+  meta: ^1.11.0
+
+dev_dependencies:
+  build_runner: ^2.4.8
+  datapod_generator:
+    path: ../datapod_generator
+  test: ^1.24.0
+  lints: ^3.0.0

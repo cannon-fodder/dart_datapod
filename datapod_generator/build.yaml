@@ -1,0 +1,7 @@
+builders:
+  datapodBuilder:
+    import: "package:datapod_generator/datapod_generator.dart"
+    builder_factories: ["datapodBuilder"]
+    build_extensions: {".dart": [".datapod.dart"]}
+    auto_apply: dependents
+    build_to: source

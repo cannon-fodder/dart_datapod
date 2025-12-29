@@ -1,0 +1,14 @@
+name: datapod_api
+description: API and annotations for the Datapod ORM framework.
+publish_to: none
+version: 0.1.0
+repository: https://github.com/aaroncosand/datapod
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  meta: ^1.11.0
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
