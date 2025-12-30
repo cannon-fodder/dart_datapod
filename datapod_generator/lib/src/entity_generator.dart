@@ -82,6 +82,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                 .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
                 .map((f) {
               final colName = SqlGenerator.parseColumn(f).columnName;
+              final typeName = f.type.getDisplayString(withNullability: false);
+              if (typeName == 'DateTime' || typeName == 'DateTime?') {
+                return Code(
+                    'super.${f.name} = row[\'$colName\'] is String ? DateTime.parse(row[\'$colName\']) : row[\'$colName\'];');
+              }
               return Code('super.${f.name} = row[\'$colName\'];');
             }),
             ..._generateRelationFieldInitializers(entityClass),

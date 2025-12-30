@@ -1,15 +1,15 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user.dart';
+part of 'setting.dart';
 
 // **************************************************************************
 // EntityGenerator
 // **************************************************************************
 
-class ManagedUser extends User implements ManagedEntity {
-  ManagedUser();
+class ManagedSetting extends Setting implements ManagedEntity {
+  ManagedSetting();
 
-  ManagedUser.fromRow(
+  ManagedSetting.fromRow(
     Map<String, dynamic> row,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
@@ -17,7 +17,8 @@ class ManagedUser extends User implements ManagedEntity {
         _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row['id'];
-    super.name = row['name'];
+    super.key = row['key'];
+    super.value = row['value'];
   }
 
   bool _isManaged = true;
@@ -30,9 +31,7 @@ class ManagedUser extends User implements ManagedEntity {
 
   RelationshipContext? _relationshipContext;
 
-  Future<List<Post>>? _loadedPosts;
-
-  Future<List<Role>>? _loadedRoles;
+  Future<List<SettingAudit>>? _loadedAuditTrail;
 
   @override
   bool get isManaged => _isManaged;
@@ -83,43 +82,35 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
-  set name(String? value) {
-    if (value != super.name) {
+  set key(String? value) {
+    if (value != super.key) {
       _isDirty = true;
-      super.name = value;
+      super.key = value;
     }
   }
 
   @override
-  Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && $relationshipContext != null) {
-      _loadedPosts = ($relationshipContext!.getForEntity<Post>() as dynamic)
-          .findByAuthorId(id!) as Future<List<Post>>?;
-    }
-    return await _loadedPosts ?? <Post>[];
-  }
-
-  @override
-  set posts(value) {
-    if (_loadedPosts != value) {
-      _loadedPosts = value;
-      markDirty();
+  set value(String? value) {
+    if (value != super.value) {
+      _isDirty = true;
+      super.value = value;
     }
   }
 
   @override
-  Future<List<Role>>? get roles async {
-    if (_loadedRoles == null && $relationshipContext != null) {
-      _loadedRoles = ($relationshipContext!.getForEntity<Role>() as dynamic)
-          .findByUserId(id!) as Future<List<Role>>?;
+  Future<List<SettingAudit>>? get auditTrail async {
+    if (_loadedAuditTrail == null && $relationshipContext != null) {
+      _loadedAuditTrail =
+          ($relationshipContext!.getForEntity<SettingAudit>() as dynamic)
+              .findBySettingId(id!) as Future<List<SettingAudit>>?;
     }
-    return await _loadedRoles ?? <Role>[];
+    return await _loadedAuditTrail ?? <SettingAudit>[];
   }
 
   @override
-  set roles(value) {
-    if (_loadedRoles != value) {
-      _loadedRoles = value;
+  set auditTrail(value) {
+    if (_loadedAuditTrail != value) {
+      _loadedAuditTrail = value;
       markDirty();
     }
   }

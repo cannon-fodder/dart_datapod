@@ -8,10 +8,13 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import '../entities/post.dart';
+import '../entities/user.dart';
+import '../entities/comment.dart';
 
 part 'post_repository.datapod.dart';
 
 @Repository()
+@Database('mysql_db')
 abstract class PostRepository extends BaseRepository<Post, int> {
   PostRepository(super.relationshipContext);
   Future<List<Post>> findByTitleContains(String title);

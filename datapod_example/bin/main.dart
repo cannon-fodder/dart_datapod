@@ -10,8 +10,16 @@ import 'package:logging/logging.dart';
 import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/post.dart';
+import 'package:datapod_example/entities/setting.dart';
+import 'package:datapod_example/entities/role.dart';
+import 'package:datapod_example/entities/comment.dart';
+import 'package:datapod_example/entities/setting_audit.dart';
 import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/post_repository.dart';
+import 'package:datapod_example/repositories/setting_repository.dart';
+import 'package:datapod_example/repositories/role_repository.dart';
+import 'package:datapod_example/repositories/comment_repository.dart';
+import 'package:datapod_example/repositories/setting_audit_repository.dart';
 import 'package:datapod_example/datapod_init.dart';
 import 'package:datapod_api/datapod_api.dart';
 
@@ -23,52 +31,47 @@ void main(List<String> args) async {
         '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
   });
 
-  final engine = args.isNotEmpty ? args[0].toLowerCase() : 'sqlite';
-  print('--- Datapod ORM Example ($engine) ---');
+  print('--- Datapod ORM Enterprise Demo ---');
 
-  // 1. Initialize Datapod (All databases from YAML)
+  // 1. Initialize Datapod (Functional databases from YAML)
   await DatapodInitializer.initialize();
-
-  // Get the database instance based on the engine argument
-  // (Not used directly here anymore as we use specific DBs for the demo)
-  // final dbName = '${engine}_db';
-  // final database = Databases.get(dbName);
 
   final userRepo = RepositoryRegistry.get<UserRepository>();
   final postRepo = RepositoryRegistry.get<PostRepository>();
+  final settingRepo = RepositoryRegistry.get<SettingRepository>();
 
   try {
-    // 3. Setup Schema (Manual for now)
+    // 2. Setup Schemas
     print('Dropping existing tables...');
-    // We might need to drop tables in different databases if we are testing cross-DB.
-    // For this example, we'll just drop them in the "main" database of the context.
-
-    // In our setup:
-    // User is in postgres_db
-    // Post is in mysql_db
-    // If we passed 'sqlite' as arg, both might fail if they are not in sqlite_db.
-    // Let's make the schema setup robust.
-
     final postgresDb = Databases.get('postgres_db');
     final mysqlDb = Databases.get('mysql_db');
     final sqliteDb = Databases.get('sqlite_db');
 
+    await postgresDb.connection.execute('DROP TABLE IF EXISTS roles');
     await postgresDb.connection.execute('DROP TABLE IF EXISTS users');
+    await mysqlDb.connection.execute('DROP TABLE IF EXISTS comments');
     await mysqlDb.connection.execute('DROP TABLE IF EXISTS posts');
-    await sqliteDb.connection.execute('DROP TABLE IF EXISTS posts');
-    await sqliteDb.connection.execute('DROP TABLE IF EXISTS users');
+    await sqliteDb.connection.execute('DROP TABLE IF EXISTS setting_audits');
+    await sqliteDb.connection.execute('DROP TABLE IF EXISTS settings');
 
-    print('Creating tables...');
+    print('Creating tables in respective databases...');
 
-    // Create users in "Postgres" (actually SQLite mock)
+    // Identity (Postgres)
     await postgresDb.connection.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT
       )
     ''');
+    await postgresDb.connection.execute('''
+      CREATE TABLE roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        user_id INTEGER
+      )
+    ''');
 
-    // Create posts in "MySQL" (actually SQLite mock)
+    // Content (MySQL)
     await mysqlDb.connection.execute('''
       CREATE TABLE posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,75 +80,106 @@ void main(List<String> args) async {
         author_id INTEGER
       )
     ''');
+    await mysqlDb.connection.execute('''
+      CREATE TABLE comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content TEXT,
+        post_id INTEGER
+      )
+    ''');
 
-    // 4. Test Persistence (Cross-Database!)
-    print('\nCreating User in PostgreSQL...');
-    final user = ManagedUser()..name = 'Alice';
-    final savedUser = await userRepo.save(user);
-    print('Saved User: ${savedUser.name} (ID: ${savedUser.id})');
+    // Config (SQLite)
+    await sqliteDb.connection.execute('''
+      CREATE TABLE settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT,
+        value TEXT
+      )
+    ''');
+    await sqliteDb.connection.execute('''
+      CREATE TABLE setting_audits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT,
+        timestamp TEXT,
+        setting_id INTEGER
+      )
+    ''');
 
-    print('\nCreating Posts in MySQL (related to PostgreSQL User)...');
+    // 3. Exercise Identity (Postgres)
+    print('\n[IDENTITY] Creating User with Roles in PostgreSQL...');
+    final alice = ManagedUser()..name = 'Alice';
+    final adminRole = ManagedRole()..name = 'ADMIN';
+    final userRole = ManagedRole()..name = 'USER';
+    alice.roles = Future.value([adminRole, userRole]);
+
+    await userRepo.save(alice);
+    print('Saved User: ${alice.name} with roles');
+
+    // 4. Exercise Content (MySQL)
+    print(
+        '\n[CONTENT] Creating Post with Comments in MySQL (related to Postgres User)...');
     final post1 = ManagedPost()
-      ..title = 'Hello Cross-DB'
-      ..content = 'This post is in MySQL, its author is in Postgres'
-      ..authorId = savedUser.id;
+      ..title = 'Enterprise Architecture'
+      ..content = 'Using multiple databases for different functions.'
+      ..authorId = alice.id;
+
+    final comment1 = ManagedComment()..content = 'Great insight!';
+    final comment2 = ManagedComment()..content = 'Very useful for scaling.';
+    post1.comments = Future.value([comment1, comment2]);
 
     await postRepo.save(post1);
-    print('Saved post 1 for User ${savedUser.id}');
+    print('Saved post: ${post1.title} with 2 comments');
 
-    // 5. Test Lazy Loading (ManyToOne)
-    print('\nTesting Lazy Loading (Post -> Author)...');
+    // 5. Exercise Config (SQLite)
+    print('\n[CONFIG] Creating Settings with Audits in SQLite...');
+    final themeSetting = ManagedSetting()
+      ..key = 'ui.theme'
+      ..value = 'dark';
+
+    final audit1 = ManagedSettingAudit()
+      ..action = 'Created setting'
+      ..timestamp = DateTime.now();
+    themeSetting.auditTrail = Future.value([audit1]);
+
+    await settingRepo.save(themeSetting);
+
+    final langSetting = ManagedSetting()
+      ..key = 'app.language'
+      ..value = 'en_US';
+    await settingRepo.save(langSetting);
+    print('Saved settings with audit trail to SQLite.');
+
+    // 6. Verify cross-database lazy loading
+    print(
+        '\n[VERIFICATION] Testing Lazy Loading (MySQL Post -> Postgres Author)...');
     final fetchedPost = await postRepo.findById(post1.id!);
     if (fetchedPost != null) {
-      print('Fetched Post: ${fetchedPost.title}');
       final author = await fetchedPost.author;
-      print('Author from PostgreSQL: ${author?.name}');
+      print(
+          'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}');
     }
 
-    // 8. Test DSL Queries
-    print('\nTesting DSL Queries...');
-    final alice = await userRepo.findByName('Alice');
-    print('findByName(\'Alice\'): ${alice?.name} (ID: ${alice?.id})');
-
-    // 9. Test Cascading Save
-    print('\nTesting Cascading Save (User -> Postgres, Posts -> MySQL)...');
-    final bob = ManagedUser()
-      ..name = 'Bob'
-      ..posts = Future.value([
-        ManagedPost()
-          ..title = 'Bob\'s First Post'
-          ..content = 'Cross-DB cascade!',
-        ManagedPost()
-          ..title = 'Bob\'s Second Post'
-          ..content = 'It just works.',
-      ]);
-
-    await userRepo.save(bob);
-    print('Saved Bob and his posts via cascading.');
-
-    final bobPosts = await bob.posts;
-    print('Bob\'s posts in MySQL: ${bobPosts?.length}');
-    for (final p in bobPosts ?? []) {
-      print(' - ${p.title} (ID: ${p.id}, Author ID: ${p.authorId})');
+    // 7. Verify Config DB
+    print('\n[VERIFICATION] Verifying Settings and Audits in Config DB...');
+    final dbTheme = await settingRepo.findByKey('ui.theme');
+    print('Found setting in SQLite: ${dbTheme?.key} = ${dbTheme?.value}');
+    final audits = await dbTheme?.auditTrail;
+    if (audits != null) {
+      print('Audit trail count: ${audits.length}');
+      for (var a in audits) {
+        print('  - ${a.action} at ${a.timestamp}');
+      }
     }
 
-    // 10. Test Cascading Delete
-    print('\nTesting Cascading Delete...');
-    await userRepo.delete(bob.id!);
-    print(
-        'Deleted Bob from Postgres (Cascading should have deleted his posts in MySQL).');
-
-    final bobPostsAfterDelete =
-        await (postRepo as dynamic).findByAuthorId(bob.id!);
-    print('Bob\'s posts in MySQL after delete: ${bobPostsAfterDelete.length}');
+    // 8. Performance check (just log)
+    print('\nDone with functional operations.');
   } catch (e, s) {
     print('Error: $e');
     print(s);
   } finally {
-    // Close all
     await Databases.get('postgres_db').close();
     await Databases.get('mysql_db').close();
     await Databases.get('sqlite_db').close();
-    print('\nDone.');
+    print('\nExample finished.');
   }
 }

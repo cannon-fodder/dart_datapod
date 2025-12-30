@@ -8,6 +8,7 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import 'post.dart';
+import 'role.dart';
 
 part 'user.datapod.dart';
 
@@ -21,4 +22,7 @@ abstract class User {
 
   @OneToMany(mappedBy: 'author', cascade: [CascadeType.all])
   Future<List<Post>>? posts;
+
+  @OneToMany(mappedBy: 'user', cascade: [CascadeType.all])
+  Future<List<Role>>? roles;
 }

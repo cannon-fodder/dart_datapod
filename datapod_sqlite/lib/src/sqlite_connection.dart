@@ -96,7 +96,11 @@ class SqliteConnection implements DatabaseConnection {
     final positionalParams = <dynamic>[];
     final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
       final name = match.group(1)!;
-      positionalParams.add(params[name]);
+      var val = params[name];
+      if (val is DateTime) {
+        val = val.toIso8601String();
+      }
+      positionalParams.add(val);
       return '?';
     });
 

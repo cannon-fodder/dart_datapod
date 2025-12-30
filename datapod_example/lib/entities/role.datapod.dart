@@ -1,15 +1,15 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user.dart';
+part of 'role.dart';
 
 // **************************************************************************
 // EntityGenerator
 // **************************************************************************
 
-class ManagedUser extends User implements ManagedEntity {
-  ManagedUser();
+class ManagedRole extends Role implements ManagedEntity {
+  ManagedRole();
 
-  ManagedUser.fromRow(
+  ManagedRole.fromRow(
     Map<String, dynamic> row,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
@@ -18,6 +18,7 @@ class ManagedUser extends User implements ManagedEntity {
     _isPersistent = true;
     super.id = row['id'];
     super.name = row['name'];
+    userId = row['user_id'];
   }
 
   bool _isManaged = true;
@@ -30,9 +31,9 @@ class ManagedUser extends User implements ManagedEntity {
 
   RelationshipContext? _relationshipContext;
 
-  Future<List<Post>>? _loadedPosts;
+  Future<User?>? _loadedUser;
 
-  Future<List<Role>>? _loadedRoles;
+  dynamic userId;
 
   @override
   bool get isManaged => _isManaged;
@@ -91,36 +92,20 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
-  Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && $relationshipContext != null) {
-      _loadedPosts = ($relationshipContext!.getForEntity<Post>() as dynamic)
-          .findByAuthorId(id!) as Future<List<Post>>?;
+  Future<User?>? get user async {
+    if (_loadedUser == null && userId != null && $relationshipContext != null) {
+      _loadedUser = $relationshipContext!.getForEntity<User>().findById(userId!)
+          as Future<User?>?;
     }
-    return await _loadedPosts ?? <Post>[];
+    return await _loadedUser;
   }
 
   @override
-  set posts(value) {
-    if (_loadedPosts != value) {
-      _loadedPosts = value;
-      markDirty();
-    }
-  }
-
-  @override
-  Future<List<Role>>? get roles async {
-    if (_loadedRoles == null && $relationshipContext != null) {
-      _loadedRoles = ($relationshipContext!.getForEntity<Role>() as dynamic)
-          .findByUserId(id!) as Future<List<Role>>?;
-    }
-    return await _loadedRoles ?? <Role>[];
-  }
-
-  @override
-  set roles(value) {
-    if (_loadedRoles != value) {
-      _loadedRoles = value;
-      markDirty();
+  set user(Future<User?>? value) {
+    if (value != _loadedUser) {
+      _loadedUser = value;
+      _isDirty = true;
+      // TODO: If value is persistent, update userId
     }
   }
 }

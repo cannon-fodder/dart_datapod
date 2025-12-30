@@ -1,13 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user_repository.dart';
+part of 'setting_repository.dart';
 
 // **************************************************************************
 // RepositoryGenerator
 // **************************************************************************
 
-class UserRepositoryImpl extends UserRepository {
-  UserRepositoryImpl(
+class SettingRepositoryImpl extends SettingRepository {
+  SettingRepositoryImpl(
     this.database,
     RelationshipContext relationshipContext,
   ) : super(relationshipContext);
@@ -15,19 +15,21 @@ class UserRepositoryImpl extends UserRepository {
   final DatapodDatabase database;
 
   static const _insertSql =
-      'INSERT INTO users (name) VALUES (@name) RETURNING id';
+      'INSERT INTO settings (key, value) VALUES (@key, @value) RETURNING id';
 
-  static const _updateSql = 'UPDATE users SET name = @name WHERE id = @id';
+  static const _updateSql =
+      'UPDATE settings SET key = @key, value = @value WHERE id = @id';
 
-  static const _deleteSql = 'DELETE FROM users WHERE id = @id';
+  static const _deleteSql = 'DELETE FROM settings WHERE id = @id';
 
-  static const _findByIdSql = 'SELECT * FROM users WHERE id = @id';
+  static const _findByIdSql = 'SELECT * FROM settings WHERE id = @id';
 
   @override
-  Future<User> save(entity) async {
+  Future<Setting> save(entity) async {
     final params = <String, dynamic>{
       'id': entity.id,
-      'name': entity.name,
+      'key': entity.key,
+      'value': entity.value,
     };
     if (entity is ManagedEntity) {
       final managed = entity as ManagedEntity;
@@ -45,26 +47,19 @@ class UserRepositoryImpl extends UserRepository {
     } else {
       await database.connection.execute(_insertSql, params);
     }
-    final posts = await entity.posts;
-    if (posts != null && posts.isNotEmpty) {
-      for (final child in posts) {
-        (child as dynamic).authorId = entity.id;
-        await relationshipContext.getForEntity<Post>().save(child);
-      }
-    }
-    final roles = await entity.roles;
-    if (roles != null && roles.isNotEmpty) {
-      for (final child in roles) {
-        (child as dynamic).userId = entity.id;
-        await relationshipContext.getForEntity<Role>().save(child);
+    final auditTrail = await entity.auditTrail;
+    if (auditTrail != null && auditTrail.isNotEmpty) {
+      for (final child in auditTrail) {
+        (child as dynamic).settingId = entity.id;
+        await relationshipContext.getForEntity<SettingAudit>().save(child);
       }
     }
     return entity;
   }
 
   @override
-  Future<List<User>> saveAll(entities) async {
-    final saved = <User>[];
+  Future<List<Setting>> saveAll(entities) async {
+    final saved = <Setting>[];
     for (final entity in entities) {
       saved.add(await save(entity));
     }
@@ -75,19 +70,11 @@ class UserRepositoryImpl extends UserRepository {
   Future<void> delete(id) async {
     final entity = await findById(id);
     if (entity != null) {
-      final posts = await entity.posts;
-      if (posts != null) {
-        for (final child in posts) {
+      final auditTrail = await entity.auditTrail;
+      if (auditTrail != null) {
+        for (final child in auditTrail) {
           await relationshipContext
-              .getForEntity<Post>()
-              .delete((child as dynamic).id);
-        }
-      }
-      final roles = await entity.roles;
-      if (roles != null) {
-        for (final child in roles) {
-          await relationshipContext
-              .getForEntity<Role>()
+              .getForEntity<SettingAudit>()
               .delete((child as dynamic).id);
         }
       }
@@ -96,22 +83,22 @@ class UserRepositoryImpl extends UserRepository {
   }
 
   @override
-  Future<User?> findById(id) async {
+  Future<Setting?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;
-    return ManagedUser.fromRow(
+    return ManagedSetting.fromRow(
         result.rows.first, database, relationshipContext);
   }
 
   @override
-  Future<User?> findByName(String name) async {
+  Future<Setting?> findByKey(String key) async {
     final params = <String, dynamic>{
-      'name': name,
+      'key': key,
     };
     final result = await database.connection
-        .execute('SELECT * FROM users WHERE name = @name', params);
+        .execute('SELECT * FROM settings WHERE key = @key', params);
     if (result.isEmpty) return null;
-    return ManagedUser.fromRow(
+    return ManagedSetting.fromRow(
         result.rows.first, database, relationshipContext);
   }
 }

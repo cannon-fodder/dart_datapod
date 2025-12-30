@@ -49,6 +49,13 @@ class PostRepositoryImpl extends PostRepository {
     } else {
       await database.connection.execute(_insertSql, params);
     }
+    final comments = await entity.comments;
+    if (comments != null && comments.isNotEmpty) {
+      for (final child in comments) {
+        (child as dynamic).postId = entity.id;
+        await relationshipContext.getForEntity<Comment>().save(child);
+      }
+    }
     return entity;
   }
 
@@ -63,6 +70,17 @@ class PostRepositoryImpl extends PostRepository {
 
   @override
   Future<void> delete(id) async {
+    final entity = await findById(id);
+    if (entity != null) {
+      final comments = await entity.comments;
+      if (comments != null) {
+        for (final child in comments) {
+          await relationshipContext
+              .getForEntity<Comment>()
+              .delete((child as dynamic).id);
+        }
+      }
+    }
     await database.connection.execute(_deleteSql, {'id': id});
   }
 

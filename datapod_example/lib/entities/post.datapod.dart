@@ -36,6 +36,8 @@ class ManagedPost extends Post implements ManagedEntity {
 
   dynamic authorId;
 
+  Future<List<Comment>>? _loadedComments;
+
   @override
   bool get isManaged => _isManaged;
 
@@ -118,6 +120,24 @@ class ManagedPost extends Post implements ManagedEntity {
       _loadedAuthor = value;
       _isDirty = true;
       // TODO: If value is persistent, update authorId
+    }
+  }
+
+  @override
+  Future<List<Comment>>? get comments async {
+    if (_loadedComments == null && $relationshipContext != null) {
+      _loadedComments =
+          ($relationshipContext!.getForEntity<Comment>() as dynamic)
+              .findByPostId(id!) as Future<List<Comment>>?;
+    }
+    return await _loadedComments ?? <Comment>[];
+  }
+
+  @override
+  set comments(value) {
+    if (_loadedComments != value) {
+      _loadedComments = value;
+      markDirty();
     }
   }
 }

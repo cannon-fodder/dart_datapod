@@ -8,6 +8,7 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import 'user.dart';
+import 'comment.dart';
 
 part 'post.datapod.dart';
 
@@ -25,4 +26,7 @@ abstract class Post {
   @ManyToOne()
   @JoinColumn('author_id')
   Future<User?>? author;
+
+  @OneToMany(mappedBy: 'post', cascade: [CascadeType.all])
+  Future<List<Comment>>? comments;
 }

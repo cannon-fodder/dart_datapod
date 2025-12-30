@@ -27,6 +27,7 @@ class InitializerGenerator extends Builder {
 
     final repoChecker = const TypeChecker.fromRuntime(api.Repository);
     final entityChecker = const TypeChecker.fromRuntime(api.Entity);
+    final dbChecker = const TypeChecker.fromRuntime(api.Database);
 
     await for (final asset in buildStep.findAssets(Glob('lib/**/*.dart'))) {
       if (!await buildStep.resolver.isLibrary(asset)) continue;
@@ -36,13 +37,19 @@ class InitializerGenerator extends Builder {
       for (final annotated in reader.annotatedWith(repoChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
+          String? dbName;
+          if (dbChecker.hasAnnotationOf(element)) {
+            final dbAnnot = dbChecker.firstAnnotationOf(element);
+            dbName = dbAnnot?.getField('name')?.toStringValue();
+          }
           repos.add({
             'name': element.name,
             'import': asset.uri.toString(),
+            if (dbName != null) 'database': dbName,
           });
         }
       }
-
+      // ... entities remains the same ...
       for (final annotated in reader.annotatedWith(entityChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
@@ -56,7 +63,7 @@ class InitializerGenerator extends Builder {
 
     if (repos.isEmpty && entities.isEmpty) return;
 
-    // Try to read databases.yaml
+    // ... YAML reading remains same ...
     YamlMap? databasesYaml;
     var databasesAsset = AssetId(buildStep.inputId.package, 'databases.yaml');
     if (!await buildStep.canRead(databasesAsset)) {
@@ -74,6 +81,7 @@ class InitializerGenerator extends Builder {
     }
 
     final result = StringBuffer();
+    // ... imports ...
     result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
     result.writeln();
     result.writeln("import 'package:datapod_api/datapod_api.dart';");
@@ -84,7 +92,6 @@ class InitializerGenerator extends Builder {
       ...entities.map((e) => e['import']!),
     };
 
-    // Determine needed plugins
     final plugins = <String>{};
     if (databasesYaml != null && databasesYaml['databases'] != null) {
       for (final db in databasesYaml['databases']) {
@@ -113,7 +120,6 @@ class InitializerGenerator extends Builder {
     result.writeln("      connectionsPath: connectionsPath,");
     result.writeln("    );");
     result.writeln();
-
     result.writeln("    final sharedContext = RelationshipContextImpl();");
     result.writeln();
 
@@ -137,23 +143,18 @@ class InitializerGenerator extends Builder {
         result.writeln("    Databases.register('$dbName', database_$dbName);");
         result.writeln();
 
-        // Determine repositories for this database
-        final dbRepos = <String>[];
-        if (db['repositories'] != null) {
-          for (final r in db['repositories']) {
-            dbRepos.add(r as String);
+        // Repositories mapped to this database via @Database(name) or default
+        final dbRepos = repos.where((r) {
+          if (r.containsKey('database')) {
+            return r['database'] == dbName;
           }
-        } else {
-          // Heuristic for example if not explicitly mapped
-          if (dbName == 'postgres_db' ||
-              (plugins.length == 1 && dbName == 'datapod')) {
-            dbRepos.add('UserRepository');
-          } else if (dbName == 'mysql_db') {
-            dbRepos.add('PostRepository');
-          }
-        }
+          // Default logic if no annotation: assign to 'postgres_db' or single DB
+          return dbName == 'postgres_db' ||
+              databasesYaml?['databases'].length == 1;
+        }).toList();
 
-        for (final repoName in dbRepos) {
+        for (final repo in dbRepos) {
+          final repoName = repo['name']!;
           final repoVar = _toCamelCase(repoName);
           repoInstances[repoName] = repoVar;
           result.writeln(
@@ -188,6 +189,9 @@ class InitializerGenerator extends Builder {
     if (s.startsWith('datapod_')) {
       s = s.substring(8);
     }
+    if (s == 'mysql') return 'MySql';
+    if (s == 'sqlite') return 'Sqlite';
+    if (s == 'postgres') return 'Postgres';
     return s
         .split('_')
         .map((word) => word[0].toUpperCase() + word.substring(1))
