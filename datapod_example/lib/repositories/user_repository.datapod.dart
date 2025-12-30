@@ -7,7 +7,10 @@ part of 'user_repository.dart';
 // **************************************************************************
 
 class UserRepositoryImpl extends UserRepository {
-  UserRepositoryImpl(this.database);
+  UserRepositoryImpl(
+    this.database,
+    RelationshipContext relationshipContext,
+  ) : super(relationshipContext);
 
   final DatapodDatabase database;
 
@@ -46,7 +49,7 @@ class UserRepositoryImpl extends UserRepository {
     if (posts != null && posts.isNotEmpty) {
       for (final child in posts) {
         (child as dynamic).authorId = entity.id;
-        await database.repositoryFor<Post>().save(child);
+        await relationshipContext.getForEntity<Post>().save(child);
       }
     }
     return entity;
@@ -68,7 +71,9 @@ class UserRepositoryImpl extends UserRepository {
       final posts = await entity.posts;
       if (posts != null) {
         for (final child in posts) {
-          await database.repositoryFor<Post>().delete((child as dynamic).id);
+          await relationshipContext
+              .getForEntity<Post>()
+              .delete((child as dynamic).id);
         }
       }
     }
@@ -79,7 +84,8 @@ class UserRepositoryImpl extends UserRepository {
   Future<User?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;
-    return ManagedUser.fromRow(result.rows.first, database);
+    return ManagedUser.fromRow(
+        result.rows.first, database, relationshipContext);
   }
 
   @override
@@ -90,6 +96,7 @@ class UserRepositoryImpl extends UserRepository {
     final result = await database.connection
         .execute('SELECT * FROM users WHERE name = @name', params);
     if (result.isEmpty) return null;
-    return ManagedUser.fromRow(result.rows.first, database);
+    return ManagedUser.fromRow(
+        result.rows.first, database, relationshipContext);
   }
 }

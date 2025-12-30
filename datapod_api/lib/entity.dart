@@ -7,6 +7,7 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'database.dart';
+import 'relationship_context.dart';
 
 /// Interface for entities that are managed by the Datapod ORM.
 abstract interface class ManagedEntity {
@@ -33,4 +34,7 @@ abstract interface class ManagedEntity {
   /// This is used for lazy loading of relationships.
   DatapodDatabase? get $database;
   set $database(DatapodDatabase? value);
+
+  RelationshipContext? get $relationshipContext;
+  set $relationshipContext(RelationshipContext? value);
 }

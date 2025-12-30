@@ -9,7 +9,6 @@
 import 'transaction.dart';
 import 'query.dart';
 import 'schema.dart';
-import 'repository.dart';
 
 /// Represents a database connection instance and provides access to its features.
 abstract interface class DatapodDatabase {
@@ -21,12 +20,6 @@ abstract interface class DatapodDatabase {
 
   /// The underlying connection provided by the plugin.
   DatabaseConnection get connection;
-
-  /// Gets a repository of type [R].
-  R repository<R>();
-
-  /// Gets the repository that manages entities of type [E].
-  BaseRepository<E, dynamic> repositoryFor<E extends Object>();
 
   /// Closes the database connection.
   Future<void> close();

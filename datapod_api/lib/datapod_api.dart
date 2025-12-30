@@ -13,6 +13,8 @@ export 'database.dart';
 export 'entity.dart';
 export 'exceptions.dart';
 export 'repository.dart';
+export 'relationship_context.dart';
+export 'repository_registry.dart';
 export 'query.dart';
 export 'schema.dart';
 export 'transaction.dart';

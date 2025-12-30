@@ -1,7 +1,7 @@
 connections:
-  - name: datapod
-    host: localhost
-    port: 5432
-    username: datapod
-    password: datapod_dba
-    database: datapod
+  - name: postgres_db
+    database: ":memory:"
+  - name: mysql_db
+    database: ":memory:"
+  - name: sqlite_db
+    database: ":memory:"

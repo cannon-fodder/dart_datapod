@@ -7,7 +7,10 @@ part of 'post_repository.dart';
 // **************************************************************************
 
 class PostRepositoryImpl extends PostRepository {
-  PostRepositoryImpl(this.database);
+  PostRepositoryImpl(
+    this.database,
+    RelationshipContext relationshipContext,
+  ) : super(relationshipContext);
 
   final DatapodDatabase database;
 
@@ -67,7 +70,8 @@ class PostRepositoryImpl extends PostRepository {
   Future<Post?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;
-    return ManagedPost.fromRow(result.rows.first, database);
+    return ManagedPost.fromRow(
+        result.rows.first, database, relationshipContext);
   }
 
   @override
@@ -78,7 +82,7 @@ class PostRepositoryImpl extends PostRepository {
     final result = await database.connection
         .execute('SELECT * FROM posts WHERE title LIKE @title', params);
     return result.rows
-        .map((row) => ManagedPost.fromRow(row, database))
+        .map((row) => ManagedPost.fromRow(row, database, relationshipContext))
         .toList();
   }
 
@@ -96,7 +100,7 @@ class PostRepositoryImpl extends PostRepository {
     final sql = 'SELECT * FROM posts WHERE author_id = @id';
     final result = await database.connection.execute(sql, {'id': id});
     return result.rows
-        .map((row) => ManagedPost.fromRow(row, database))
+        .map((row) => ManagedPost.fromRow(row, database, relationshipContext))
         .toList();
   }
 }

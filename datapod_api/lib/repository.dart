@@ -8,10 +8,16 @@
 
 import 'dart:async';
 
+import 'relationship_context.dart';
+
 /// Base repository interface for entity operations.
 ///
 /// [E] is the entity type, and [K] is the primary key type.
 abstract class BaseRepository<E, K> {
+  final RelationshipContext relationshipContext;
+
+  BaseRepository(this.relationshipContext);
+
   /// Saves the given [entity] to the database.
   ///
   /// Returns the saved entity, which may be a managed version of the original.

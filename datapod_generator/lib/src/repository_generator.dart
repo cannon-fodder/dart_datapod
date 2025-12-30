@@ -84,7 +84,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       ..constructors.add(Constructor((c) => c
         ..requiredParameters.add(Parameter((p) => p
           ..name = 'database'
-          ..toThis = true))))
+          ..toThis = true))
+        ..requiredParameters.add(Parameter((p) => p
+          ..name = 'relationshipContext'
+          ..type = refer(
+              'RelationshipContext', 'package:datapod_api/datapod_api.dart')))
+        ..initializers
+            .add(refer('super').call([refer('relationshipContext')]).code)))
       ..methods.addAll([
         _generateSaveMethod(entityClass, metadata),
         _generateSaveAllMethod(entityClass),
@@ -123,7 +129,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           Code('final ${col.fieldName} = await entity.${col.fieldName};'),
           Code('if (${col.fieldName} != null) {'),
           Code(
-              '  final related = await database.repositoryFor<${col.relatedEntityType}>().save(${col.fieldName});'),
+              '  final related = await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
           Code(
               '  (entity as dynamic).${col.fieldName}Id = (related as dynamic).id;'),
           Code('}'),
@@ -166,7 +172,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             Code('  for (final child in ${col.fieldName}) {'),
             Code('    (child as dynamic).${col.mappedBy}Id = entity.id;'),
             Code(
-                '    await database.repositoryFor<${col.relatedEntityType}>().save(child);'),
+                '    await relationshipContext.getForEntity<${col.relatedEntityType}>().save(child);'),
             Code('  }'),
             Code('}'),
           ] else ...[
@@ -174,7 +180,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             Code(
                 '  ( ${col.fieldName} as dynamic).${col.mappedBy}Id = entity.id;'),
             Code(
-                '  await database.repositoryFor<${col.relatedEntityType}>().save(${col.fieldName});'),
+                '  await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
             Code('}'),
           ],
         ],
@@ -219,13 +225,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
               Code('  if (${col.fieldName} != null) {'),
               Code('    for (final child in ${col.fieldName}) {'),
               Code(
-                  '      await database.repositoryFor<${col.relatedEntityType}>().delete((child as dynamic).id);'),
+                  '      await relationshipContext.getForEntity<${col.relatedEntityType}>().delete((child as dynamic).id);'),
               Code('    }'),
               Code('  }'),
             ] else ...[
               Code('  if (${col.fieldName} != null) {'),
               Code(
-                  '    await database.repositoryFor<${col.relatedEntityType}>().delete((${col.fieldName} as dynamic).id);'),
+                  '    await relationshipContext.getForEntity<${col.relatedEntityType}>().delete((${col.fieldName} as dynamic).id);'),
               Code('  }'),
             ],
           ],
@@ -248,7 +254,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             'final result = await database.connection.execute(_findByIdSql, {\'id\': id});'),
         Code('if (result.isEmpty) return null;'),
         Code(
-            'return Managed${entityClass.name}.fromRow(result.rows.first, database);'),
+            'return Managed${entityClass.name}.fromRow(result.rows.first, database, relationshipContext);'),
       ]));
   }
 
@@ -284,7 +290,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             Code(
                 "final result = await database.connection.execute(sql, {'id': id});"),
             Code(
-                "return result.rows.map((row) => Managed${entityClass.name}.fromRow(row, database)).toList();"),
+                "return result.rows.map((row) => Managed${entityClass.name}.fromRow(row, database, relationshipContext)).toList();"),
           ])));
       }
     }
@@ -385,12 +391,12 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
         if (isList) {
           return Code(
-              'return result.rows.map((row) => Managed${entityClass.name}.fromRow(row, database)).toList();');
+              'return result.rows.map((row) => Managed${entityClass.name}.fromRow(row, database, relationshipContext)).toList();');
         } else {
           return Block.of([
             Code('if (result.isEmpty) return null;'),
             Code(
-                'return Managed${entityClass.name}.fromRow(result.rows.first, database);'),
+                'return Managed${entityClass.name}.fromRow(result.rows.first, database, relationshipContext);'),
           ]);
         }
     }

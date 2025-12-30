@@ -12,7 +12,9 @@ class ManagedPost extends Post implements ManagedEntity {
   ManagedPost.fromRow(
     Map<String, dynamic> row,
     DatapodDatabase database,
-  ) : _database = database {
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row['id'];
     super.title = row['title'];
@@ -27,6 +29,8 @@ class ManagedPost extends Post implements ManagedEntity {
   bool _isDirty = false;
 
   DatapodDatabase? _database;
+
+  RelationshipContext? _relationshipContext;
 
   Future<User?>? _loadedAuthor;
 
@@ -65,6 +69,14 @@ class ManagedPost extends Post implements ManagedEntity {
   }
 
   @override
+  RelationshipContext? get $relationshipContext => _relationshipContext;
+
+  @override
+  set $relationshipContext(RelationshipContext? value) {
+    _relationshipContext = value;
+  }
+
+  @override
   set id(int? value) {
     if (value != super.id) {
       _isDirty = true;
@@ -90,9 +102,12 @@ class ManagedPost extends Post implements ManagedEntity {
 
   @override
   Future<User?>? get author async {
-    if (_loadedAuthor == null && authorId != null && $database != null) {
-      _loadedAuthor = $database!.repositoryFor<User>().findById(authorId!)
-          as Future<User?>?;
+    if (_loadedAuthor == null &&
+        authorId != null &&
+        $relationshipContext != null) {
+      _loadedAuthor = $relationshipContext!
+          .getForEntity<User>()
+          .findById(authorId!) as Future<User?>?;
     }
     return await _loadedAuthor;
   }

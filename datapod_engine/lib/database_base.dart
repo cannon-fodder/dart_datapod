@@ -20,45 +20,7 @@ abstract class DatapodDatabaseBase implements DatapodDatabase {
   @override
   final TransactionManager transactionManager;
 
-  final Map<Type, dynamic> _repositories = {};
-  final Map<Type, dynamic> _repositoriesByEntity = {};
-
   DatapodDatabaseBase(this.name, this.connection, this.transactionManager);
-
-  @override
-  R repository<R>() {
-    final repo = _repositories[R];
-    if (repo == null) {
-      throw ConfigurationException('Repository of type $R not registered.');
-    }
-    return repo as R;
-  }
-
-  @override
-  BaseRepository<E, dynamic> repositoryFor<E extends Object>() {
-    final repo = _repositoriesByEntity[E];
-    if (repo == null) {
-      throw ConfigurationException(
-          'No repository registered for entity type $E.');
-    }
-    return repo as BaseRepository<E, dynamic>;
-  }
-
-  /// Internal method to register repositories during initialization.
-  void registerRepository<R>(dynamic repository) {
-    _repositories[R] = repository;
-    if (repository is BaseRepository) {
-      // This is a bit of a hack to get the entity type from the repository,
-      // but in a real ORM we would have more metadata.
-      // For now, we'll rely on the user registering it or we'll add an entityType getter to BaseRepository.
-    }
-  }
-
-  /// Explicitly register a repository for an entity type.
-  void registerEntityRepository<E extends Object>(
-      BaseRepository<E, dynamic> repository) {
-    _repositoriesByEntity[E] = repository;
-  }
 
   @override
   Future<void> close() => connection.close();

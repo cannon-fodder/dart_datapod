@@ -12,7 +12,9 @@ class ManagedUser extends User implements ManagedEntity {
   ManagedUser.fromRow(
     Map<String, dynamic> row,
     DatapodDatabase database,
-  ) : _database = database {
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row['id'];
     super.name = row['name'];
@@ -25,6 +27,8 @@ class ManagedUser extends User implements ManagedEntity {
   bool _isDirty = false;
 
   DatapodDatabase? _database;
+
+  RelationshipContext? _relationshipContext;
 
   Future<List<Post>>? _loadedPosts;
 
@@ -61,6 +65,14 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
+  RelationshipContext? get $relationshipContext => _relationshipContext;
+
+  @override
+  set $relationshipContext(RelationshipContext? value) {
+    _relationshipContext = value;
+  }
+
+  @override
   set id(int? value) {
     if (value != super.id) {
       _isDirty = true;
@@ -78,8 +90,8 @@ class ManagedUser extends User implements ManagedEntity {
 
   @override
   Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && $database != null) {
-      _loadedPosts = ($database!.repositoryFor<Post>() as dynamic)
+    if (_loadedPosts == null && $relationshipContext != null) {
+      _loadedPosts = ($relationshipContext!.getForEntity<Post>() as dynamic)
           .findByAuthorId(id!) as Future<List<Post>>?;
     }
     return await _loadedPosts ?? <Post>[];

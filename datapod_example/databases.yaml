@@ -1,3 +1,7 @@
 databases:
-  - name: datapod
-    plugin: datapod_postgres
+  - name: postgres_db
+    plugin: datapod_sqlite
+  - name: mysql_db
+    plugin: datapod_sqlite
+  - name: sqlite_db
+    plugin: datapod_sqlite

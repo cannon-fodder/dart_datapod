@@ -8,14 +8,12 @@
 
 import 'package:logging/logging.dart';
 import 'package:datapod_core/datapod_core.dart';
-import 'package:datapod_engine/datapod_engine.dart';
-import 'package:datapod_postgres/datapod_postgres.dart';
-import 'package:datapod_mysql/datapod_mysql.dart';
-import 'package:datapod_sqlite/datapod_sqlite.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/post_repository.dart';
+import 'package:datapod_example/datapod_init.dart';
+import 'package:datapod_api/datapod_api.dart';
 
 void main(List<String> args) async {
   // Configure logging
@@ -25,146 +23,83 @@ void main(List<String> args) async {
         '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
   });
 
-  final engine = args.isNotEmpty ? args[0].toLowerCase() : 'postgres';
+  final engine = args.isNotEmpty ? args[0].toLowerCase() : 'sqlite';
   print('--- Datapod ORM Example ($engine) ---');
 
-  DatapodPlugin plugin;
-  DatabaseConfig dbConfig;
-  ConnectionConfig connConfig;
+  // 1. Initialize Datapod (All databases from YAML)
+  await DatapodInitializer.initialize();
 
-  switch (engine) {
-    case 'mysql':
-      plugin = MySqlPlugin();
-      dbConfig = DatabaseConfig(
-          name: 'datapod', plugin: 'datapod_mysql', connection: 'datapod');
-      connConfig = ConnectionConfig(name: 'datapod', attributes: {
-        'host': 'localhost',
-        'port': 3306,
-        'username': 'datapod',
-        'password': 'datapod_dba',
-        'database': 'datapod',
-      });
-      break;
-    case 'sqlite':
-      plugin = SqlitePlugin();
-      dbConfig = DatabaseConfig(
-          name: 'datapod', plugin: 'datapod_sqlite', connection: 'datapod');
-      connConfig = ConnectionConfig(name: 'datapod', attributes: {
-        'database': ':memory:',
-      });
-      break;
-    case 'postgres':
-    default:
-      plugin = PostgresPlugin();
-      dbConfig = DatabaseConfig(
-          name: 'datapod', plugin: 'datapod_postgres', connection: 'datapod');
-      connConfig = ConnectionConfig(name: 'datapod', attributes: {
-        'host': 'localhost',
-        'port': 5432,
-        'username': 'datapod',
-        'password': 'datapod_dba',
-        'database': 'datapod',
-      });
-      break;
-  }
+  // Get the database instance based on the engine argument
+  // (Not used directly here anymore as we use specific DBs for the demo)
+  // final dbName = '${engine}_db';
+  // final database = Databases.get(dbName);
 
-  final database =
-      await plugin.createDatabase(dbConfig, connConfig) as DatapodDatabaseBase;
-
-  // 2. Register Repositories
-  final userRepo = UserRepositoryImpl(database);
-  final postRepo = PostRepositoryImpl(database);
-  database.registerRepository<UserRepository>(userRepo);
-  database.registerRepository<PostRepository>(postRepo);
-  database.registerEntityRepository<User>(userRepo);
-  database.registerEntityRepository<Post>(postRepo);
+  final userRepo = RepositoryRegistry.get<UserRepository>();
+  final postRepo = RepositoryRegistry.get<PostRepository>();
 
   try {
     // 3. Setup Schema (Manual for now)
     print('Dropping existing tables...');
-    await database.connection.execute('DROP TABLE IF EXISTS posts');
-    await database.connection.execute('DROP TABLE IF EXISTS users');
+    // We might need to drop tables in different databases if we are testing cross-DB.
+    // For this example, we'll just drop them in the "main" database of the context.
+
+    // In our setup:
+    // User is in postgres_db
+    // Post is in mysql_db
+    // If we passed 'sqlite' as arg, both might fail if they are not in sqlite_db.
+    // Let's make the schema setup robust.
+
+    final postgresDb = Databases.get('postgres_db');
+    final mysqlDb = Databases.get('mysql_db');
+    final sqliteDb = Databases.get('sqlite_db');
+
+    await postgresDb.connection.execute('DROP TABLE IF EXISTS users');
+    await mysqlDb.connection.execute('DROP TABLE IF EXISTS posts');
+    await sqliteDb.connection.execute('DROP TABLE IF EXISTS posts');
+    await sqliteDb.connection.execute('DROP TABLE IF EXISTS users');
 
     print('Creating tables...');
-    String idType;
-    switch (engine) {
-      case 'mysql':
-        idType = 'INT NOT NULL AUTO_INCREMENT PRIMARY KEY';
-        break;
-      case 'sqlite':
-        idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
-        break;
-      case 'postgres':
-      default:
-        idType = 'SERIAL PRIMARY KEY';
-        break;
-    }
 
-    await database.connection.execute('''
+    // Create users in "Postgres" (actually SQLite mock)
+    await postgresDb.connection.execute('''
       CREATE TABLE users (
-        id $idType,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT
       )
     ''');
 
-    String fkConstraint =
-        'REFERENCES users(id) ON DELETE CASCADE'; // PostgreSQL/MySQL
-    if (engine == 'sqlite') {
-      // SQLite needs the FK at column level or table level
-    }
-
-    await database.connection.execute('''
+    // Create posts in "MySQL" (actually SQLite mock)
+    await mysqlDb.connection.execute('''
       CREATE TABLE posts (
-        id $idType,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT,
-        author_id INTEGER $fkConstraint
+        author_id INTEGER
       )
     ''');
 
-    // 4. Test Persistence
-    print('\nCreating User...');
+    // 4. Test Persistence (Cross-Database!)
+    print('\nCreating User in PostgreSQL...');
     final user = ManagedUser()..name = 'Alice';
-
-    final savedUser = await database.repository<UserRepository>().save(user);
+    final savedUser = await userRepo.save(user);
     print('Saved User: ${savedUser.name} (ID: ${savedUser.id})');
 
-    print('\nCreating Posts...');
+    print('\nCreating Posts in MySQL (related to PostgreSQL User)...');
     final post1 = ManagedPost()
-      ..title = 'Hello Datapod'
-      ..content = 'This is my first post'
+      ..title = 'Hello Cross-DB'
+      ..content = 'This post is in MySQL, its author is in Postgres'
       ..authorId = savedUser.id;
 
-    final post2 = ManagedPost()
-      ..title = 'Relationships'
-      ..content = 'Lazy loading is cool'
-      ..authorId = savedUser.id;
-
-    await database.repository<PostRepository>().save(post1);
-    await database.repository<PostRepository>().save(post2);
-    print('Saved 2 posts for User ${savedUser.id}');
+    await postRepo.save(post1);
+    print('Saved post 1 for User ${savedUser.id}');
 
     // 5. Test Lazy Loading (ManyToOne)
     print('\nTesting Lazy Loading (Post -> Author)...');
-    final fetchedPost =
-        await database.repository<PostRepository>().findById(post1.id!);
+    final fetchedPost = await postRepo.findById(post1.id!);
     if (fetchedPost != null) {
       print('Fetched Post: ${fetchedPost.title}');
       final author = await fetchedPost.author;
-      print('Author name: ${author?.name}');
-    }
-
-    // 6. Test Lazy Loading (OneToMany)
-    print('\nTesting Lazy Loading (User -> Posts)...');
-    final fetchedUser =
-        await database.repository<UserRepository>().findById(savedUser.id!);
-    if (fetchedUser != null) {
-      print('Fetched User: ${fetchedUser.name}');
-      final posts = await fetchedUser.posts;
-      print('Number of posts: ${posts?.length}');
-      for (final p in posts ?? []) {
-        print(' - ${p.title}');
-      }
+      print('Author from PostgreSQL: ${author?.name}');
     }
 
     // 8. Test DSL Queries
@@ -172,33 +107,24 @@ void main(List<String> args) async {
     final alice = await userRepo.findByName('Alice');
     print('findByName(\'Alice\'): ${alice?.name} (ID: ${alice?.id})');
 
-    final datapodPosts = await postRepo.findByTitleContains('Datapod');
-    print('findByTitleContains(\'Datapod\'): ${datapodPosts.length} posts');
-    for (final p in datapodPosts) {
-      print(' - ${p.title}');
-    }
-
-    final postCount = await postRepo.countByTitle('Relationships');
-    print('countByTitle(\'Relationships\'): $postCount');
-
     // 9. Test Cascading Save
-    print('\nTesting Cascading Save...');
+    print('\nTesting Cascading Save (User -> Postgres, Posts -> MySQL)...');
     final bob = ManagedUser()
       ..name = 'Bob'
       ..posts = Future.value([
         ManagedPost()
           ..title = 'Bob\'s First Post'
-          ..content = 'Hello from Bob!',
+          ..content = 'Cross-DB cascade!',
         ManagedPost()
           ..title = 'Bob\'s Second Post'
-          ..content = 'Scaling Datapod',
+          ..content = 'It just works.',
       ]);
 
     await userRepo.save(bob);
     print('Saved Bob and his posts via cascading.');
 
     final bobPosts = await bob.posts;
-    print('Bob\'s posts in DB: ${bobPosts?.length}');
+    print('Bob\'s posts in MySQL: ${bobPosts?.length}');
     for (final p in bobPosts ?? []) {
       print(' - ${p.title} (ID: ${p.id}, Author ID: ${p.authorId})');
     }
@@ -206,15 +132,20 @@ void main(List<String> args) async {
     // 10. Test Cascading Delete
     print('\nTesting Cascading Delete...');
     await userRepo.delete(bob.id!);
-    print('Deleted Bob (Cascading should have deleted his posts).');
+    print(
+        'Deleted Bob from Postgres (Cascading should have deleted his posts in MySQL).');
 
-    final bobPostsAfterDelete = await postRepo.findByAuthorId(bob.id!);
-    print('Bob\'s posts after delete: ${bobPostsAfterDelete.length}');
+    final bobPostsAfterDelete =
+        await (postRepo as dynamic).findByAuthorId(bob.id!);
+    print('Bob\'s posts in MySQL after delete: ${bobPostsAfterDelete.length}');
   } catch (e, s) {
     print('Error: $e');
     print(s);
   } finally {
-    await database.close();
+    // Close all
+    await Databases.get('postgres_db').close();
+    await Databases.get('mysql_db').close();
+    await Databases.get('sqlite_db').close();
     print('\nDone.');
   }
 }

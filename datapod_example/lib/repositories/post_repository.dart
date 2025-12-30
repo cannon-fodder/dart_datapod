@@ -13,6 +13,7 @@ part 'post_repository.datapod.dart';
 
 @Repository()
 abstract class PostRepository extends BaseRepository<Post, int> {
+  PostRepository(super.relationshipContext);
   Future<List<Post>> findByTitleContains(String title);
   Future<int> countByTitle(String title);
 }

@@ -6,6 +6,9 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'dart:io';
+import 'package:yaml/yaml.dart';
+
 /// Represents a database definition in databases.yml.
 class DatabaseConfig {
   final String name;
@@ -24,10 +27,21 @@ class DatabaseConfig {
     return DatabaseConfig(
       name: yaml['name'] as String,
       plugin: yaml['plugin'] as String,
-      connection: yaml['connection'] as String,
+      connection: (yaml['connection'] ?? yaml['name']) as String,
       attributes: (yaml['attributes'] as Map<dynamic, dynamic>? ?? {})
           .cast<String, dynamic>(),
     );
+  }
+
+  static Future<List<DatabaseConfig>> load(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return [];
+    final content = await file.readAsString();
+    final yaml = loadYaml(content);
+    if (yaml is! YamlMap || yaml['databases'] == null) return [];
+    return (yaml['databases'] as YamlList)
+        .map((db) => DatabaseConfig.fromYaml(db as YamlMap))
+        .toList();
   }
 }
 
@@ -53,5 +67,16 @@ class ConnectionConfig {
     });
 
     return ConnectionConfig(name: yaml['name'] as String, attributes: attrs);
+  }
+
+  static Future<List<ConnectionConfig>> load(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return [];
+    final content = await file.readAsString();
+    final yaml = loadYaml(content);
+    if (yaml is! YamlMap || yaml['connections'] == null) return [];
+    return (yaml['connections'] as YamlList)
+        .map((conn) => ConnectionConfig.fromYaml(conn as YamlMap))
+        .toList();
   }
 }

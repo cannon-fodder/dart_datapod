@@ -5,3 +5,11 @@ builders:
     build_extensions: {".dart": [".datapod.dart"]}
     auto_apply: dependents
     build_to: source
+
+  datapodInitializerBuilder:
+    import: "package:datapod_generator/datapod_generator.dart"
+    builder_factories: ["datapodInitializerBuilder"]
+    build_extensions: {r"$lib$": ["datapod_init.dart"]}
+    auto_apply: dependents
+    build_to: source
+    required_inputs: [".yaml"]

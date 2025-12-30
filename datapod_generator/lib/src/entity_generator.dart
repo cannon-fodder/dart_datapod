@@ -53,6 +53,10 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..name = '_database'
           ..type = refer(
               'DatapodDatabase?', 'package:datapod_api/datapod_api.dart')),
+        Field((f) => f
+          ..name = '_relationshipContext'
+          ..type = refer(
+              'RelationshipContext?', 'package:datapod_api/datapod_api.dart')),
         ..._generateRelationFields(entityClass),
       ])
       ..constructors.addAll([
@@ -66,7 +70,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             ..name = 'database'
             ..type = refer(
                 'DatapodDatabase', 'package:datapod_api/datapod_api.dart')))
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'relationshipContext'
+            ..type = refer(
+                'RelationshipContext', 'package:datapod_api/datapod_api.dart')))
           ..initializers.add(Code('_database = database'))
+          ..initializers.add(Code('_relationshipContext = relationshipContext'))
           ..body = Block.of([
             Code('_isPersistent = true;'),
             ...entityClass.fields
@@ -125,6 +134,22 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             ..type = refer(
                 'DatapodDatabase?', 'package:datapod_api/datapod_api.dart')))
           ..body = Code('_database = value;')),
+        Method((m) => m
+          ..name = '\$relationshipContext'
+          ..type = MethodType.getter
+          ..annotations.add(refer('override'))
+          ..returns = refer(
+              'RelationshipContext?', 'package:datapod_api/datapod_api.dart')
+          ..body = refer('_relationshipContext').code),
+        Method((m) => m
+          ..name = '\$relationshipContext'
+          ..type = MethodType.setter
+          ..annotations.add(refer('override'))
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'value'
+            ..type = refer('RelationshipContext?',
+                'package:datapod_api/datapod_api.dart')))
+          ..body = Code('_relationshipContext = value;')),
         ...entityClass.fields
             .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
             .map((f) => Method((m) => m
@@ -217,9 +242,9 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       ..modifier = MethodModifier.async
       ..body = Block.of([
         Code(
-            'if ($loadedField == null && $foreignKeyField != null && \$database != null) {'),
+            'if ($loadedField == null && $foreignKeyField != null && \$relationshipContext != null) {'),
         Code(
-            '  $loadedField = \$database!.repositoryFor<${relatedType.element?.name}>().findById($foreignKeyField!) as Future<${relatedType.element?.name}?>?;'),
+            '  $loadedField = \$relationshipContext!.getForEntity<${relatedType.element?.name}>().findById($foreignKeyField!) as Future<${relatedType.element?.name}?>?;'),
         Code('}'),
         Code('return await $loadedField;'),
       ])));
@@ -262,9 +287,9 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       ..returns = refer(field.type.getDisplayString(withNullability: true))
       ..modifier = MethodModifier.async
       ..body = Block.of([
-        Code('if ($loadedField == null && \$database != null) {'),
+        Code('if ($loadedField == null && \$relationshipContext != null) {'),
         Code(
-            '  $loadedField = (\$database!.repositoryFor<${relatedType.element?.name}>() as dynamic).$methodName(id!) as Future<List<${relatedType.element?.name}>>?;'),
+            '  $loadedField = (\$relationshipContext!.getForEntity<${relatedType.element?.name}>() as dynamic).$methodName(id!) as Future<List<${relatedType.element?.name}>>?;'),
         Code('}'),
         Code('return await $loadedField ?? <${relatedType.element?.name}>[];'),
       ])));

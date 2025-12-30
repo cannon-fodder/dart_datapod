@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      datapod_generator:datapodInitializerBuilder:
+        options:
+          databases: "databases.yaml"
+          connections: "connections.yaml"
+    sources:
+      - lib/**
+      - databases.yaml
+      - connections.yaml
+      - pubspec.yaml
