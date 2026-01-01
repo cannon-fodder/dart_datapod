@@ -133,14 +133,19 @@ class InitializerGenerator extends Builder {
         final pluginClassName = _toPascalCase(pluginName) + 'Plugin';
 
         result.writeln("    // Initialize $dbName");
-        result.writeln("    final plugin_$dbName = $pluginClassName();");
+        final pluginVar = _toCamelCase('plugin_$dbName');
+        final dbConfigVar = _toCamelCase('dbConfig_$dbName');
+        final connConfigVar = _toCamelCase('connConfig_$dbName');
+        final databaseVar = _toCamelCase('database_$dbName');
+
+        result.writeln("    final $pluginVar = $pluginClassName();");
         result.writeln(
-            "    final dbConfig_$dbName = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == '$dbName');");
+            "    final $dbConfigVar = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == '$dbName');");
         result.writeln(
-            "    final connConfig_$dbName = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == '$dbName');");
+            "    final $connConfigVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == '$dbName');");
         result.writeln(
-            "    final database_$dbName = await plugin_$dbName.createDatabase(dbConfig_$dbName, connConfig_$dbName);");
-        result.writeln("    Databases.register('$dbName', database_$dbName);");
+            "    final $databaseVar = await $pluginVar.createDatabase($dbConfigVar, $connConfigVar);");
+        result.writeln("    Databases.register('$dbName', $databaseVar);");
         result.writeln();
 
         // Repositories mapped to this database via @Database(name) or default
@@ -157,8 +162,9 @@ class InitializerGenerator extends Builder {
           final repoName = repo['name']!;
           final repoVar = _toCamelCase(repoName);
           repoInstances[repoName] = repoVar;
+          final databaseVar = _toCamelCase('database_$dbName');
           result.writeln(
-              "    final $repoVar = ${repoName}Impl(database_$dbName, sharedContext);");
+              "    final $repoVar = ${repoName}Impl($databaseVar, sharedContext);");
         }
         result.writeln();
       }

@@ -13,7 +13,7 @@ import 'comment.dart';
 part 'post.datapod.dart';
 
 @Entity(tableName: 'posts')
-abstract class Post {
+class Post {
   @Id()
   int? id;
 

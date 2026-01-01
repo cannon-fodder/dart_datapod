@@ -21,7 +21,19 @@ class ManagedSetting extends Setting implements ManagedEntity {
     super.value = row['value'];
   }
 
-  bool _isManaged = true;
+  ManagedSetting.fromEntity(
+    Setting entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.key = entity.key;
+    super.value = entity.value;
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

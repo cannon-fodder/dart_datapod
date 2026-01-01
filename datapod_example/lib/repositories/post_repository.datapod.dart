@@ -26,37 +26,38 @@ class PostRepositoryImpl extends PostRepository {
 
   @override
   Future<Post> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedPost)
+        : ManagedPost.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'title': entity.title,
-      'content': entity.content,
-      'authorId':
-          (entity is ManagedEntity) ? (entity as dynamic).authorId : null,
+      'id': managed.id,
+      'title': managed.title,
+      'content': managed.content,
+      'authorId': managed.authorId,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    final comments = await entity.comments;
+    var comments = await managed.comments;
     if (comments != null && comments.isNotEmpty) {
-      for (final child in comments) {
-        (child as dynamic).postId = entity.id;
+      for (var child in comments) {
+        if (child is! ManagedEntity) {
+          child =
+              ManagedComment.fromEntity(child, database, relationshipContext);
+        }
+        (child as dynamic).postId = managed.id;
         await relationshipContext.getForEntity<Comment>().save(child);
       }
     }
-    return entity;
+    return managed;
   }
 
   @override

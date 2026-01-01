@@ -6,7 +6,7 @@ import 'setting.dart';
 part 'setting_audit.datapod.dart';
 
 @Entity(tableName: 'setting_audits')
-abstract class SettingAudit {
+class SettingAudit {
   @Id()
   int? id;
 

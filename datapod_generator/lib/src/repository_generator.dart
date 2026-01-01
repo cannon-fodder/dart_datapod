@@ -125,66 +125,69 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       ..requiredParameters.add(Parameter((p) => p..name = 'entity'))
       ..modifier = MethodModifier.async
       ..body = Block.of([
+        Code(
+            'final managed = entity is ManagedEntity ? (entity as Managed${entityClass.name}) : Managed${entityClass.name}.fromEntity(entity, database, relationshipContext);'),
         for (final col in cascadeBefore) ...[
-          Code('final ${col.fieldName} = await entity.${col.fieldName};'),
+          Code('final ${col.fieldName} = await managed.${col.fieldName};'),
           Code('if (${col.fieldName} != null) {'),
           Code(
               '  final related = await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
-          Code(
-              '  (entity as dynamic).${col.fieldName}Id = (related as dynamic).id;'),
+          Code('  managed.${col.fieldName}Id = (related as dynamic).id;'),
           Code('}'),
         ],
         Code('final params = <String, dynamic>{'),
         ...metadata.columns.map((c) {
           if (c.relationType != null && c.columnName.isNotEmpty) {
-            return Code(
-                "'${c.fieldName}Id': (entity is ManagedEntity) ? (entity as dynamic).${c.fieldName}Id : null,");
+            return Code("'${c.fieldName}Id': managed.${c.fieldName}Id,");
           }
           if (c.columnName.isEmpty) return Code(''); // Skip OneToMany
-          return Code("'${c.fieldName}': entity.${c.fieldName},");
+          return Code("'${c.fieldName}': managed.${c.fieldName},");
         }),
         Code('};'),
-        Code('if (entity is ManagedEntity) {'),
-        Code('  final managed = entity as ManagedEntity;'),
-        Code('  if (managed.isPersistent) {'),
-        Code('    if (managed.isDirty) {'),
-        Code('      await database.connection.execute(_updateSql, params);'),
-        Code('      managed.clearDirty();'),
-        Code('    }'),
-        Code('  } else {'),
-        Code(
-            '    final result = await database.connection.execute(_insertSql, params);'),
-        Code('    managed.markPersistent();'),
-        if (metadata.idColumn?.autoIncrement ?? false) ...[
-          Code(
-              '    (entity as dynamic).${metadata.idColumn!.fieldName} = result.lastInsertId;'),
-        ],
+        Code('if (managed.isPersistent) {'),
+        Code('  if (managed.isDirty) {'),
+        Code('    await database.connection.execute(_updateSql, params);'),
         Code('    managed.clearDirty();'),
         Code('  }'),
         Code('} else {'),
-        Code('  await database.connection.execute(_insertSql, params);'),
-        Code('}'),
+        Code(
+            '  final result = await database.connection.execute(_insertSql, params);'),
+        Code('  managed.markPersistent();'),
+        if (metadata.idColumn?.autoIncrement ?? false) ...[
+          Code(
+              '  managed.${metadata.idColumn!.fieldName} = result.lastInsertId;'),
+        ],
+        Code('    managed.clearDirty();'),
+        Code('  }'),
         for (final col in cascadeAfter) ...[
-          Code('final ${col.fieldName} = await entity.${col.fieldName};'),
+          Code('var ${col.fieldName} = await managed.${col.fieldName};'),
           if (col.relationType == 'OneToMany') ...[
             Code(
                 'if (${col.fieldName} != null && ${col.fieldName}.isNotEmpty) {'),
-            Code('  for (final child in ${col.fieldName}) {'),
-            Code('    (child as dynamic).${col.mappedBy}Id = entity.id;'),
+            Code('  for (var child in ${col.fieldName}) {'),
+            Code('    if (child is! ManagedEntity) {'),
+            Code(
+                '      child = Managed${col.relatedEntityType}.fromEntity(child, database, relationshipContext);'),
+            Code('    }'),
+            Code('    (child as dynamic).${col.mappedBy}Id = managed.id;'),
             Code(
                 '    await relationshipContext.getForEntity<${col.relatedEntityType}>().save(child);'),
             Code('  }'),
             Code('}'),
           ] else ...[
             Code('if (${col.fieldName} != null) {'),
+            Code('    var child = ${col.fieldName};'),
+            Code('    if (child is! ManagedEntity) {'),
             Code(
-                '  ( ${col.fieldName} as dynamic).${col.mappedBy}Id = entity.id;'),
+                '      child = Managed${col.relatedEntityType}.fromEntity(child, database, relationshipContext);'),
+            Code('    }'),
+            Code('    (child as dynamic).${col.mappedBy}Id = managed.id;'),
             Code(
-                '  await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
+                '    await relationshipContext.getForEntity<${col.relatedEntityType}>().save(child);'),
             Code('}'),
           ],
         ],
-        Code('return entity;'),
+        Code('return managed;'),
       ]));
   }
 

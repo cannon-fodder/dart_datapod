@@ -26,35 +26,37 @@ class SettingRepositoryImpl extends SettingRepository {
 
   @override
   Future<Setting> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedSetting)
+        : ManagedSetting.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'key': entity.key,
-      'value': entity.value,
+      'id': managed.id,
+      'key': managed.key,
+      'value': managed.value,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    final auditTrail = await entity.auditTrail;
+    var auditTrail = await managed.auditTrail;
     if (auditTrail != null && auditTrail.isNotEmpty) {
-      for (final child in auditTrail) {
-        (child as dynamic).settingId = entity.id;
+      for (var child in auditTrail) {
+        if (child is! ManagedEntity) {
+          child = ManagedSettingAudit.fromEntity(
+              child, database, relationshipContext);
+        }
+        (child as dynamic).settingId = managed.id;
         await relationshipContext.getForEntity<SettingAudit>().save(child);
       }
     }
-    return entity;
+    return managed;
   }
 
   @override

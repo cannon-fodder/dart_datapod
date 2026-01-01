@@ -40,6 +40,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Field((f) => f
           ..name = '_isManaged'
           ..type = refer('bool')
+          ..modifier = FieldModifier.final$
           ..assignment = Code('true')),
         Field((f) => f
           ..name = '_isPersistent'
@@ -90,6 +91,28 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
               return Code('super.${f.name} = row[\'$colName\'];');
             }),
             ..._generateRelationFieldInitializers(entityClass),
+          ])),
+        Constructor((c) => c
+          ..name = 'fromEntity'
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'entity'
+            ..type = refer(entityClass.name)))
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'database'
+            ..type = refer(
+                'DatapodDatabase', 'package:datapod_api/datapod_api.dart')))
+          ..requiredParameters.add(Parameter((p) => p
+            ..name = 'relationshipContext'
+            ..type = refer(
+                'RelationshipContext', 'package:datapod_api/datapod_api.dart')))
+          ..initializers.add(Code('_database = database'))
+          ..initializers.add(Code('_relationshipContext = relationshipContext'))
+          ..body = Block.of([
+            Code('_isPersistent = true;'),
+            ...entityClass.fields
+                .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
+                .map((f) => Code('super.${f.name} = entity.${f.name};')),
+            ..._generateRelationFieldCopyInitializers(entityClass),
           ])),
       ])
       ..methods.addAll([
@@ -357,6 +380,21 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
         final colName = SqlGenerator.parseColumn(field).columnName;
         codes.add(Code('${field.name}Id = row[\'$colName\'];'));
+      }
+    }
+    return codes;
+  }
+
+  Iterable<Code> _generateRelationFieldCopyInitializers(
+      ClassElement entityClass) {
+    final codes = <Code>[];
+    for (final field in entityClass.fields) {
+      if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
+
+      if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
+          const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
+        codes.add(Code(
+            'if (entity is ManagedEntity) { ${field.name}Id = (entity as dynamic).${field.name}Id; }'));
       }
     }
     return codes;

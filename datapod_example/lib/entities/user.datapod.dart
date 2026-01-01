@@ -20,7 +20,18 @@ class ManagedUser extends User implements ManagedEntity {
     super.name = row['name'];
   }
 
-  bool _isManaged = true;
+  ManagedUser.fromEntity(
+    User entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.name = entity.name;
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

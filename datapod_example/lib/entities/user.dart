@@ -13,7 +13,7 @@ import 'role.dart';
 part 'user.datapod.dart';
 
 @Entity(tableName: 'users')
-abstract class User {
+class User {
   @Id()
   int? id;
 

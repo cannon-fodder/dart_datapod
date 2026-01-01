@@ -2,6 +2,8 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_core/datapod_core.dart';
+import 'package:datapod_postgres/datapod_postgres.dart';
+import 'package:datapod_mysql/datapod_mysql.dart';
 import 'package:datapod_sqlite/datapod_sqlite.dart';
 import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/setting_repository.dart';
@@ -29,34 +31,34 @@ class DatapodInitializer {
     final sharedContext = RelationshipContextImpl();
 
     // Initialize postgres_db
-    final plugin_postgres_db = SqlitePlugin();
-    final dbConfig_postgres_db = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'postgres_db');
-    final connConfig_postgres_db = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'postgres_db');
-    final database_postgres_db = await plugin_postgres_db.createDatabase(dbConfig_postgres_db, connConfig_postgres_db);
-    Databases.register('postgres_db', database_postgres_db);
+    final pluginPostgresDb = PostgresPlugin();
+    final dbConfigPostgresDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'postgres_db');
+    final connConfigPostgresDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'postgres_db');
+    final databasePostgresDb = await pluginPostgresDb.createDatabase(dbConfigPostgresDb, connConfigPostgresDb);
+    Databases.register('postgres_db', databasePostgresDb);
 
-    final userRepository = UserRepositoryImpl(database_postgres_db, sharedContext);
-    final roleRepository = RoleRepositoryImpl(database_postgres_db, sharedContext);
+    final userRepository = UserRepositoryImpl(databasePostgresDb, sharedContext);
+    final roleRepository = RoleRepositoryImpl(databasePostgresDb, sharedContext);
 
     // Initialize mysql_db
-    final plugin_mysql_db = SqlitePlugin();
-    final dbConfig_mysql_db = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'mysql_db');
-    final connConfig_mysql_db = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'mysql_db');
-    final database_mysql_db = await plugin_mysql_db.createDatabase(dbConfig_mysql_db, connConfig_mysql_db);
-    Databases.register('mysql_db', database_mysql_db);
+    final pluginMysqlDb = MySqlPlugin();
+    final dbConfigMysqlDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'mysql_db');
+    final connConfigMysqlDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'mysql_db');
+    final databaseMysqlDb = await pluginMysqlDb.createDatabase(dbConfigMysqlDb, connConfigMysqlDb);
+    Databases.register('mysql_db', databaseMysqlDb);
 
-    final postRepository = PostRepositoryImpl(database_mysql_db, sharedContext);
-    final commentRepository = CommentRepositoryImpl(database_mysql_db, sharedContext);
+    final postRepository = PostRepositoryImpl(databaseMysqlDb, sharedContext);
+    final commentRepository = CommentRepositoryImpl(databaseMysqlDb, sharedContext);
 
     // Initialize sqlite_db
-    final plugin_sqlite_db = SqlitePlugin();
-    final dbConfig_sqlite_db = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'sqlite_db');
-    final connConfig_sqlite_db = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'sqlite_db');
-    final database_sqlite_db = await plugin_sqlite_db.createDatabase(dbConfig_sqlite_db, connConfig_sqlite_db);
-    Databases.register('sqlite_db', database_sqlite_db);
+    final pluginSqliteDb = SqlitePlugin();
+    final dbConfigSqliteDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'sqlite_db');
+    final connConfigSqliteDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'sqlite_db');
+    final databaseSqliteDb = await pluginSqliteDb.createDatabase(dbConfigSqliteDb, connConfigSqliteDb);
+    Databases.register('sqlite_db', databaseSqliteDb);
 
-    final settingRepository = SettingRepositoryImpl(database_sqlite_db, sharedContext);
-    final settingAuditRepository = SettingAuditRepositoryImpl(database_sqlite_db, sharedContext);
+    final settingRepository = SettingRepositoryImpl(databaseSqliteDb, sharedContext);
+    final settingAuditRepository = SettingAuditRepositoryImpl(databaseSqliteDb, sharedContext);
 
     // Register all repositories
     sharedContext.registerForEntity<User>(userRepository);

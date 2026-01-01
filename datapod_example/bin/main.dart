@@ -17,9 +17,6 @@ import 'package:datapod_example/entities/setting_audit.dart';
 import 'package:datapod_example/repositories/user_repository.dart';
 import 'package:datapod_example/repositories/post_repository.dart';
 import 'package:datapod_example/repositories/setting_repository.dart';
-import 'package:datapod_example/repositories/role_repository.dart';
-import 'package:datapod_example/repositories/comment_repository.dart';
-import 'package:datapod_example/repositories/setting_audit_repository.dart';
 import 'package:datapod_example/datapod_init.dart';
 import 'package:datapod_api/datapod_api.dart';
 
@@ -107,46 +104,46 @@ void main(List<String> args) async {
 
     // 3. Exercise Identity (Postgres)
     print('\n[IDENTITY] Creating User with Roles in PostgreSQL...');
-    final alice = ManagedUser()..name = 'Alice';
-    final adminRole = ManagedRole()..name = 'ADMIN';
-    final userRole = ManagedRole()..name = 'USER';
+    var alice = User()..name = 'Alice';
+    final adminRole = Role()..name = 'ADMIN';
+    final userRole = Role()..name = 'USER';
     alice.roles = Future.value([adminRole, userRole]);
 
-    await userRepo.save(alice);
+    alice = await userRepo.save(alice);
     print('Saved User: ${alice.name} with roles');
 
     // 4. Exercise Content (MySQL)
     print(
         '\n[CONTENT] Creating Post with Comments in MySQL (related to Postgres User)...');
-    final post1 = ManagedPost()
+    var post1 = Post()
       ..title = 'Enterprise Architecture'
       ..content = 'Using multiple databases for different functions.'
-      ..authorId = alice.id;
+      ..author = Future.value(alice);
 
-    final comment1 = ManagedComment()..content = 'Great insight!';
-    final comment2 = ManagedComment()..content = 'Very useful for scaling.';
+    final comment1 = Comment()..content = 'Great insight!';
+    final comment2 = Comment()..content = 'Very useful for scaling.';
     post1.comments = Future.value([comment1, comment2]);
 
-    await postRepo.save(post1);
+    post1 = await postRepo.save(post1);
     print('Saved post: ${post1.title} with 2 comments');
 
     // 5. Exercise Config (SQLite)
     print('\n[CONFIG] Creating Settings with Audits in SQLite...');
-    final themeSetting = ManagedSetting()
+    var themeSetting = Setting()
       ..key = 'ui.theme'
       ..value = 'dark';
 
-    final audit1 = ManagedSettingAudit()
+    final audit1 = SettingAudit()
       ..action = 'Created setting'
       ..timestamp = DateTime.now();
     themeSetting.auditTrail = Future.value([audit1]);
 
-    await settingRepo.save(themeSetting);
+    themeSetting = await settingRepo.save(themeSetting);
 
-    final langSetting = ManagedSetting()
+    var langSetting = Setting()
       ..key = 'app.language'
       ..value = 'en_US';
-    await settingRepo.save(langSetting);
+    langSetting = await settingRepo.save(langSetting);
     print('Saved settings with audit trail to SQLite.');
 
     // 6. Verify cross-database lazy loading

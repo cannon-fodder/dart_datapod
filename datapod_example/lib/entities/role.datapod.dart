@@ -21,7 +21,21 @@ class ManagedRole extends Role implements ManagedEntity {
     userId = row['user_id'];
   }
 
-  bool _isManaged = true;
+  ManagedRole.fromEntity(
+    Role entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.name = entity.name;
+    if (entity is ManagedEntity) {
+      userId = (entity as dynamic).userId;
+    }
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

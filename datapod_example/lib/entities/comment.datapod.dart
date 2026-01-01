@@ -21,7 +21,21 @@ class ManagedComment extends Comment implements ManagedEntity {
     postId = row['post_id'];
   }
 
-  bool _isManaged = true;
+  ManagedComment.fromEntity(
+    Comment entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.content = entity.content;
+    if (entity is ManagedEntity) {
+      postId = (entity as dynamic).postId;
+    }
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

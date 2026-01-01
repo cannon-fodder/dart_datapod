@@ -26,28 +26,26 @@ class RoleRepositoryImpl extends RoleRepository {
 
   @override
   Future<Role> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedRole)
+        : ManagedRole.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'name': entity.name,
-      'userId': (entity is ManagedEntity) ? (entity as dynamic).userId : null,
+      'id': managed.id,
+      'name': managed.name,
+      'userId': managed.userId,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    return entity;
+    return managed;
   }
 
   @override

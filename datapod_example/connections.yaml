@@ -1,7 +1,15 @@
 connections:
   - name: postgres_db
-    database: ":memory:"
+    host: localhost
+    port: 5432
+    user: user
+    password: password
+    database: postgres
   - name: mysql_db
-    database: ":memory:"
+    host: localhost
+    port: 3306
+    user: user
+    password: password
+    database: mysql
   - name: sqlite_db
     database: ":memory:"

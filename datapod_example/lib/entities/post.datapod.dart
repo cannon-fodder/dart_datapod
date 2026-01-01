@@ -22,7 +22,22 @@ class ManagedPost extends Post implements ManagedEntity {
     authorId = row['author_id'];
   }
 
-  bool _isManaged = true;
+  ManagedPost.fromEntity(
+    Post entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.title = entity.title;
+    super.content = entity.content;
+    if (entity is ManagedEntity) {
+      authorId = (entity as dynamic).authorId;
+    }
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

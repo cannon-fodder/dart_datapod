@@ -9,7 +9,6 @@
 import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:datapod_api/datapod_api.dart';
-import 'package:meta/meta.dart';
 
 /// The entry point for the Datapod framework.
 class Databases {
@@ -51,8 +50,7 @@ class Databases {
     return db;
   }
 
-  /// Internal method for plugins/generator to register databases.
-  @internal
+  /// Method for plugins/generator to register databases.
   static void register(String name, DatapodDatabase database) {
     _log.info('Registering database: $name');
     _databases[name] = database;

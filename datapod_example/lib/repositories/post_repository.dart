@@ -8,7 +8,6 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import '../entities/post.dart';
-import '../entities/user.dart';
 import '../entities/comment.dart';
 
 part 'post_repository.datapod.dart';

@@ -26,30 +26,27 @@ class SettingAuditRepositoryImpl extends SettingAuditRepository {
 
   @override
   Future<SettingAudit> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedSettingAudit)
+        : ManagedSettingAudit.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'action': entity.action,
-      'timestamp': entity.timestamp,
-      'settingId':
-          (entity is ManagedEntity) ? (entity as dynamic).settingId : null,
+      'id': managed.id,
+      'action': managed.action,
+      'timestamp': managed.timestamp,
+      'settingId': managed.settingId,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    return entity;
+    return managed;
   }
 
   @override

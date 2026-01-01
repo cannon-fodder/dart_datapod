@@ -24,7 +24,22 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
     settingId = row['setting_id'];
   }
 
-  bool _isManaged = true;
+  ManagedSettingAudit.fromEntity(
+    SettingAudit entity,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  )   : _database = database,
+        _relationshipContext = relationshipContext {
+    _isPersistent = true;
+    super.id = entity.id;
+    super.action = entity.action;
+    super.timestamp = entity.timestamp;
+    if (entity is ManagedEntity) {
+      settingId = (entity as dynamic).settingId;
+    }
+  }
+
+  final bool _isManaged = true;
 
   bool _isPersistent = false;
 

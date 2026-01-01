@@ -25,41 +25,45 @@ class UserRepositoryImpl extends UserRepository {
 
   @override
   Future<User> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedUser)
+        : ManagedUser.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'name': entity.name,
+      'id': managed.id,
+      'name': managed.name,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    final posts = await entity.posts;
+    var posts = await managed.posts;
     if (posts != null && posts.isNotEmpty) {
-      for (final child in posts) {
-        (child as dynamic).authorId = entity.id;
+      for (var child in posts) {
+        if (child is! ManagedEntity) {
+          child = ManagedPost.fromEntity(child, database, relationshipContext);
+        }
+        (child as dynamic).authorId = managed.id;
         await relationshipContext.getForEntity<Post>().save(child);
       }
     }
-    final roles = await entity.roles;
+    var roles = await managed.roles;
     if (roles != null && roles.isNotEmpty) {
-      for (final child in roles) {
-        (child as dynamic).userId = entity.id;
+      for (var child in roles) {
+        if (child is! ManagedEntity) {
+          child = ManagedRole.fromEntity(child, database, relationshipContext);
+        }
+        (child as dynamic).userId = managed.id;
         await relationshipContext.getForEntity<Role>().save(child);
       }
     }
-    return entity;
+    return managed;
   }
 
   @override

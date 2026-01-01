@@ -26,28 +26,26 @@ class CommentRepositoryImpl extends CommentRepository {
 
   @override
   Future<Comment> save(entity) async {
+    final managed = entity is ManagedEntity
+        ? (entity as ManagedComment)
+        : ManagedComment.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
-      'id': entity.id,
-      'content': entity.content,
-      'postId': (entity is ManagedEntity) ? (entity as dynamic).postId : null,
+      'id': managed.id,
+      'content': managed.content,
+      'postId': managed.postId,
     };
-    if (entity is ManagedEntity) {
-      final managed = entity as ManagedEntity;
-      if (managed.isPersistent) {
-        if (managed.isDirty) {
-          await database.connection.execute(_updateSql, params);
-          managed.clearDirty();
-        }
-      } else {
-        final result = await database.connection.execute(_insertSql, params);
-        managed.markPersistent();
-        (entity as dynamic).id = result.lastInsertId;
+    if (managed.isPersistent) {
+      if (managed.isDirty) {
+        await database.connection.execute(_updateSql, params);
         managed.clearDirty();
       }
     } else {
-      await database.connection.execute(_insertSql, params);
+      final result = await database.connection.execute(_insertSql, params);
+      managed.markPersistent();
+      managed.id = result.lastInsertId;
+      managed.clearDirty();
     }
-    return entity;
+    return managed;
   }
 
   @override
