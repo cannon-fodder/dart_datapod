@@ -8,6 +8,9 @@
 
 /// Interface for schema management and migrations.
 abstract interface class SchemaManager {
+  /// Sets the desired schema for the database.
+  void setSchema(SchemaDefinition schema);
+
   /// Initializes the schema based on entity definitions.
   Future<void> initializeSchema();
 
@@ -18,7 +21,65 @@ abstract interface class SchemaManager {
   Future<List<TableMetadata>> getTables();
 }
 
-/// Metadata about a database table.
+/// Represents the desired state of the database schema.
+class SchemaDefinition {
+  final List<TableDefinition> tables;
+
+  const SchemaDefinition({required this.tables});
+}
+
+/// Represents the desired state of a database table.
+class TableDefinition {
+  final String name;
+  final List<ColumnDefinition> columns;
+  final List<String> primaryKey;
+  final List<ForeignKeyDefinition> foreignKeys;
+
+  const TableDefinition({
+    required this.name,
+    required this.columns,
+    this.primaryKey = const [],
+    this.foreignKeys = const [],
+  });
+}
+
+/// Represents the desired state of a database column.
+class ColumnDefinition {
+  final String name;
+  final String type;
+  final bool isNullable;
+  final bool isAutoIncrement;
+  final String? defaultValue;
+
+  const ColumnDefinition({
+    required this.name,
+    required this.type,
+    this.isNullable = true,
+    this.isAutoIncrement = false,
+    this.defaultValue,
+  });
+}
+
+/// Represents a foreign key constraint.
+class ForeignKeyDefinition {
+  final String name;
+  final List<String> columns;
+  final String referencedTable;
+  final List<String> referencedColumns;
+  final String? onUpdate;
+  final String? onDelete;
+
+  const ForeignKeyDefinition({
+    required this.name,
+    required this.columns,
+    required this.referencedTable,
+    required this.referencedColumns,
+    this.onUpdate,
+    this.onDelete,
+  });
+}
+
+/// Metadata about a database table (current state).
 class TableMetadata {
   final String name;
   final List<ColumnMetadata> columns;
@@ -26,17 +87,19 @@ class TableMetadata {
   const TableMetadata(this.name, this.columns);
 }
 
-/// Metadata about a database column.
+/// Metadata about a database column (current state).
 class ColumnMetadata {
   final String name;
   final String type;
   final bool isNullable;
   final bool isPrimaryKey;
+  final bool isAutoIncrement;
 
   const ColumnMetadata({
     required this.name,
     required this.type,
     this.isNullable = true,
     this.isPrimaryKey = false,
+    this.isAutoIncrement = false,
   });
 }

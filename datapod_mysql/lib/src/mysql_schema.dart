@@ -14,14 +14,65 @@ class MySqlSchemaManager implements SchemaManager {
 
   MySqlSchemaManager(this._connection);
 
+  SchemaDefinition? _schema;
+
+  @override
+  void setSchema(SchemaDefinition schema) {
+    _schema = schema;
+  }
+
   @override
   Future<void> initializeSchema() async {
-    // TODO: Implementation for creating tables based on entities
+    if (_schema == null) return;
+
+    for (final table in _schema!.tables) {
+      final columns = table.columns.map((c) {
+        String type = _mapType(c.type);
+        final autoInc = c.isAutoIncrement ? ' AUTO_INCREMENT' : '';
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        return '`${c.name}` $type$nullable$autoInc$pk';
+      }).join(', ');
+
+      await _connection
+          .execute('CREATE TABLE IF NOT EXISTS `${table.name}` ($columns)');
+
+      for (final fk in table.foreignKeys) {
+        final fkName = fk.name;
+        final cols = fk.columns.map((c) => '`$c`').join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.map((c) => '`$c`').join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+
+        try {
+          await _connection.execute(
+              'ALTER TABLE `${table.name}` ADD CONSTRAINT `$fkName` FOREIGN KEY ($cols) REFERENCES `$refTable` ($refCols)$onDel');
+        } catch (_) {
+          // Ignore if constraint already exists or other error
+        }
+      }
+    }
+  }
+
+  String _mapType(String type) {
+    switch (type) {
+      case 'int':
+        return 'INT';
+      case 'double':
+        return 'DOUBLE';
+      case 'bool':
+        return 'BOOLEAN';
+      case 'DateTime':
+        return 'DATETIME';
+      case 'String':
+      default:
+        return 'TEXT';
+    }
   }
 
   @override
   Future<void> migrateSchema() async {
-    // TODO: Implementation for schema migrations
+    // TODO: Implementation
   }
 
   @override

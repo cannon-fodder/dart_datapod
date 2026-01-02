@@ -46,7 +46,16 @@ class MySqlConnection implements DatabaseConnection {
 
       final result = await _connection.query(processedSql, positionalParams);
 
-      final rows = result.map((row) => row.fields).toList();
+      final rows = result.map((row) {
+        final map = Map<String, dynamic>.from(row.fields);
+        map.updateAll((key, value) {
+          if (value is mysql.Blob) {
+            return value.toString();
+          }
+          return value;
+        });
+        return map;
+      }).toList();
 
       return QueryResult(
         rows: rows,

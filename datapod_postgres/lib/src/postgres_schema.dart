@@ -14,14 +14,67 @@ class PostgresSchemaManager implements SchemaManager {
 
   PostgresSchemaManager(this._connection);
 
+  SchemaDefinition? _schema;
+
+  @override
+  void setSchema(SchemaDefinition schema) {
+    _schema = schema;
+  }
+
   @override
   Future<void> initializeSchema() async {
-    // TODO: Implementation
+    if (_schema == null) return;
+
+    for (final table in _schema!.tables) {
+      final columns = table.columns.map((c) {
+        String type = _mapType(c.type);
+        if (c.isAutoIncrement) {
+          type = 'SERIAL';
+        }
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        return '${c.name} $type$nullable$pk';
+      }).join(', ');
+
+      await _connection
+          .execute('CREATE TABLE IF NOT EXISTS ${table.name} ($columns)');
+
+      for (final fk in table.foreignKeys) {
+        final fkName = fk.name;
+        final cols = fk.columns.join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+
+        try {
+          await _connection.execute(
+              'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+        } catch (_) {
+          // Ignore if constraint already exists
+        }
+      }
+    }
   }
 
   @override
   Future<void> migrateSchema() async {
-    // TODO: Implementation
+    // TODO: Implementation of diff-based migration
+  }
+
+  String _mapType(String type) {
+    switch (type) {
+      case 'int':
+        return 'INTEGER';
+      case 'double':
+        return 'DOUBLE PRECISION';
+      case 'bool':
+        return 'BOOLEAN';
+      case 'DateTime':
+        return 'TIMESTAMP';
+      case 'String':
+      default:
+        return 'TEXT';
+    }
   }
 
   @override

@@ -54,9 +54,11 @@ class ConnectionConfig {
 
   String? get host => attributes['host']?.toString();
   int? get port => attributes['port'] as int?;
-  String? get username => attributes['username']?.toString();
+  String? get username =>
+      (attributes['username'] ?? attributes['user'])?.toString();
   String? get password => attributes['password']?.toString();
-  String? get database => attributes['database']?.toString();
+  String? get database =>
+      (attributes['database'] ?? attributes['db'])?.toString();
 
   factory ConnectionConfig.fromYaml(Map<dynamic, dynamic> yaml) {
     final Map<String, dynamic> attrs = {};

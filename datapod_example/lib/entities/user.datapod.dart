@@ -26,7 +26,9 @@ class ManagedUser extends User implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.name = entity.name;
   }
@@ -103,7 +105,7 @@ class ManagedUser extends User implements ManagedEntity {
 
   @override
   Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && $relationshipContext != null) {
+    if (_loadedPosts == null && id != null && $relationshipContext != null) {
       _loadedPosts = ($relationshipContext!.getForEntity<Post>() as dynamic)
           .findByAuthorId(id!) as Future<List<Post>>?;
     }
@@ -120,7 +122,7 @@ class ManagedUser extends User implements ManagedEntity {
 
   @override
   Future<List<Role>>? get roles async {
-    if (_loadedRoles == null && $relationshipContext != null) {
+    if (_loadedRoles == null && id != null && $relationshipContext != null) {
       _loadedRoles = ($relationshipContext!.getForEntity<Role>() as dynamic)
           .findByUserId(id!) as Future<List<Role>>?;
     }

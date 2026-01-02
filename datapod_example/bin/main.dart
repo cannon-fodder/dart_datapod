@@ -44,63 +44,17 @@ void main(List<String> args) async {
     final mysqlDb = Databases.get('mysql_db');
     final sqliteDb = Databases.get('sqlite_db');
 
-    await postgresDb.connection.execute('DROP TABLE IF EXISTS roles');
-    await postgresDb.connection.execute('DROP TABLE IF EXISTS users');
+    await postgresDb.connection.execute('DROP TABLE IF EXISTS roles CASCADE');
+    await postgresDb.connection.execute('DROP TABLE IF EXISTS users CASCADE');
     await mysqlDb.connection.execute('DROP TABLE IF EXISTS comments');
     await mysqlDb.connection.execute('DROP TABLE IF EXISTS posts');
     await sqliteDb.connection.execute('DROP TABLE IF EXISTS setting_audits');
     await sqliteDb.connection.execute('DROP TABLE IF EXISTS settings');
 
-    print('Creating tables in respective databases...');
-
-    // Identity (Postgres)
-    await postgresDb.connection.execute('''
-      CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
-      )
-    ''');
-    await postgresDb.connection.execute('''
-      CREATE TABLE roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        user_id INTEGER
-      )
-    ''');
-
-    // Content (MySQL)
-    await mysqlDb.connection.execute('''
-      CREATE TABLE posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        content TEXT,
-        author_id INTEGER
-      )
-    ''');
-    await mysqlDb.connection.execute('''
-      CREATE TABLE comments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        content TEXT,
-        post_id INTEGER
-      )
-    ''');
-
-    // Config (SQLite)
-    await sqliteDb.connection.execute('''
-      CREATE TABLE settings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT,
-        value TEXT
-      )
-    ''');
-    await sqliteDb.connection.execute('''
-      CREATE TABLE setting_audits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        action TEXT,
-        timestamp TEXT,
-        setting_id INTEGER
-      )
-    ''');
+    print('Initializing schemas via SchemaManager...');
+    await postgresDb.connection.schemaManager.initializeSchema();
+    await mysqlDb.connection.schemaManager.initializeSchema();
+    await sqliteDb.connection.schemaManager.initializeSchema();
 
     // 3. Exercise Identity (Postgres)
     print('\n[IDENTITY] Creating User with Roles in PostgreSQL...');

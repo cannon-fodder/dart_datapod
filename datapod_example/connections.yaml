@@ -2,14 +2,14 @@ connections:
   - name: postgres_db
     host: localhost
     port: 5432
-    user: user
-    password: password
-    database: postgres
+    user: datapod
+    password: datapod_dba
+    database: datapod
   - name: mysql_db
     host: localhost
     port: 3306
-    user: user
-    password: password
-    database: mysql
+    user: datapod
+    password: datapod_dba
+    database: datapod
   - name: sqlite_db
     database: ":memory:"

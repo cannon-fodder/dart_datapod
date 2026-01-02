@@ -13,6 +13,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:datapod_api/datapod_api.dart' as api;
 import 'package:source_gen/source_gen.dart';
 import 'package:yaml/yaml.dart';
+import 'sql_generator.dart';
 
 class InitializerGenerator extends Builder {
   @override
@@ -53,9 +54,12 @@ class InitializerGenerator extends Builder {
       for (final annotated in reader.annotatedWith(entityChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
+          final metadata = SqlGenerator.parseEntity(element);
+          final tableDef = SqlGenerator.generateTableDefinition(metadata);
           entities.add({
             'name': element.name,
             'import': asset.uri.toString(),
+            'tableDef': _generateTableDefCode(tableDef),
           });
         }
       }
@@ -148,6 +152,20 @@ class InitializerGenerator extends Builder {
         result.writeln("    Databases.register('$dbName', $databaseVar);");
         result.writeln();
 
+        // Pass schema to the database
+        result.writeln(
+            "    $databaseVar.connection.schemaManager.setSchema(const SchemaDefinition(tables: [");
+        final dbEntities = entities.where((e) {
+          // For now, assume all entities belong to all databases or we need a way to filter
+          // We'll use the same logic as repos: if an entity's corresponding repo is in this DB
+          return true; // Simplified: all entities for now
+        });
+        for (final entity in dbEntities) {
+          result.writeln("      ${entity['tableDef']},");
+        }
+        result.writeln("    ]));");
+        result.writeln();
+
         // Repositories mapped to this database via @Database(name) or default
         final dbRepos = repos.where((r) {
           if (r.containsKey('database')) {
@@ -215,5 +233,19 @@ class InitializerGenerator extends Builder {
       return entityName;
     }
     return 'Object';
+  }
+
+  String _generateTableDefCode(api.TableDefinition def) {
+    final columns = def.columns
+        .map((c) =>
+            "ColumnDefinition(name: '${c.name}', type: '${c.type}', isNullable: ${c.isNullable}, isAutoIncrement: ${c.isAutoIncrement}${c.defaultValue != null ? ", defaultValue: '${c.defaultValue}'" : ""})")
+        .join(', ');
+    final pks = def.primaryKey.map((pk) => "'$pk'").join(', ');
+    final fks = def.foreignKeys
+        .map((fk) =>
+            "ForeignKeyDefinition(name: '${fk.name}', columns: [${fk.columns.map((c) => "'$c'").join(', ')}], referencedTable: '${fk.referencedTable}', referencedColumns: [${fk.referencedColumns.map((c) => "'$c'").join(', ')}]${fk.onDelete != null ? ", onDelete: '${fk.onDelete}'" : ""})")
+        .join(', ');
+
+    return "TableDefinition(name: '${def.name}', columns: [$columns], primaryKey: [$pks], foreignKeys: [$fks])";
   }
 }

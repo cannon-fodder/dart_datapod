@@ -108,7 +108,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..initializers.add(Code('_database = database'))
           ..initializers.add(Code('_relationshipContext = relationshipContext'))
           ..body = Block.of([
-            Code('_isPersistent = true;'),
+            Code(
+                '_isPersistent = entity is ManagedEntity ? (entity as ManagedEntity).isPersistent : false;'),
             ...entityClass.fields
                 .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
                 .map((f) => Code('super.${f.name} = entity.${f.name};')),
@@ -272,7 +273,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code(
             'if ($loadedField == null && $foreignKeyField != null && \$relationshipContext != null) {'),
         Code(
-            '  $loadedField = \$relationshipContext!.getForEntity<${relatedType.element?.name}>().findById($foreignKeyField!) as Future<${relatedType.element?.name}?>?;'),
+            '  $loadedField = \$relationshipContext!.getForEntity<${relatedType.element?.name}>().findById($foreignKeyField) as Future<${relatedType.element?.name}?>?;'),
         Code('}'),
         Code('return await $loadedField;'),
       ])));
@@ -315,7 +316,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       ..returns = refer(field.type.getDisplayString(withNullability: true))
       ..modifier = MethodModifier.async
       ..body = Block.of([
-        Code('if ($loadedField == null && \$relationshipContext != null) {'),
+        Code(
+            'if ($loadedField == null && id != null && \$relationshipContext != null) {'),
         Code(
             '  $loadedField = (\$relationshipContext!.getForEntity<${relatedType.element?.name}>() as dynamic).$methodName(id!) as Future<List<${relatedType.element?.name}>>?;'),
         Code('}'),

@@ -27,7 +27,9 @@ class ManagedSetting extends Setting implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.key = entity.key;
     super.value = entity.value;
@@ -111,7 +113,9 @@ class ManagedSetting extends Setting implements ManagedEntity {
 
   @override
   Future<List<SettingAudit>>? get auditTrail async {
-    if (_loadedAuditTrail == null && $relationshipContext != null) {
+    if (_loadedAuditTrail == null &&
+        id != null &&
+        $relationshipContext != null) {
       _loadedAuditTrail =
           ($relationshipContext!.getForEntity<SettingAudit>() as dynamic)
               .findBySettingId(id!) as Future<List<SettingAudit>>?;

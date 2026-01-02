@@ -27,7 +27,9 @@ class ManagedComment extends Comment implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.content = entity.content;
     if (entity is ManagedEntity) {
@@ -108,7 +110,7 @@ class ManagedComment extends Comment implements ManagedEntity {
   @override
   Future<Post?>? get post async {
     if (_loadedPost == null && postId != null && $relationshipContext != null) {
-      _loadedPost = $relationshipContext!.getForEntity<Post>().findById(postId!)
+      _loadedPost = $relationshipContext!.getForEntity<Post>().findById(postId)
           as Future<Post?>?;
     }
     return await _loadedPost;

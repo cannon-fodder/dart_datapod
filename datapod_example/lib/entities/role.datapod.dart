@@ -27,7 +27,9 @@ class ManagedRole extends Role implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.name = entity.name;
     if (entity is ManagedEntity) {
@@ -108,7 +110,7 @@ class ManagedRole extends Role implements ManagedEntity {
   @override
   Future<User?>? get user async {
     if (_loadedUser == null && userId != null && $relationshipContext != null) {
-      _loadedUser = $relationshipContext!.getForEntity<User>().findById(userId!)
+      _loadedUser = $relationshipContext!.getForEntity<User>().findById(userId)
           as Future<User?>?;
     }
     return await _loadedUser;

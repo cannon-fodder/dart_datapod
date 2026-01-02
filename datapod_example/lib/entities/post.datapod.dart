@@ -28,7 +28,9 @@ class ManagedPost extends Post implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.title = entity.title;
     super.content = entity.content;
@@ -124,7 +126,7 @@ class ManagedPost extends Post implements ManagedEntity {
         $relationshipContext != null) {
       _loadedAuthor = $relationshipContext!
           .getForEntity<User>()
-          .findById(authorId!) as Future<User?>?;
+          .findById(authorId) as Future<User?>?;
     }
     return await _loadedAuthor;
   }
@@ -140,7 +142,7 @@ class ManagedPost extends Post implements ManagedEntity {
 
   @override
   Future<List<Comment>>? get comments async {
-    if (_loadedComments == null && $relationshipContext != null) {
+    if (_loadedComments == null && id != null && $relationshipContext != null) {
       _loadedComments =
           ($relationshipContext!.getForEntity<Comment>() as dynamic)
               .findByPostId(id!) as Future<List<Comment>>?;

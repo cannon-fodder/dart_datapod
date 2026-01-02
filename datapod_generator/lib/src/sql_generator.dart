@@ -28,6 +28,8 @@ class ColumnMetadata {
   final String columnName;
   final bool isId;
   final bool autoIncrement;
+  final String fieldType;
+  final String? relatedTable;
   final String? relationType; // ManyToOne, OneToMany, OneToOne
   final String? relatedEntityType;
   final String? mappedBy;
@@ -37,8 +39,10 @@ class ColumnMetadata {
   ColumnMetadata({
     required this.fieldName,
     required this.columnName,
+    required this.fieldType,
     this.isId = false,
     this.autoIncrement = false,
+    this.relatedTable,
     this.relationType,
     this.relatedEntityType,
     this.mappedBy,
@@ -146,6 +150,7 @@ class SqlGenerator {
         final metadata = ColumnMetadata(
           fieldName: field.name,
           columnName: '', // No column
+          fieldType: field.type.getDisplayString(withNullability: false),
           relationType: relationType,
           relatedEntityType: relatedEntityType,
           mappedBy: mappedBy,
@@ -160,10 +165,14 @@ class SqlGenerator {
         fieldName: field.name,
         columnName:
             isId ? colName : (relationType != null ? '${colName}_id' : colName),
+        fieldType: field.type.getDisplayString(withNullability: false),
         isId: isId,
         autoIncrement: autoIncrement,
         relationType: relationType,
         relatedEntityType: relatedEntityType,
+        relatedTable: relatedEntityType != null
+            ? '${_camelToSnake(relatedEntityType)}s'
+            : null, // Basic assumption for example project
         mappedBy: mappedBy,
         cascadePersist: cascadePersist,
         cascadeRemove: cascadeRemove,
@@ -177,6 +186,34 @@ class SqlGenerator {
       tableName: tableName,
       columns: columns,
       idColumn: idColumn,
+    );
+  }
+
+  static api.TableDefinition generateTableDefinition(
+      EntitySqlMetadata metadata) {
+    return api.TableDefinition(
+      name: metadata.tableName,
+      columns: metadata.columns
+          .where((c) => c.columnName.isNotEmpty)
+          .map((c) => api.ColumnDefinition(
+                name: c.columnName,
+                type: c.relationType != null ? 'int' : c.fieldType,
+                isNullable: true, // TODO: Extract nullability from field
+                isAutoIncrement: c.autoIncrement,
+              ))
+          .toList(),
+      primaryKey:
+          metadata.idColumn != null ? [metadata.idColumn!.columnName] : [],
+      foreignKeys: metadata.columns
+          .where((c) => c.relationType != null && c.columnName.isNotEmpty)
+          .map((c) => api.ForeignKeyDefinition(
+                name: 'fk_${metadata.tableName}_${c.columnName}',
+                columns: [c.columnName],
+                referencedTable: c.relatedTable!,
+                referencedColumns: ['id'],
+                onDelete: c.cascadeRemove ? 'CASCADE' : null,
+              ))
+          .toList(),
     );
   }
 
@@ -349,6 +386,7 @@ class SqlGenerator {
       fieldName: field.name,
       columnName:
           isId ? colName : (relationType != null ? '${colName}_id' : colName),
+      fieldType: field.type.getDisplayString(withNullability: false),
       isId: isId,
       autoIncrement: autoIncrement,
       relationType: relationType,

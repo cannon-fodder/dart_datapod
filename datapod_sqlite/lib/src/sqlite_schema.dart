@@ -14,14 +14,61 @@ class SqliteSchemaManager implements SchemaManager {
 
   SqliteSchemaManager(this._connection);
 
+  SchemaDefinition? _schema;
+
+  @override
+  void setSchema(SchemaDefinition schema) {
+    _schema = schema;
+  }
+
   @override
   Future<void> initializeSchema() async {
-    // TODO: Implementation for creating tables
+    if (_schema == null) return;
+
+    for (final table in _schema!.tables) {
+      final columnStrings = table.columns.map((c) {
+        String type = _mapType(c.type);
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        final autoInc =
+            (c.isAutoIncrement && pk.isNotEmpty) ? ' AUTOINCREMENT' : '';
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        return '${c.name} $type$pk$autoInc$nullable';
+      }).toList();
+
+      for (final fk in table.foreignKeys) {
+        final cols = fk.columns.join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+        columnStrings
+            .add('FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+      }
+
+      final columns = columnStrings.join(', ');
+      await _connection
+          .execute('CREATE TABLE IF NOT EXISTS ${table.name} ($columns)');
+    }
+  }
+
+  String _mapType(String type) {
+    switch (type) {
+      case 'int':
+        return 'INTEGER';
+      case 'double':
+        return 'REAL';
+      case 'bool':
+        return 'INTEGER';
+      case 'DateTime':
+        return 'TEXT';
+      case 'String':
+      default:
+        return 'TEXT';
+    }
   }
 
   @override
   Future<void> migrateSchema() async {
-    // TODO: Implementation for migrations
+    // TODO: Implementation
   }
 
   @override

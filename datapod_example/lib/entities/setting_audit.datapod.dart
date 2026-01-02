@@ -30,7 +30,9 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
     RelationshipContext relationshipContext,
   )   : _database = database,
         _relationshipContext = relationshipContext {
-    _isPersistent = true;
+    _isPersistent = entity is ManagedEntity
+        ? (entity as ManagedEntity).isPersistent
+        : false;
     super.id = entity.id;
     super.action = entity.action;
     super.timestamp = entity.timestamp;
@@ -124,7 +126,7 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
         $relationshipContext != null) {
       _loadedSetting = $relationshipContext!
           .getForEntity<Setting>()
-          .findById(settingId!) as Future<Setting?>?;
+          .findById(settingId) as Future<Setting?>?;
     }
     return await _loadedSetting;
   }
