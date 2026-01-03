@@ -1,8 +1,9 @@
 name: datapod_engine
 description: Engine and plugin architecture for the Datapod ORM framework.
-publish_to: none
 version: 0.1.0
-repository: https://github.com/aaroncosand/datapod
+homepage: https://github.com/cannon-fodder/dart_datapod
+repository: https://github.com/cannon-fodder/dart_datapod
+issue_tracker: https://github.com/cannon-fodder/dart_datapod/issues
 environment:
   sdk: '>=3.0.0 <4.0.0'
 

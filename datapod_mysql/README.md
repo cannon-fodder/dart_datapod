@@ -1,12 +1,12 @@
-# datapod_postgres
+# datapod_mysql
 
-The PostgreSQL database plugin for the Datapod ORM.
+The MySQL database plugin for the Datapod ORM framework.
 
 ## ✨ Features
 
-- Fully integrates PostgreSQL into the Datapod ecosystem.
+- Fully integrates MySQL into the Datapod ecosystem.
 - Supports transactions, connection pooling, and automated schema management.
-- Handles advanced data types like JSONB and Arrays via Datapod's mapping system.
+- Handles common MySQL data types via Datapod's mapping system.
 
 ## 📖 Usage
 
@@ -14,7 +14,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  datapod_postgres: any
+  datapod_mysql: any
 ```
 
 Then configure it in your `databases.yaml`:
@@ -22,7 +22,7 @@ Then configure it in your `databases.yaml`:
 ```yaml
 databases:
   - name: my_db
-    plugin: datapod_postgres
+    plugin: datapod_mysql
 ```
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

@@ -12,4 +12,4 @@ The core API for the Datapod ORM. This package contains the annotations and base
 
 This package is intended to be used as a dependency in your application code where you define your data models.
 
-For full documentation, see the [root README](../README.md).
+For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

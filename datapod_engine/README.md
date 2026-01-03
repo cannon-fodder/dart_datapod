@@ -1,0 +1,16 @@
+# datapod_engine
+
+The execution engine for the Datapod ORM framework. It manages database plugins, orchestrates cross-database relationships, and handles transaction boundaries.
+
+## ✨ Features
+
+- **Plugin Management**: Load and manage multiple database plugins in the same application.
+- **Relationship Orchestration**: Handles cascading saves and deletes across different database backends.
+- **Transaction Support**: Core logic for zone-based and manual transactions.
+- **Build-Time Integration**: Supports the plugin discovery mechanism used by `datapod_generator`.
+
+## 📖 Usage
+
+This is a core framework package and is typically brought in as a dependency by database plugins or the generated code.
+
+For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

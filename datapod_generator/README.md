@@ -17,4 +17,4 @@ Add this package to your `dev_dependencies` and run the build command:
 dart run build_runner build
 ```
 
-For full documentation, see the [root README](../README.md).
+For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).
