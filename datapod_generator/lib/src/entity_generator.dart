@@ -103,10 +103,10 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
               if (c.isJson || c.isList) {
                 if (c.isList) {
                   return Code(
-                      'super.$fieldName = row[\'$colName\'] is String ? List.from(jsonDecode(row[\'$colName\'])) : (row[\'$colName\'] != null ? List.from(row[\'$colName\']) : null);');
+                      'super.$fieldName = row[\'$colName\'] is String ? (jsonDecode(row[\'$colName\']) as List?)?.cast<String>() : (row[\'$colName\'] != null ? List<String>.from(row[\'$colName\']) : null);');
                 }
                 return Code(
-                    'super.$fieldName = row[\'$colName\'] is String ? Map.from(jsonDecode(row[\'$colName\'])) : (row[\'$colName\'] != null ? Map.from(row[\'$colName\']) : null);');
+                    'super.$fieldName = row[\'$colName\'] is String ? (jsonDecode(row[\'$colName\']) as Map?)?.cast<String, dynamic>() : (row[\'$colName\'] != null ? Map<String, dynamic>.from(row[\'$colName\']) : null);');
               }
               if (c.enumValues != null) {
                 return Code(

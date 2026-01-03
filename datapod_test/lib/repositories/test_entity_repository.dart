@@ -15,4 +15,5 @@ part 'test_entity_repository.datapod.dart';
 @Repository()
 abstract class TestEntityRepository extends BaseRepository<TestEntity, int> {
   TestEntityRepository(super.relationshipContext);
+  Future<TestEntity?> findByName(String name);
 }
