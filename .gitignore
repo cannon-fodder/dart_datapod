@@ -1,2 +1,5 @@
 .dart_tool/
+*.log
+*.datapod.dart
+datapod_init.dart
 
