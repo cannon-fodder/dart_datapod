@@ -12,6 +12,7 @@ import 'package:datapod_engine/datapod_engine.dart';
 import 'package:mysql1/mysql1.dart' as mysql;
 import 'mysql_connection.dart';
 import 'mysql_database.dart';
+import 'mysql_pool.dart';
 
 class MySqlPlugin implements DatapodPlugin {
   @override
@@ -30,7 +31,13 @@ class MySqlPlugin implements DatapodPlugin {
       db: connConfig.database,
     );
 
-    final conn = await mysql.MySqlConnection.connect(settings);
-    return MySqlDatabase(dbConfig.name, MySqlConnection(conn));
+    if (connConfig.maxConnections > 1) {
+      final pool = await MySqlPool.connect(settings, connConfig.maxConnections);
+      return MySqlDatabase(dbConfig.name, MySqlConnection(pool));
+    } else {
+      final conn = await mysql.MySqlConnection.connect(settings);
+      return MySqlDatabase(
+          dbConfig.name, MySqlConnection(SingleMySqlExecutor(conn)));
+    }
   }
 }

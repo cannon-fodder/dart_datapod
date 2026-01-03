@@ -6,11 +6,14 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'dart:convert';
 import 'package:datapod_api/datapod_api.dart';
 import 'user.dart';
 import 'comment.dart';
 
 part 'post.datapod.dart';
+
+enum PostStatus { draft, published, archived }
 
 @Entity(tableName: 'posts')
 class Post {
@@ -22,6 +25,15 @@ class Post {
 
   @Column()
   String? content;
+
+  @Column()
+  PostStatus? status;
+
+  @Column()
+  Map<String, dynamic>? metadata;
+
+  @Column()
+  List<String>? tags;
 
   @ManyToOne()
   @JoinColumn('author_id')

@@ -5,6 +5,7 @@ builders:
     build_extensions: {".dart": [".datapod.dart"]}
     auto_apply: dependents
     build_to: source
+    runs_before: ["datapod_generator:datapodInitializerBuilder"]
 
   datapodInitializerBuilder:
     import: "package:datapod_generator/datapod_generator.dart"

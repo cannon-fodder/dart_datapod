@@ -15,10 +15,10 @@ class PostRepositoryImpl extends PostRepository {
   final DatapodDatabase database;
 
   static const _insertSql =
-      'INSERT INTO posts (title, content, author_id) VALUES (@title, @content, @authorId) RETURNING id';
+      'INSERT INTO posts (title, content, status, metadata, tags, author_id) VALUES (@title, @content, @status, @metadata, @tags, @authorId) RETURNING id';
 
   static const _updateSql =
-      'UPDATE posts SET title = @title, content = @content, author_id = @authorId WHERE id = @id';
+      'UPDATE posts SET title = @title, content = @content, status = @status, metadata = @metadata, tags = @tags, author_id = @authorId WHERE id = @id';
 
   static const _deleteSql = 'DELETE FROM posts WHERE id = @id';
 
@@ -29,10 +29,19 @@ class PostRepositoryImpl extends PostRepository {
     final managed = entity is ManagedEntity
         ? (entity as ManagedPost)
         : ManagedPost.fromEntity(entity, database, relationshipContext);
+    final author = await managed.author;
+    if (author != null) {
+      if (author is ManagedEntity) {
+        managed.authorId = (author as dynamic).id;
+      }
+    }
     final params = <String, dynamic>{
       'id': managed.id,
       'title': managed.title,
       'content': managed.content,
+      'status': managed.status?.name,
+      'metadata': jsonEncode(managed.metadata),
+      'tags': jsonEncode(managed.tags),
       'authorId': managed.authorId,
     };
     if (managed.isPersistent) {

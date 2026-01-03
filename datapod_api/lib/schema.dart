@@ -50,6 +50,9 @@ class ColumnDefinition {
   final bool isNullable;
   final bool isAutoIncrement;
   final String? defaultValue;
+  final List<String>? enumValues;
+  final bool isJson;
+  final bool isList;
 
   const ColumnDefinition({
     required this.name,
@@ -57,6 +60,9 @@ class ColumnDefinition {
     this.isNullable = true,
     this.isAutoIncrement = false,
     this.defaultValue,
+    this.enumValues,
+    this.isJson = false,
+    this.isList = false,
   });
 }
 

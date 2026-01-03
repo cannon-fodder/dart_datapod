@@ -7,22 +7,17 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'package:logging/logging.dart';
-import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/entities/setting.dart';
 import 'package:datapod_example/entities/role.dart';
 import 'package:datapod_example/entities/comment.dart';
 import 'package:datapod_example/entities/setting_audit.dart';
-import 'package:datapod_example/repositories/user_repository.dart';
-import 'package:datapod_example/repositories/post_repository.dart';
-import 'package:datapod_example/repositories/setting_repository.dart';
 import 'package:datapod_example/datapod_init.dart';
-import 'package:datapod_api/datapod_api.dart';
 
 void main(List<String> args) async {
   // Configure logging
-  Logger.root.level = Level.FINE;
+  Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((record) {
     print(
         '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
@@ -31,18 +26,18 @@ void main(List<String> args) async {
   print('--- Datapod ORM Enterprise Demo ---');
 
   // 1. Initialize Datapod (Functional databases from YAML)
-  await DatapodInitializer.initialize();
+  final context = await DatapodInitializer.initialize();
 
-  final userRepo = RepositoryRegistry.get<UserRepository>();
-  final postRepo = RepositoryRegistry.get<PostRepository>();
-  final settingRepo = RepositoryRegistry.get<SettingRepository>();
+  final userRepo = context.userRepository;
+  final postRepo = context.postRepository;
+  final settingRepo = context.settingRepository;
 
   try {
     // 2. Setup Schemas
     print('Dropping existing tables...');
-    final postgresDb = Databases.get('postgres_db');
-    final mysqlDb = Databases.get('mysql_db');
-    final sqliteDb = Databases.get('sqlite_db');
+    final postgresDb = context.postgresDb;
+    final mysqlDb = context.mysqlDb;
+    final sqliteDb = context.sqliteDb;
 
     await postgresDb.connection.execute('DROP TABLE IF EXISTS roles CASCADE');
     await postgresDb.connection.execute('DROP TABLE IF EXISTS users CASCADE');
@@ -55,6 +50,15 @@ void main(List<String> args) async {
     await postgresDb.connection.schemaManager.initializeSchema();
     await mysqlDb.connection.schemaManager.initializeSchema();
     await sqliteDb.connection.schemaManager.initializeSchema();
+
+    // In a real cross-database scenario, physical FKs across DB servers don't exist.
+    // We'll drop the physical FK in MySQL that points to a table in Postgres.
+    try {
+      await mysqlDb.connection
+          .execute('ALTER TABLE posts DROP FOREIGN KEY fk_posts_author_id');
+    } catch (_) {
+      // Ignore if it fails (e.g. if it wasn't created)
+    }
 
     // 3. Exercise Identity (Postgres)
     print('\n[IDENTITY] Creating User with Roles in PostgreSQL...');
@@ -72,6 +76,9 @@ void main(List<String> args) async {
     var post1 = Post()
       ..title = 'Enterprise Architecture'
       ..content = 'Using multiple databases for different functions.'
+      ..status = PostStatus.published
+      ..metadata = {'version': '1.0', 'priority': 'high'}
+      ..tags = ['architecture', 'orm', 'dart']
       ..author = Future.value(alice);
 
     final comment1 = Comment()..content = 'Great insight!';
@@ -79,7 +86,8 @@ void main(List<String> args) async {
     post1.comments = Future.value([comment1, comment2]);
 
     post1 = await postRepo.save(post1);
-    print('Saved post: ${post1.title} with 2 comments');
+    print(
+        'Saved post: ${post1.title} with status ${post1.status}, metadata ${post1.metadata}, and tags ${post1.tags}');
 
     // 5. Exercise Config (SQLite)
     print('\n[CONFIG] Creating Settings with Audits in SQLite...');
@@ -108,6 +116,8 @@ void main(List<String> args) async {
       final author = await fetchedPost.author;
       print(
           'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}');
+      print(
+          '  - Status: ${fetchedPost.status}, Metadata: ${fetchedPost.metadata}, Tags: ${fetchedPost.tags}');
     }
 
     // 7. Verify Config DB
@@ -128,9 +138,7 @@ void main(List<String> args) async {
     print('Error: $e');
     print(s);
   } finally {
-    await Databases.get('postgres_db').close();
-    await Databases.get('mysql_db').close();
-    await Databases.get('sqlite_db').close();
+    await context.close();
     print('\nExample finished.');
   }
 }

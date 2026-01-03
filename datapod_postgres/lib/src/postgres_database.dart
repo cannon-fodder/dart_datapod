@@ -8,13 +8,11 @@
 
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_engine/datapod_engine.dart';
-import 'package:postgres/postgres.dart' as pg;
 import 'postgres_connection.dart';
 
 class PostgresDatabase extends DatapodDatabaseBase {
-  PostgresDatabase(String name, pg.Connection connection)
-      : super(name, PostgresConnection(connection),
-            PostgresTransactionManager(PostgresConnection(connection)));
+  PostgresDatabase(String name, PostgresConnection connection)
+      : super(name, connection, PostgresTransactionManager(connection));
 }
 
 class PostgresTransactionManager extends BaseTransactionManager {

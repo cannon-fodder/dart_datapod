@@ -1,0 +1,28 @@
+name: datapod_test
+description: Integration tests for the Datapod ORM framework.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  test: ^1.24.0
+  datapod_api:
+    path: ../datapod_api
+  datapod_core:
+    path: ../datapod_core
+  datapod_postgres:
+    path: ../datapod_postgres
+  datapod_mysql:
+    path: ../datapod_mysql
+  datapod_sqlite:
+    path: ../datapod_sqlite
+  logging: ^1.1.0
+  yaml: ^3.1.1
+
+dev_dependencies:
+  lints: ^2.1.0
+  build_runner: ^2.4.0
+  datapod_generator:
+    path: ../datapod_generator

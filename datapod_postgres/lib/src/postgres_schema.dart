@@ -27,7 +27,7 @@ class PostgresSchemaManager implements SchemaManager {
 
     for (final table in _schema!.tables) {
       final columns = table.columns.map((c) {
-        String type = _mapType(c.type);
+        String type = _mapType(c);
         if (c.isAutoIncrement) {
           type = 'SERIAL';
         }
@@ -61,8 +61,11 @@ class PostgresSchemaManager implements SchemaManager {
     // TODO: Implementation of diff-based migration
   }
 
-  String _mapType(String type) {
-    switch (type) {
+  String _mapType(ColumnDefinition c) {
+    if (c.isJson || c.isList) {
+      return 'JSONB';
+    }
+    switch (c.type) {
       case 'int':
         return 'INTEGER';
       case 'double':

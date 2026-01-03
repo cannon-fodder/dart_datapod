@@ -27,7 +27,7 @@ class MySqlSchemaManager implements SchemaManager {
 
     for (final table in _schema!.tables) {
       final columns = table.columns.map((c) {
-        String type = _mapType(c.type);
+        String type = _mapType(c);
         final autoInc = c.isAutoIncrement ? ' AUTO_INCREMENT' : '';
         final nullable = c.isNullable ? '' : ' NOT NULL';
         final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
@@ -54,8 +54,15 @@ class MySqlSchemaManager implements SchemaManager {
     }
   }
 
-  String _mapType(String type) {
-    switch (type) {
+  String _mapType(ColumnDefinition c) {
+    if (c.isJson || c.isList) {
+      return 'JSON';
+    }
+    if (c.enumValues != null) {
+      final values = c.enumValues!.map((v) => "'$v'").join(', ');
+      return 'ENUM($values)';
+    }
+    switch (c.type) {
       case 'int':
         return 'INT';
       case 'double':

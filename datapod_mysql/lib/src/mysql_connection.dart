@@ -11,13 +11,14 @@ import 'package:datapod_api/datapod_api.dart';
 import 'package:mysql1/mysql1.dart' as mysql;
 import 'mysql_schema.dart';
 import 'mysql_transaction.dart';
+import 'mysql_pool.dart';
 
 class MySqlConnection implements DatabaseConnection {
-  final mysql.MySqlConnection _connection;
+  final MySqlExecutor _executor;
   late final MySqlSchemaManager _schemaManager;
   final _log = Logger('Datapod.MySQL');
 
-  MySqlConnection(this._connection) {
+  MySqlConnection(this._executor) {
     _schemaManager = MySqlSchemaManager(this);
   }
 
@@ -44,9 +45,9 @@ class MySqlConnection implements DatabaseConnection {
         }
       }
 
-      final result = await _connection.query(processedSql, positionalParams);
+      final result = await _executor.query(processedSql, positionalParams);
 
-      final rows = result.map((row) {
+      final rows = result.map<Map<String, dynamic>>((row) {
         final map = Map<String, dynamic>.from(row.fields);
         map.updateAll((key, value) {
           if (value is mysql.Blob) {
@@ -73,7 +74,11 @@ class MySqlConnection implements DatabaseConnection {
     final positionalParams = <dynamic>[];
     final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
       final name = match.group(1)!;
-      positionalParams.add(params[name]);
+      var value = params[name];
+      if (value is DateTime) {
+        value = value.toUtc();
+      }
+      positionalParams.add(value);
       return '?';
     });
 
@@ -100,11 +105,11 @@ class MySqlConnection implements DatabaseConnection {
   }
 
   @override
-  Future<void> close() => _connection.close();
+  Future<void> close() => _executor.close();
 
   @override
   SchemaManager get schemaManager => _schemaManager;
 
   /// Internal access for schema manager to use the underlying mysql1 connection if needed.
-  mysql.MySqlConnection get rawConnection => _connection;
+  MySqlExecutor get rawExecutor => _executor;
 }

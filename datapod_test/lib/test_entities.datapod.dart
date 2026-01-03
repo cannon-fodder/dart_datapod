@@ -1,15 +1,15 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'user.dart';
+part of 'test_entities.dart';
 
 // **************************************************************************
 // EntityGenerator
 // **************************************************************************
 
-class ManagedUser extends User implements ManagedEntity {
-  ManagedUser();
+class ManagedTestEntity extends TestEntity implements ManagedEntity {
+  ManagedTestEntity();
 
-  ManagedUser.fromRow(
+  ManagedTestEntity.fromRow(
     Map<String, dynamic> row,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
@@ -18,10 +18,25 @@ class ManagedUser extends User implements ManagedEntity {
     _isPersistent = true;
     super.id = row['id'];
     super.name = row['name'];
+    super.value = row['value'];
+    super.rating = row['rating'];
+    super.flag = row['flag'] is int ? row['flag'] == 1 : row['flag'];
+    super.createdAt = row['created_at'] is String
+        ? DateTime.parse(row['created_at'])
+        : row['created_at'];
+    super.type = row['type'] != null
+        ? TestEnum.values.firstWhere((e) => e.name == row['type'])
+        : super.type;
+    super.data = row['data'] is String
+        ? Map.from(jsonDecode(row['data']))
+        : (row['data'] != null ? Map.from(row['data']) : null);
+    super.tags = row['tags'] is String
+        ? List.from(jsonDecode(row['tags']))
+        : (row['tags'] != null ? List.from(row['tags']) : null);
   }
 
-  ManagedUser.fromEntity(
-    User entity,
+  ManagedTestEntity.fromEntity(
+    TestEntity entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
   )   : _database = database,
@@ -31,8 +46,13 @@ class ManagedUser extends User implements ManagedEntity {
         : false;
     super.id = entity.id;
     super.name = entity.name;
-    posts = entity.posts;
-    roles = entity.roles;
+    super.value = entity.value;
+    super.rating = entity.rating;
+    super.flag = entity.flag;
+    super.createdAt = entity.createdAt;
+    super.type = entity.type;
+    super.data = entity.data;
+    super.tags = entity.tags;
   }
 
   final bool _isManaged = true;
@@ -44,10 +64,6 @@ class ManagedUser extends User implements ManagedEntity {
   DatapodDatabase? _database;
 
   RelationshipContext? _relationshipContext;
-
-  Future<List<Post>>? _loadedPosts;
-
-  Future<List<Role>>? _loadedRoles;
 
   @override
   bool get isManaged => _isManaged;
@@ -106,36 +122,58 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
-  Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && id != null && $relationshipContext != null) {
-      _loadedPosts = ($relationshipContext!.getForEntity<Post>() as dynamic)
-          .findByAuthorId(id!) as Future<List<Post>>?;
-    }
-    return await _loadedPosts ?? <Post>[];
-  }
-
-  @override
-  set posts(value) {
-    if (_loadedPosts != value) {
-      _loadedPosts = value;
-      markDirty();
+  set value(int? value) {
+    if (value != super.value) {
+      _isDirty = true;
+      super.value = value;
     }
   }
 
   @override
-  Future<List<Role>>? get roles async {
-    if (_loadedRoles == null && id != null && $relationshipContext != null) {
-      _loadedRoles = ($relationshipContext!.getForEntity<Role>() as dynamic)
-          .findByUserId(id!) as Future<List<Role>>?;
+  set rating(double? value) {
+    if (value != super.rating) {
+      _isDirty = true;
+      super.rating = value;
     }
-    return await _loadedRoles ?? <Role>[];
   }
 
   @override
-  set roles(value) {
-    if (_loadedRoles != value) {
-      _loadedRoles = value;
-      markDirty();
+  set flag(bool? value) {
+    if (value != super.flag) {
+      _isDirty = true;
+      super.flag = value;
+    }
+  }
+
+  @override
+  set createdAt(DateTime? value) {
+    if (value != super.createdAt) {
+      _isDirty = true;
+      super.createdAt = value;
+    }
+  }
+
+  @override
+  set type(TestEnum? value) {
+    if (value != super.type) {
+      _isDirty = true;
+      super.type = value;
+    }
+  }
+
+  @override
+  set data(Map<String, dynamic>? value) {
+    if (value != super.data) {
+      _isDirty = true;
+      super.data = value;
+    }
+  }
+
+  @override
+  set tags(List<String>? value) {
+    if (value != super.tags) {
+      _isDirty = true;
+      super.tags = value;
     }
   }
 }

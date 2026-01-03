@@ -105,12 +105,6 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
   Method _generateSaveMethod(
       ClassElement entityClass, EntitySqlMetadata metadata) {
-    final cascadeBefore = metadata.columns
-        .where((c) =>
-            c.cascadePersist &&
-            (c.relationType == 'ManyToOne' ||
-                (c.relationType == 'OneToOne' && c.columnName.isNotEmpty)))
-        .toList();
     final cascadeAfter = metadata.columns
         .where((c) =>
             c.cascadePersist &&
@@ -127,12 +121,21 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       ..body = Block.of([
         Code(
             'final managed = entity is ManagedEntity ? (entity as Managed${entityClass.name}) : Managed${entityClass.name}.fromEntity(entity, database, relationshipContext);'),
-        for (final col in cascadeBefore) ...[
+        for (final col in metadata.columns.where((c) =>
+            c.relationType == 'ManyToOne' ||
+            (c.relationType == 'OneToOne' && c.columnName.isNotEmpty))) ...[
           Code('final ${col.fieldName} = await managed.${col.fieldName};'),
           Code('if (${col.fieldName} != null) {'),
-          Code(
-              '  final related = await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
-          Code('  managed.${col.fieldName}Id = (related as dynamic).id;'),
+          if (col.cascadePersist) ...[
+            Code(
+                '  final related = await relationshipContext.getForEntity<${col.relatedEntityType}>().save(${col.fieldName});'),
+            Code('  managed.${col.fieldName}Id = (related as dynamic).id;'),
+          ] else ...[
+            Code('  if (${col.fieldName} is ManagedEntity) {'),
+            Code(
+                '    managed.${col.fieldName}Id = (${col.fieldName} as dynamic).id;'),
+            Code('  }'),
+          ],
           Code('}'),
         ],
         Code('final params = <String, dynamic>{'),
@@ -141,6 +144,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             return Code("'${c.fieldName}Id': managed.${c.fieldName}Id,");
           }
           if (c.columnName.isEmpty) return Code(''); // Skip OneToMany
+          if (c.isJson || c.isList) {
+            return Code(
+                "'${c.fieldName}': jsonEncode(managed.${c.fieldName}),");
+          }
+          if (c.enumValues != null) {
+            return Code("'${c.fieldName}': managed.${c.fieldName}?.name,");
+          }
           return Code("'${c.fieldName}': managed.${c.fieldName},");
         }),
         Code('};'),

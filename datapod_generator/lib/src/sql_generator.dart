@@ -8,6 +8,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:datapod_api/datapod_api.dart' as api;
 
@@ -35,6 +36,10 @@ class ColumnMetadata {
   final String? mappedBy;
   final bool cascadePersist;
   final bool cascadeRemove;
+  final bool isJson;
+  final bool isList;
+  final List<String>? enumValues;
+  final bool isNullable;
 
   ColumnMetadata({
     required this.fieldName,
@@ -48,6 +53,10 @@ class ColumnMetadata {
     this.mappedBy,
     this.cascadePersist = false,
     this.cascadeRemove = false,
+    this.isJson = false,
+    this.isList = false,
+    this.enumValues,
+    this.isNullable = true,
   });
 }
 
@@ -156,16 +165,40 @@ class SqlGenerator {
           mappedBy: mappedBy,
           cascadePersist: cascadePersist,
           cascadeRemove: cascadeRemove,
+          isNullable:
+              field.type.nullabilitySuffix == NullabilitySuffix.question,
         );
         columns.add(metadata);
         continue;
+      }
+
+      final type = field.type;
+      bool isList = false;
+      bool isJson = false;
+      List<String>? enumValues;
+      String fieldTypeStr = type.getDisplayString(withNullability: false);
+
+      if (type is InterfaceType) {
+        if (type.element is EnumElement) {
+          final enumElement = type.element as EnumElement;
+          enumValues = enumElement.fields
+              .where((f) => f.isEnumConstant)
+              .map((f) => f.name)
+              .toList();
+        } else if (type.isDartCoreList || type.isDartCoreMap) {
+          isJson = true;
+          if (type.isDartCoreList) isList = true;
+        } else if (!_isPrimitive(type) && relationType == null) {
+          // Custom class not marked as entity, treat as JSON
+          isJson = true;
+        }
       }
 
       final metadata = ColumnMetadata(
         fieldName: field.name,
         columnName:
             isId ? colName : (relationType != null ? '${colName}_id' : colName),
-        fieldType: field.type.getDisplayString(withNullability: false),
+        fieldType: fieldTypeStr,
         isId: isId,
         autoIncrement: autoIncrement,
         relationType: relationType,
@@ -176,6 +209,10 @@ class SqlGenerator {
         mappedBy: mappedBy,
         cascadePersist: cascadePersist,
         cascadeRemove: cascadeRemove,
+        isJson: isJson,
+        isList: isList,
+        enumValues: enumValues,
+        isNullable: field.type.nullabilitySuffix == NullabilitySuffix.question,
       );
 
       columns.add(metadata);
@@ -198,8 +235,11 @@ class SqlGenerator {
           .map((c) => api.ColumnDefinition(
                 name: c.columnName,
                 type: c.relationType != null ? 'int' : c.fieldType,
-                isNullable: true, // TODO: Extract nullability from field
+                isNullable: c.isNullable,
                 isAutoIncrement: c.autoIncrement,
+                enumValues: c.enumValues,
+                isJson: c.isJson,
+                isList: c.isList,
               ))
           .toList(),
       primaryKey:
@@ -393,12 +433,11 @@ class SqlGenerator {
     );
   }
 
-  static bool _isPrimitive(dynamic type) {
-    final t = type.toString();
-    return t == 'int' ||
-        t == 'double' ||
-        t == 'String' ||
-        t == 'bool' ||
-        t == 'DateTime';
+  static bool _isPrimitive(DartType type) {
+    return type.isDartCoreInt ||
+        type.isDartCoreDouble ||
+        type.isDartCoreString ||
+        type.isDartCoreBool ||
+        type.getDisplayString(withNullability: false) == 'DateTime';
   }
 }

@@ -54,8 +54,10 @@ class SqliteConnection implements DatabaseConnection {
           if (isQuery) {
             final result = stmt.select(positionalParams);
             return QueryResult(
-              rows:
-                  result.map((row) => Map<String, dynamic>.from(row)).toList(),
+              rows: result
+                  .map<Map<String, dynamic>>(
+                      (row) => Map<String, dynamic>.from(row))
+                  .toList(),
               affectedRows: _db.updatedRows,
               lastInsertId: _db.lastInsertRowId,
             );
@@ -73,7 +75,10 @@ class SqliteConnection implements DatabaseConnection {
         if (isQuery) {
           final result = _db.select(processedSql);
           return QueryResult(
-            rows: result.map((row) => Map<String, dynamic>.from(row)).toList(),
+            rows: result
+                .map<Map<String, dynamic>>(
+                    (row) => Map<String, dynamic>.from(row))
+                .toList(),
             affectedRows: _db.updatedRows,
             lastInsertId: _db.lastInsertRowId,
           );

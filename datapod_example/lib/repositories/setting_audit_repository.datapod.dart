@@ -29,6 +29,12 @@ class SettingAuditRepositoryImpl extends SettingAuditRepository {
     final managed = entity is ManagedEntity
         ? (entity as ManagedSettingAudit)
         : ManagedSettingAudit.fromEntity(entity, database, relationshipContext);
+    final setting = await managed.setting;
+    if (setting != null) {
+      if (setting is ManagedEntity) {
+        managed.settingId = (setting as dynamic).id;
+      }
+    }
     final params = <String, dynamic>{
       'id': managed.id,
       'action': managed.action,

@@ -32,6 +32,7 @@ class ManagedRole extends Role implements ManagedEntity {
         : false;
     super.id = entity.id;
     super.name = entity.name;
+    user = entity.user;
     if (entity is ManagedEntity) {
       userId = (entity as dynamic).userId;
     }

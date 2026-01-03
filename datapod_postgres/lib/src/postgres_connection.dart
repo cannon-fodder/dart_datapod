@@ -13,11 +13,13 @@ import 'postgres_schema.dart';
 import 'postgres_transaction.dart';
 
 class PostgresConnection implements DatabaseConnection {
-  final pg.Connection _connection;
+  final dynamic _executor;
+  final Future<void> Function()? _onClose;
   late final PostgresSchemaManager _schemaManager;
   final _log = Logger('Datapod.Postgres');
 
-  PostgresConnection(this._connection) {
+  PostgresConnection(this._executor, {Future<void> Function()? onClose})
+      : _onClose = onClose {
     _schemaManager = PostgresSchemaManager(this);
   }
 
@@ -41,9 +43,9 @@ class PostgresConnection implements DatabaseConnection {
       }
 
       final result = filteredParams != null && filteredParams.isNotEmpty
-          ? await _connection.execute(pg.Sql.named(sql),
+          ? await _executor.execute(pg.Sql.named(sql),
               parameters: filteredParams)
-          : await _connection.execute(sql);
+          : await _executor.execute(pg.Sql.named(sql));
 
       dynamic lastId;
       if (sql.toUpperCase().contains('RETURNING')) {
@@ -51,7 +53,9 @@ class PostgresConnection implements DatabaseConnection {
       }
 
       return QueryResult(
-        rows: result.map((row) => row.toColumnMap()).toList(),
+        rows: result
+            .map<Map<String, dynamic>>((pg.ResultRow row) => row.toColumnMap())
+            .toList(),
         affectedRows: result.affectedRows,
         lastInsertId: lastId,
       );
@@ -70,10 +74,16 @@ class PostgresConnection implements DatabaseConnection {
   }
 
   @override
-  Future<void> close() => _connection.close();
+  Future<void> close() async {
+    if (_onClose != null) {
+      await _onClose!();
+    } else if (_executor is pg.Connection) {
+      await (_executor as pg.Connection).close();
+    }
+  }
 
   @override
   SchemaManager get schemaManager => _schemaManager;
 
-  pg.Connection get rawConnection => _connection;
+  dynamic get rawExecutor => _executor;
 }

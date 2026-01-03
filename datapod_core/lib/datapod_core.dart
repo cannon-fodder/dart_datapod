@@ -9,5 +9,4 @@
 library datapod_core;
 
 export 'config.dart';
-export 'src/databases.dart';
 export 'env_resolver.dart';

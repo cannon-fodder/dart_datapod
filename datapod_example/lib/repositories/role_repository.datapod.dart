@@ -29,6 +29,12 @@ class RoleRepositoryImpl extends RoleRepository {
     final managed = entity is ManagedEntity
         ? (entity as ManagedRole)
         : ManagedRole.fromEntity(entity, database, relationshipContext);
+    final user = await managed.user;
+    if (user != null) {
+      if (user is ManagedEntity) {
+        managed.userId = (user as dynamic).id;
+      }
+    }
     final params = <String, dynamic>{
       'id': managed.id,
       'name': managed.name,

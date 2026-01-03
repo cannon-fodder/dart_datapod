@@ -1,13 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'comment_repository.dart';
+part of 'test_entity_repository.dart';
 
 // **************************************************************************
 // RepositoryGenerator
 // **************************************************************************
 
-class CommentRepositoryImpl extends CommentRepository {
-  CommentRepositoryImpl(
+class TestEntityRepositoryImpl extends TestEntityRepository {
+  TestEntityRepositoryImpl(
     this.database,
     RelationshipContext relationshipContext,
   ) : super(relationshipContext);
@@ -15,30 +15,30 @@ class CommentRepositoryImpl extends CommentRepository {
   final DatapodDatabase database;
 
   static const _insertSql =
-      'INSERT INTO comments (content, post_id) VALUES (@content, @postId) RETURNING id';
+      'INSERT INTO test_entities (name, value, rating, flag, created_at, type, data, tags) VALUES (@name, @value, @rating, @flag, @createdAt, @type, @data, @tags) RETURNING id';
 
   static const _updateSql =
-      'UPDATE comments SET content = @content, post_id = @postId WHERE id = @id';
+      'UPDATE test_entities SET name = @name, value = @value, rating = @rating, flag = @flag, created_at = @createdAt, type = @type, data = @data, tags = @tags WHERE id = @id';
 
-  static const _deleteSql = 'DELETE FROM comments WHERE id = @id';
+  static const _deleteSql = 'DELETE FROM test_entities WHERE id = @id';
 
-  static const _findByIdSql = 'SELECT * FROM comments WHERE id = @id';
+  static const _findByIdSql = 'SELECT * FROM test_entities WHERE id = @id';
 
   @override
-  Future<Comment> save(entity) async {
+  Future<TestEntity> save(entity) async {
     final managed = entity is ManagedEntity
-        ? (entity as ManagedComment)
-        : ManagedComment.fromEntity(entity, database, relationshipContext);
-    final post = await managed.post;
-    if (post != null) {
-      if (post is ManagedEntity) {
-        managed.postId = (post as dynamic).id;
-      }
-    }
+        ? (entity as ManagedTestEntity)
+        : ManagedTestEntity.fromEntity(entity, database, relationshipContext);
     final params = <String, dynamic>{
       'id': managed.id,
-      'content': managed.content,
-      'postId': managed.postId,
+      'name': managed.name,
+      'value': managed.value,
+      'rating': managed.rating,
+      'flag': managed.flag,
+      'createdAt': managed.createdAt,
+      'type': managed.type?.name,
+      'data': jsonEncode(managed.data),
+      'tags': jsonEncode(managed.tags),
     };
     if (managed.isPersistent) {
       if (managed.isDirty) {
@@ -55,8 +55,8 @@ class CommentRepositoryImpl extends CommentRepository {
   }
 
   @override
-  Future<List<Comment>> saveAll(entities) async {
-    final saved = <Comment>[];
+  Future<List<TestEntity>> saveAll(entities) async {
+    final saved = <TestEntity>[];
     for (final entity in entities) {
       saved.add(await save(entity));
     }
@@ -69,19 +69,10 @@ class CommentRepositoryImpl extends CommentRepository {
   }
 
   @override
-  Future<Comment?> findById(id) async {
+  Future<TestEntity?> findById(id) async {
     final result = await database.connection.execute(_findByIdSql, {'id': id});
     if (result.isEmpty) return null;
-    return ManagedComment.fromRow(
+    return ManagedTestEntity.fromRow(
         result.rows.first, database, relationshipContext);
-  }
-
-  Future<List<Comment>> findByPostId(id) async {
-    final sql = 'SELECT * FROM comments WHERE post_id = @id';
-    final result = await database.connection.execute(sql, {'id': id});
-    return result.rows
-        .map(
-            (row) => ManagedComment.fromRow(row, database, relationshipContext))
-        .toList();
   }
 }

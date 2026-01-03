@@ -32,6 +32,7 @@ class ManagedComment extends Comment implements ManagedEntity {
         : false;
     super.id = entity.id;
     super.content = entity.content;
+    post = entity.post;
     if (entity is ManagedEntity) {
       postId = (entity as dynamic).postId;
     }

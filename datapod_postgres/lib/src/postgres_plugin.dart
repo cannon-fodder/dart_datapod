@@ -11,6 +11,7 @@ import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'package:postgres/postgres.dart' as pg;
 import 'postgres_database.dart';
+import 'postgres_connection.dart';
 
 class PostgresPlugin implements DatapodPlugin {
   @override
@@ -29,7 +30,27 @@ class PostgresPlugin implements DatapodPlugin {
       password: connConfig.password,
     );
 
-    final conn = await pg.Connection.open(endpoint);
-    return PostgresDatabase(dbConfig.name, conn);
+    if (connConfig.maxConnections > 1) {
+      final pool = pg.Pool.withEndpoints(
+        [endpoint],
+        settings: pg.PoolSettings(
+          maxConnectionCount: connConfig.maxConnections,
+          sslMode: pg.SslMode.disable,
+        ),
+      );
+      return PostgresDatabase(
+        dbConfig.name,
+        PostgresConnection(pool, onClose: () => pool.close()),
+      );
+    } else {
+      final conn = await pg.Connection.open(
+        endpoint,
+        settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable),
+      );
+      return PostgresDatabase(
+        dbConfig.name,
+        PostgresConnection(conn),
+      );
+    }
   }
 }

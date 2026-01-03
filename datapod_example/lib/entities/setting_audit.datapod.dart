@@ -36,6 +36,7 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
     super.id = entity.id;
     super.action = entity.action;
     super.timestamp = entity.timestamp;
+    setting = entity.setting;
     if (entity is ManagedEntity) {
       settingId = (entity as dynamic).settingId;
     }

@@ -1,0 +1,5 @@
+databases:
+  - name: postgres_test
+    plugin: datapod_postgres
+  - name: mysql_test
+    plugin: datapod_mysql

@@ -30,6 +30,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
   }
 
   String _generateManagedEntity(ClassElement entityClass) {
+    final metadata = SqlGenerator.parseEntity(entityClass);
     final className = 'Managed${entityClass.name}';
     final managedClass = Class((b) => b
       ..name = className
@@ -79,16 +80,32 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..initializers.add(Code('_relationshipContext = relationshipContext'))
           ..body = Block.of([
             Code('_isPersistent = true;'),
-            ...entityClass.fields
-                .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
-                .map((f) {
-              final colName = SqlGenerator.parseColumn(f).columnName;
-              final typeName = f.type.getDisplayString(withNullability: false);
-              if (typeName == 'DateTime' || typeName == 'DateTime?') {
+            ...metadata.columns
+                .where((c) => c.columnName.isNotEmpty && c.relationType == null)
+                .map((c) {
+              final colName = c.columnName;
+              final fieldName = c.fieldName;
+              if (c.fieldType == 'DateTime') {
                 return Code(
-                    'super.${f.name} = row[\'$colName\'] is String ? DateTime.parse(row[\'$colName\']) : row[\'$colName\'];');
+                    'super.$fieldName = row[\'$colName\'] is String ? DateTime.parse(row[\'$colName\']) : row[\'$colName\'];');
               }
-              return Code('super.${f.name} = row[\'$colName\'];');
+              if (c.fieldType == 'bool') {
+                return Code(
+                    'super.$fieldName = row[\'$colName\'] is int ? row[\'$colName\'] == 1 : row[\'$colName\'];');
+              }
+              if (c.isJson || c.isList) {
+                if (c.isList) {
+                  return Code(
+                      'super.$fieldName = row[\'$colName\'] is String ? List.from(jsonDecode(row[\'$colName\'])) : (row[\'$colName\'] != null ? List.from(row[\'$colName\']) : null);');
+                }
+                return Code(
+                    'super.$fieldName = row[\'$colName\'] is String ? Map.from(jsonDecode(row[\'$colName\'])) : (row[\'$colName\'] != null ? Map.from(row[\'$colName\']) : null);');
+              }
+              if (c.enumValues != null) {
+                return Code(
+                    'super.$fieldName = row[\'$colName\'] != null ? ${c.fieldType}.values.firstWhere((e) => e.name == row[\'$colName\']) : super.$fieldName;');
+              }
+              return Code('super.$fieldName = row[\'$colName\'];');
             }),
             ..._generateRelationFieldInitializers(entityClass),
           ])),
@@ -392,6 +409,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     final codes = <Code>[];
     for (final field in entityClass.fields) {
       if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
+
+      codes.add(Code('${field.name} = entity.${field.name};'));
 
       if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
           const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {

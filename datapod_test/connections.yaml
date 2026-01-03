@@ -1,0 +1,14 @@
+connections:
+  - name: postgres_test
+    host: localhost
+    port: 5433
+    user: datapod
+    password: datapod
+    database: datapod_test
+  - name: mysql_test
+    host: localhost
+    port: 3307
+    user: datapod
+    password: datapod
+    database: datapod_test
+    maxConnections: 1

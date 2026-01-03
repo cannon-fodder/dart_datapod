@@ -26,12 +26,17 @@ class InitializerGenerator extends Builder {
     final repos = <Map<String, String>>[];
     final entities = <Map<String, String>>[];
 
-    final repoChecker = const TypeChecker.fromRuntime(api.Repository);
-    final entityChecker = const TypeChecker.fromRuntime(api.Entity);
-    final dbChecker = const TypeChecker.fromRuntime(api.Database);
+    final repoChecker =
+        TypeChecker.fromUrl('package:datapod_api/annotations.dart#Repository');
+    final entityChecker =
+        TypeChecker.fromUrl('package:datapod_api/annotations.dart#Entity');
+    final dbChecker =
+        TypeChecker.fromUrl('package:datapod_api/annotations.dart#Database');
 
-    await for (final asset in buildStep.findAssets(Glob('lib/**/*.dart'))) {
-      if (!await buildStep.resolver.isLibrary(asset)) continue;
+    await for (final asset in buildStep.findAssets(Glob('lib/**.dart'))) {
+      if (!await buildStep.resolver.isLibrary(asset)) {
+        continue;
+      }
       final library = await buildStep.resolver.libraryFor(asset);
       final reader = LibraryReader(library);
 
@@ -88,6 +93,7 @@ class InitializerGenerator extends Builder {
     // ... imports ...
     result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
     result.writeln();
+    result.writeln("import 'dart:io';");
     result.writeln("import 'package:datapod_api/datapod_api.dart';");
     result.writeln("import 'package:datapod_core/datapod_core.dart';");
 
@@ -115,24 +121,32 @@ class InitializerGenerator extends Builder {
 
     result.writeln();
     result.writeln("class DatapodInitializer {");
-    result.writeln("  static Future<void> initialize({");
+    result.writeln("  static Future<DatapodContext> initialize({");
     result.writeln("    String databasesPath = 'databases.yaml',");
     result.writeln("    String connectionsPath = 'connections.yaml',");
     result.writeln("  }) async {");
-    result.writeln("    await Databases.initialize(");
-    result.writeln("      databasesPath: databasesPath,");
-    result.writeln("      connectionsPath: connectionsPath,");
-    result.writeln("    );");
+    result.writeln("    final databasesFile = File(databasesPath);");
+    result.writeln("    final connectionsFile = File(connectionsPath);");
+    result.writeln();
+    result.writeln("    if (!await databasesFile.exists()) {");
+    result.writeln(
+        "      throw ConfigurationException('databases.yaml not found at \$databasesPath');");
+    result.writeln("    }");
+    result.writeln("    if (!await connectionsFile.exists()) {");
+    result.writeln(
+        "      throw ConfigurationException('connections.yaml not found at \$connectionsPath');");
+    result.writeln("    }");
     result.writeln();
     result.writeln("    final sharedContext = RelationshipContextImpl();");
     result.writeln();
 
     final repoInstances = <String, String>{}; // repoName -> repoVar
+    final dbInstances = <String, String>{}; // dbName -> dbVar
 
     if (databasesYaml != null && databasesYaml['databases'] != null) {
       for (final db in databasesYaml['databases']) {
         if (db is! YamlMap) continue;
-        final dbName = db['name'];
+        final dbName = db['name'] as String;
         final pluginName = db['plugin'];
         final pluginClassName = _toPascalCase(pluginName) + 'Plugin';
 
@@ -141,6 +155,7 @@ class InitializerGenerator extends Builder {
         final dbConfigVar = _toCamelCase('dbConfig_$dbName');
         final connConfigVar = _toCamelCase('connConfig_$dbName');
         final databaseVar = _toCamelCase('database_$dbName');
+        dbInstances[dbName] = databaseVar;
 
         result.writeln("    final $pluginVar = $pluginClassName();");
         result.writeln(
@@ -149,7 +164,6 @@ class InitializerGenerator extends Builder {
             "    final $connConfigVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == '$dbName');");
         result.writeln(
             "    final $databaseVar = await $pluginVar.createDatabase($dbConfigVar, $connConfigVar);");
-        result.writeln("    Databases.register('$dbName', $databaseVar);");
         result.writeln();
 
         // Pass schema to the database
@@ -167,20 +181,23 @@ class InitializerGenerator extends Builder {
         result.writeln();
 
         // Repositories mapped to this database via @Database(name) or default
+        final allDbNames = (databasesYaml['databases'] as YamlList)
+            .map((d) => d['name'] as String)
+            .toList();
         final dbRepos = repos.where((r) {
           if (r.containsKey('database')) {
             return r['database'] == dbName;
           }
-          // Default logic if no annotation: assign to 'postgres_db' or single DB
-          return dbName == 'postgres_db' ||
-              databasesYaml?['databases'].length == 1;
+          final defaultDb = allDbNames.contains('postgres_db')
+              ? 'postgres_db'
+              : allDbNames.first;
+          return dbName == defaultDb;
         }).toList();
 
         for (final repo in dbRepos) {
           final repoName = repo['name']!;
           final repoVar = _toCamelCase(repoName);
           repoInstances[repoName] = repoVar;
-          final databaseVar = _toCamelCase('database_$dbName');
           result.writeln(
               "    final $repoVar = ${repoName}Impl($databaseVar, sharedContext);");
         }
@@ -189,20 +206,58 @@ class InitializerGenerator extends Builder {
     }
 
     // Register all instances in the shared context and global registry
-    result.writeln("    // Register all repositories");
+    result.writeln("    // Register all repositories in shared context");
     for (final entry in repoInstances.entries) {
       final repoName = entry.key;
       final repoVar = entry.value;
       final entityName = _getEntityName(repoName, entities);
       result.writeln(
           "    sharedContext.registerForEntity<$entityName>($repoVar);");
-      result.writeln("    RepositoryRegistry.register<$repoName>($repoVar);");
-      result.writeln(
-          "    RepositoryRegistry.registerForEntity<$entityName>($repoVar);");
     }
 
+    result.writeln();
+    if (dbInstances.isEmpty && repoInstances.isEmpty) {
+      result.writeln("    return DatapodContext();");
+    } else {
+      result.writeln("    return DatapodContext(");
+      for (final dbEntry in dbInstances.entries) {
+        result.writeln("      ${_toCamelCase(dbEntry.key)}: ${dbEntry.value},");
+      }
+      for (final repoEntry in repoInstances.entries) {
+        result.writeln("      ${repoEntry.value}: ${repoEntry.value},");
+      }
+      result.writeln("    );");
+    }
     result.writeln("  }");
+    result.writeln("}");
+    result.writeln();
 
+    result.writeln("class DatapodContext {");
+    for (final dbEntry in dbInstances.entries) {
+      result.writeln("  final DatapodDatabase ${_toCamelCase(dbEntry.key)};");
+    }
+    for (final repoEntry in repoInstances.entries) {
+      result.writeln("  final ${repoEntry.key} ${repoEntry.value};");
+    }
+    result.writeln();
+    if (dbInstances.isEmpty && repoInstances.isEmpty) {
+      result.writeln("  DatapodContext();");
+    } else {
+      result.writeln("  DatapodContext({");
+      for (final dbEntry in dbInstances.entries) {
+        result.writeln("    required this.${_toCamelCase(dbEntry.key)},");
+      }
+      for (final repoEntry in repoInstances.entries) {
+        result.writeln("    required this.${repoEntry.value},");
+      }
+      result.writeln("  });");
+    }
+    result.writeln();
+    result.writeln("  Future<void> close() async {");
+    for (final dbEntry in dbInstances.entries) {
+      result.writeln("    await ${_toCamelCase(dbEntry.key)}.close();");
+    }
+    result.writeln("  }");
     result.writeln("}");
 
     final output = AssetId(buildStep.inputId.package, 'lib/datapod_init.dart');
@@ -228,18 +283,27 @@ class InitializerGenerator extends Builder {
   }
 
   String _getEntityName(String repoName, List<Map<String, String>> entities) {
-    final entityName = repoName.replaceAll('Repository', '');
+    var entityName = repoName.replaceAll('Repository', '');
     if (entities.any((e) => e['name'] == entityName)) {
       return entityName;
+    }
+    // Try plural to singular if needed, or other common patterns
+    if (entities.isNotEmpty) {
+      // If we only have one entity and one repository, they likely match
+      if (entities.length == 1 && repoName.contains(entities[0]['name']!)) {
+        return entities[0]['name']!;
+      }
     }
     return 'Object';
   }
 
   String _generateTableDefCode(api.TableDefinition def) {
-    final columns = def.columns
-        .map((c) =>
-            "ColumnDefinition(name: '${c.name}', type: '${c.type}', isNullable: ${c.isNullable}, isAutoIncrement: ${c.isAutoIncrement}${c.defaultValue != null ? ", defaultValue: '${c.defaultValue}'" : ""})")
-        .join(', ');
+    final columns = def.columns.map((c) {
+      final values = c.enumValues != null
+          ? '[${c.enumValues!.map((v) => "'$v'").join(', ')}]'
+          : 'null';
+      return "ColumnDefinition(name: '${c.name}', type: '${c.type}', isNullable: ${c.isNullable}, isAutoIncrement: ${c.isAutoIncrement}${c.defaultValue != null ? ", defaultValue: '${c.defaultValue}'" : ""}, enumValues: $values, isJson: ${c.isJson}, isList: ${c.isList})";
+    }).join(', ');
     final pks = def.primaryKey.map((pk) => "'$pk'").join(', ');
     final fks = def.foreignKeys
         .map((fk) =>

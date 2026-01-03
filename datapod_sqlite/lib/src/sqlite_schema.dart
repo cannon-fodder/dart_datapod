@@ -27,7 +27,7 @@ class SqliteSchemaManager implements SchemaManager {
 
     for (final table in _schema!.tables) {
       final columnStrings = table.columns.map((c) {
-        String type = _mapType(c.type);
+        String type = _mapType(c);
         final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
         final autoInc =
             (c.isAutoIncrement && pk.isNotEmpty) ? ' AUTOINCREMENT' : '';
@@ -50,8 +50,11 @@ class SqliteSchemaManager implements SchemaManager {
     }
   }
 
-  String _mapType(String type) {
-    switch (type) {
+  String _mapType(ColumnDefinition c) {
+    if (c.isJson || c.isList || c.enumValues != null) {
+      return 'TEXT';
+    }
+    switch (c.type) {
       case 'int':
         return 'INTEGER';
       case 'double':

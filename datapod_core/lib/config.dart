@@ -60,6 +60,10 @@ class ConnectionConfig {
   String? get database =>
       (attributes['database'] ?? attributes['db'])?.toString();
 
+  int get minConnections => attributes['minConnections'] as int? ?? 1;
+  int get maxConnections => attributes['maxConnections'] as int? ?? 5;
+  int get idleTimeout => attributes['idleTimeout'] as int? ?? 30;
+
   factory ConnectionConfig.fromYaml(Map<dynamic, dynamic> yaml) {
     final Map<String, dynamic> attrs = {};
     yaml.forEach((key, value) {

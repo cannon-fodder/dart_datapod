@@ -33,6 +33,7 @@ class ManagedSetting extends Setting implements ManagedEntity {
     super.id = entity.id;
     super.key = entity.key;
     super.value = entity.value;
+    auditTrail = entity.auditTrail;
   }
 
   final bool _isManaged = true;

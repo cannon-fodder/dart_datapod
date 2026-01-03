@@ -19,6 +19,15 @@ class ManagedPost extends Post implements ManagedEntity {
     super.id = row['id'];
     super.title = row['title'];
     super.content = row['content'];
+    super.status = row['status'] != null
+        ? PostStatus.values.firstWhere((e) => e.name == row['status'])
+        : super.status;
+    super.metadata = row['metadata'] is String
+        ? Map.from(jsonDecode(row['metadata']))
+        : (row['metadata'] != null ? Map.from(row['metadata']) : null);
+    super.tags = row['tags'] is String
+        ? List.from(jsonDecode(row['tags']))
+        : (row['tags'] != null ? List.from(row['tags']) : null);
     authorId = row['author_id'];
   }
 
@@ -34,9 +43,14 @@ class ManagedPost extends Post implements ManagedEntity {
     super.id = entity.id;
     super.title = entity.title;
     super.content = entity.content;
+    super.status = entity.status;
+    super.metadata = entity.metadata;
+    super.tags = entity.tags;
+    author = entity.author;
     if (entity is ManagedEntity) {
       authorId = (entity as dynamic).authorId;
     }
+    comments = entity.comments;
   }
 
   final bool _isManaged = true;
@@ -116,6 +130,30 @@ class ManagedPost extends Post implements ManagedEntity {
     if (value != super.content) {
       _isDirty = true;
       super.content = value;
+    }
+  }
+
+  @override
+  set status(PostStatus? value) {
+    if (value != super.status) {
+      _isDirty = true;
+      super.status = value;
+    }
+  }
+
+  @override
+  set metadata(Map<String, dynamic>? value) {
+    if (value != super.metadata) {
+      _isDirty = true;
+      super.metadata = value;
+    }
+  }
+
+  @override
+  set tags(List<String>? value) {
+    if (value != super.tags) {
+      _isDirty = true;
+      super.tags = value;
     }
   }
 

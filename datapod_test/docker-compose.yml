@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: datapod
+      POSTGRES_PASSWORD: datapod
+      POSTGRES_DB: datapod_test
+    ports:
+      - "5433:5432"
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: datapod_test
+      MYSQL_USER: datapod
+      MYSQL_PASSWORD: datapod
+    ports:
+      - "3307:3306"
+    command: --default-authentication-plugin=mysql_native_password
