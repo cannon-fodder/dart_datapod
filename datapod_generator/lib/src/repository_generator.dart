@@ -363,7 +363,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       } else if (comp.operator == 'EndsWith') {
         val = '\'%\$${param.name}\'';
       } else if (comp.operator == 'Contains' ||
-          comp.operator == 'NotContains') {
+          comp.operator == 'NotContains' ||
+          comp.operator == 'Containing' ||
+          comp.operator == 'NotContaining') {
         val = '\'%\$${param.name}%\'';
       }
 
@@ -373,10 +375,15 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     final sql =
         SqlGenerator.generateDslQuery(metadata, components, type, paramNames);
 
+    final returnType = method.returnType;
+    final isStream =
+        returnType is InterfaceType && returnType.isDartAsyncStream;
+
     return Method((m) => m
       ..name = method.name
-      ..returns =
-          refer('Future<QueryResult>', 'package:datapod_api/datapod_api.dart')
+      ..returns = isStream
+          ? refer('Stream<Map<String, dynamic>>', 'dart:async')
+          : refer('Future<QueryResult>', 'package:datapod_api/datapod_api.dart')
       ..requiredParameters
           .addAll(method.parameters.map((p) => Parameter((b) => b
             ..name = p.name
@@ -385,7 +392,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         Code('final params = <String, dynamic>{'),
         ...paramAssignments,
         Code('};'),
-        Code('return database.connection.execute(\'$sql\', params);'),
+        isStream
+            ? Code('return database.connection.stream(\'$sql\', params);')
+            : Code('return database.connection.execute(\'$sql\', params);'),
       ]));
   }
 
@@ -535,19 +544,25 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
                 ? 'delete'
                 : 'find';
 
+    final isStream = method.returnType is InterfaceType &&
+        (method.returnType as InterfaceType).isDartAsyncStream;
+
     return Method((m) => m
       ..name = method.name
       ..annotations.add(refer('override'))
       ..returns =
           refer(method.returnType.getDisplayString(withNullability: true))
+      ..modifier = isStream ? null : MethodModifier.async
       ..requiredParameters
           .addAll(method.parameters.map((p) => Parameter((b) => b
             ..name = p.name
             ..type = refer(p.type.getDisplayString(withNullability: true)))))
-      ..modifier = MethodModifier.async
       ..body = Block.of([
-        Code(
-            'final result = await operations.${method.name}(${method.parameters.map((p) => p.name).join(', ')});'),
+        isStream
+            ? Code(
+                'final result = operations.${method.name}(${method.parameters.map((p) => p.name).join(', ')});')
+            : Code(
+                'final result = await operations.${method.name}(${method.parameters.map((p) => p.name).join(', ')});'),
         _generateRepoDslReturn(type, method, entityClass),
       ]));
   }
@@ -567,8 +582,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             (returnType is InterfaceType &&
                 returnType.isDartAsyncFuture &&
                 returnType.typeArguments.first.isDartCoreList);
+        final isStream =
+            returnType is InterfaceType && returnType.isDartAsyncStream;
 
-        if (isList) {
+        if (isStream) {
+          return Code(
+              'return result.map((row) => mapper.mapRow(row, database, relationshipContext));');
+        } else if (isList) {
           return Code(
               'return mapper.mapRows(result.rows, database, relationshipContext);');
         } else {

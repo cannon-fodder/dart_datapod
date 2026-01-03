@@ -371,8 +371,10 @@ class SqlGenerator {
       case 'EndsWith':
         return '$column LIKE @$paramName'; // Caller must prepend % to param
       case 'Contains':
+      case 'Containing':
         return '$column LIKE @$paramName'; // Caller must wrap with % to param
       case 'NotContains':
+      case 'NotContaining':
         return '$column NOT LIKE @$paramName';
       case 'In':
         return '$column IN (@$paramName)';

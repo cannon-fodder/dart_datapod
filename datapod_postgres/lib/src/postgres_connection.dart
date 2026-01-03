@@ -65,6 +65,37 @@ class PostgresConnection implements DatabaseConnection {
   }
 
   @override
+  Stream<Map<String, dynamic>> stream(String sql,
+      [Map<String, dynamic>? params]) async* {
+    try {
+      final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
+      final usedParams =
+          paramRegex.allMatches(sql).map((m) => m.group(1)).toSet();
+      final filteredParams = params != null
+          ? Map.fromEntries(
+              params.entries.where((e) => usedParams.contains(e.key)))
+          : null;
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Streaming SQL: $sql');
+        if (filteredParams != null && filteredParams.isNotEmpty) {
+          _log.fine('Parameters: $filteredParams');
+        }
+      }
+
+      final rows = filteredParams != null && filteredParams.isNotEmpty
+          ? _executor.query(pg.Sql.named(sql), parameters: filteredParams)
+          : _executor.query(pg.Sql.named(sql));
+
+      await for (final pg.ResultRow row in rows) {
+        yield row.toColumnMap();
+      }
+    } catch (e) {
+      throw QueryException('Postgres Error: $e', sql: sql, cause: e);
+    }
+  }
+
+  @override
   Future<Transaction> beginTransaction() async {
     await execute('BEGIN');
     return PostgresTransaction(

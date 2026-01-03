@@ -145,7 +145,19 @@ void main(List<String> args) async {
       print('Retrieved from Memory DB: ${memResult.rows.first['info']}');
     }
 
-    // 9. Performance check (just log)
+    // 9. Exercise Streams (Postgres)
+    print('\n[STREAM] Using Stream-based queries...');
+    await userRepo.save(User()..name = 'Bob');
+    await userRepo.save(User()..name = 'Charlie');
+    await userRepo.save(User()..name = 'Alice in Wonderland');
+
+    print('Streaming users with "Ali" in their name:');
+    final userStream = userRepo.findByNameContaining('Ali');
+    await for (final user in userStream) {
+      print('  - Emitted user: ${user.name}');
+    }
+
+    // 10. Performance check (just log)
     print('\nDone with functional operations.');
   } catch (e, s) {
     print('Error: $e');

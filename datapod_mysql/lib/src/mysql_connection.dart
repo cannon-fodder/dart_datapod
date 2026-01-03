@@ -68,6 +68,45 @@ class MySqlConnection implements DatabaseConnection {
     }
   }
 
+  @override
+  Stream<Map<String, dynamic>> stream(String sql,
+      [Map<String, dynamic>? params]) async* {
+    try {
+      String processedSql = sql;
+      List<dynamic> positionalParams = [];
+
+      if (params != null && params.isNotEmpty) {
+        final translation = _translateSql(sql, params);
+        processedSql = translation.sql;
+        positionalParams = translation.params;
+      } else {
+        processedSql = _stripReturning(sql);
+      }
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Streaming SQL: $processedSql');
+        if (positionalParams.isNotEmpty) {
+          _log.fine('Parameters: $positionalParams');
+        }
+      }
+
+      final result = await _executor.query(processedSql, positionalParams);
+
+      for (final row in result) {
+        final map = Map<String, dynamic>.from(row.fields);
+        map.updateAll((key, value) {
+          if (value is mysql.Blob) {
+            return value.toString();
+          }
+          return value;
+        });
+        yield map;
+      }
+    } catch (e) {
+      throw QueryException('MySQL Error: $e', sql: sql);
+    }
+  }
+
   ({String sql, List<dynamic> params}) _translateSql(
       String sql, Map<String, dynamic> params) {
     final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');

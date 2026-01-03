@@ -30,6 +30,10 @@ abstract interface class DatabaseConnection {
   /// Executes a raw SQL query and returns the results.
   Future<QueryResult> execute(String sql, [Map<String, dynamic>? params]);
 
+  /// Executes a raw SQL query and returns a stream of rows.
+  Stream<Map<String, dynamic>> stream(String sql,
+      [Map<String, dynamic>? params]);
+
   /// Starts a new transaction.
   Future<Transaction> beginTransaction();
 

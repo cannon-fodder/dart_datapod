@@ -97,6 +97,29 @@ class MemoryConnection implements DatabaseConnection {
   }
 
   @override
+  Stream<Map<String, dynamic>> stream(String sql,
+      [Map<String, dynamic>? params]) async* {
+    final cleanSql = sql.trim().toUpperCase();
+    if (cleanSql.startsWith('SELECT * FROM')) {
+      final parts = sql.split(' ');
+      final tableName = parts[3].toLowerCase();
+      var rows = _storage[tableName] ?? [];
+
+      if (cleanSql.contains('WHERE')) {
+        final wherePart = cleanSql.split('WHERE')[1].trim();
+        if (wherePart.contains('ID = @ID')) {
+          final id = params?['id'];
+          rows = rows.where((r) => r['id'] == id).toList();
+        }
+      }
+
+      for (final row in rows) {
+        yield Map<String, dynamic>.from(row);
+      }
+    }
+  }
+
+  @override
   Future<Transaction> beginTransaction() async {
     return TransactionImpl(this);
   }

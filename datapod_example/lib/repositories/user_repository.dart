@@ -18,4 +18,5 @@ part 'user_repository.datapod.dart';
 abstract class UserRepository extends BaseRepository<User, int> {
   UserRepository(super.relationshipContext);
   Future<User?> findByName(String name);
+  Stream<User> findByNameContaining(String name);
 }

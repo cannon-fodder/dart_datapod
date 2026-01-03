@@ -95,6 +95,49 @@ class SqliteConnection implements DatabaseConnection {
     }
   }
 
+  @override
+  Stream<Map<String, dynamic>> stream(String sql,
+      [Map<String, dynamic>? params]) async* {
+    try {
+      String processedSql = sql;
+      List<dynamic> positionalParams = [];
+
+      if (params != null && params.isNotEmpty) {
+        final translation = _translateSql(sql, params);
+        processedSql = translation.sql;
+        positionalParams = translation.params;
+      } else {
+        processedSql = _stripReturning(sql);
+      }
+
+      if (_log.isLoggable(Level.FINE)) {
+        _log.fine('Streaming SQL: $processedSql');
+        if (positionalParams.isNotEmpty) {
+          _log.fine('Parameters: $positionalParams');
+        }
+      }
+
+      if (positionalParams.isNotEmpty) {
+        final stmt = _db.prepare(processedSql);
+        try {
+          final result = stmt.select(positionalParams);
+          for (final row in result) {
+            yield Map<String, dynamic>.from(row);
+          }
+        } finally {
+          stmt.dispose();
+        }
+      } else {
+        final result = _db.select(processedSql);
+        for (final row in result) {
+          yield Map<String, dynamic>.from(row);
+        }
+      }
+    } catch (e) {
+      throw QueryException('SQLite Error: $e', sql: sql);
+    }
+  }
+
   ({String sql, List<dynamic> params}) _translateSql(
       String sql, Map<String, dynamic> params) {
     final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
