@@ -5,3 +5,5 @@ databases:
     plugin: datapod_mysql
   - name: sqlite_db
     plugin: datapod_sqlite
+  - name: memory_db
+    plugin: memory

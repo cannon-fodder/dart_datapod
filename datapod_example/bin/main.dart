@@ -132,7 +132,20 @@ void main(List<String> args) async {
       }
     }
 
-    // 8. Performance check (just log)
+    // 8. Exercise Memory DB (Custom Plugin)
+    print('\n[MEMORY] Using custom MemoryPlugin...');
+    final memoryDb = context.memoryDb;
+    // We can use the connection directly for raw operations on the custom plugin
+    await memoryDb.connection.execute(
+        'INSERT INTO test (id, info) VALUES (@id, @info)',
+        {'id': 1, 'info': 'Found in memory!'});
+    final memResult = await memoryDb.connection
+        .execute('SELECT * FROM test WHERE id = @id', {'id': 1});
+    if (memResult.isNotEmpty) {
+      print('Retrieved from Memory DB: ${memResult.rows.first['info']}');
+    }
+
+    // 9. Performance check (just log)
     print('\nDone with functional operations.');
   } catch (e, s) {
     print('Error: $e');

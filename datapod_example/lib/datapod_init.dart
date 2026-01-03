@@ -20,6 +20,7 @@ import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/comment.dart';
 import 'package:datapod_example/entities/setting.dart';
+import 'package:datapod_example/plugins/memory_plugin.dart';
 
 class DatapodInitializer {
   static Future<DatapodContext> initialize({
@@ -116,12 +117,29 @@ class DatapodInitializer {
     sharedContext.registerOperations<SettingAudit>(settingAuditRepositoryOps);
     sharedContext.registerMapper<SettingAudit>(settingAuditRepositoryMapper);
 
+    // Initialize memory_db
+    final pluginMemoryDb = MemoryPlugin();
+    final dbConfigMemoryDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'memory_db');
+    final connConfigMemoryDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'memory_db');
+    final databaseMemoryDb = await pluginMemoryDb.createDatabase(dbConfigMemoryDb, connConfigMemoryDb);
+
+    databaseMemoryDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
+      TableDefinition(name: 'roles', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'user_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_roles_user_id', columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'])]),
+      TableDefinition(name: 'setting_audits', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'action', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'timestamp', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'setting_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_setting_audits_setting_id', columns: ['setting_id'], referencedTable: 'settings', referencedColumns: ['id'])]),
+      TableDefinition(name: 'posts', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'status', type: 'PostStatus', isNullable: true, isAutoIncrement: false, enumValues: ['draft', 'published', 'archived'], isJson: false, isList: false), ColumnDefinition(name: 'metadata', type: 'Map<String, dynamic>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: false), ColumnDefinition(name: 'tags', type: 'List<String>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: true), ColumnDefinition(name: 'author_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_posts_author_id', columns: ['author_id'], referencedTable: 'users', referencedColumns: ['id'])]),
+      TableDefinition(name: 'users', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: []),
+      TableDefinition(name: 'comments', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'post_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_comments_post_id', columns: ['post_id'], referencedTable: 'posts', referencedColumns: ['id'])]),
+      TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: []),
+    ]));
+
+
     // All components registered in shared context
 
     return DatapodContext(
       postgresDb: databasePostgresDb,
       mysqlDb: databaseMysqlDb,
       sqliteDb: databaseSqliteDb,
+      memoryDb: databaseMemoryDb,
       userRepository: userRepository,
       roleRepository: roleRepository,
       postRepository: postRepository,
@@ -136,6 +154,7 @@ class DatapodContext {
   final DatapodDatabase postgresDb;
   final DatapodDatabase mysqlDb;
   final DatapodDatabase sqliteDb;
+  final DatapodDatabase memoryDb;
   final UserRepository userRepository;
   final RoleRepository roleRepository;
   final PostRepository postRepository;
@@ -147,6 +166,7 @@ class DatapodContext {
     required this.postgresDb,
     required this.mysqlDb,
     required this.sqliteDb,
+    required this.memoryDb,
     required this.userRepository,
     required this.roleRepository,
     required this.postRepository,
@@ -159,5 +179,6 @@ class DatapodContext {
     await postgresDb.close();
     await mysqlDb.close();
     await sqliteDb.close();
+    await memoryDb.close();
   }
 }

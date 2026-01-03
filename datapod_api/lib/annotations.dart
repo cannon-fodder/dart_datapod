@@ -122,3 +122,10 @@ class JoinColumn {
   final bool nullable;
   const JoinColumn(this.name, {this.nullable = true});
 }
+
+/// Indicates a class is a Datapod plugin.
+@Target({TargetKind.classType})
+class DatapodPluginDef {
+  final String name;
+  const DatapodPluginDef(this.name);
+}

@@ -13,3 +13,4 @@ connections:
     database: datapod
   - name: sqlite_db
     database: ":memory:"
+  - name: memory_db

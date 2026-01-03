@@ -32,6 +32,10 @@ class InitializerGenerator extends Builder {
         TypeChecker.fromUrl('package:datapod_api/annotations.dart#Entity');
     final dbChecker =
         TypeChecker.fromUrl('package:datapod_api/annotations.dart#Database');
+    final pluginDefChecker = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#DatapodPluginDef');
+
+    final discoveredPlugins = <String, Map<String, String>>{};
 
     await for (final asset in buildStep.findAssets(Glob('lib/**.dart'))) {
       if (!await buildStep.resolver.isLibrary(asset)) {
@@ -66,6 +70,16 @@ class InitializerGenerator extends Builder {
             'import': asset.uri.toString(),
             'tableDef': _generateTableDefCode(tableDef),
           });
+        }
+      }
+      for (final annotated in reader.annotatedWith(pluginDefChecker)) {
+        if (annotated.element is ClassElement) {
+          final element = annotated.element as ClassElement;
+          final pluginName = annotated.annotation.read('name').stringValue;
+          discoveredPlugins[pluginName] = {
+            'class': element.name,
+            'import': asset.uri.toString(),
+          };
         }
       }
     }
@@ -115,7 +129,11 @@ class InitializerGenerator extends Builder {
     }
 
     for (final plugin in plugins) {
-      result.writeln("import 'package:$plugin/$plugin.dart';");
+      if (discoveredPlugins.containsKey(plugin)) {
+        allImports.add(discoveredPlugins[plugin]!['import']!);
+      } else {
+        result.writeln("import 'package:$plugin/$plugin.dart';");
+      }
     }
 
     for (final imp in allImports) {
@@ -150,8 +168,13 @@ class InitializerGenerator extends Builder {
       for (final db in databasesYaml['databases']) {
         if (db is! YamlMap) continue;
         final dbName = db['name'] as String;
-        final pluginName = db['plugin'];
-        final pluginClassName = _toPascalCase(pluginName) + 'Plugin';
+        final pluginName = db['plugin'] as String;
+        String pluginClassName;
+        if (discoveredPlugins.containsKey(pluginName)) {
+          pluginClassName = discoveredPlugins[pluginName]!['class']!;
+        } else {
+          pluginClassName = _toPascalCase(pluginName) + 'Plugin';
+        }
 
         result.writeln("    // Initialize $dbName");
         final pluginVar = _toCamelCase('plugin_$dbName');
