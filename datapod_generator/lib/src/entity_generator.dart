@@ -30,6 +30,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         "// This software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.");
     result.writeln();
     result.writeln(_generateManagedEntity(element));
+    result.writeln();
+    result.writeln(_generateMapper(element));
 
     return result.toString();
   }
@@ -301,7 +303,14 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code(
             'if ($loadedField == null && $foreignKeyField != null && \$relationshipContext != null) {'),
         Code(
-            '  $loadedField = \$relationshipContext!.getForEntity<${relatedType.element?.name}>().findById($foreignKeyField) as Future<${relatedType.element?.name}?>?;'),
+            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}>();'),
+        Code(
+            '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();'),
+        Code('  final result = await ops.findById($foreignKeyField);'),
+        Code('  if (result.isNotEmpty) {'),
+        Code(
+            '    $loadedField = Future.value(mapper.mapRow(result.rows.first, \$database!, \$relationshipContext!));'),
+        Code('  }'),
         Code('}'),
         Code('return await $loadedField;'),
       ])));
@@ -351,7 +360,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code(
             'if ($loadedField == null && id != null && \$relationshipContext != null) {'),
         Code(
-            '  $loadedField = (\$relationshipContext!.getForEntity<${relatedType.element?.name}>() as dynamic).$methodName(id!) as Future<List<${relatedType.element?.name}>>?;'),
+            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}>();'),
+        Code(
+            '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();'),
+        Code('  final result = await (ops as dynamic).$methodName(id!);'),
+        Code(
+            '  $loadedField = Future.value(mapper.mapRows(result.rows, \$database!, \$relationshipContext!));'),
         Code('}'),
         Code('return await $loadedField ?? <${relatedType.element?.name}>[];'),
       ])));
@@ -434,5 +448,35 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       }
     }
     return codes;
+  }
+
+  String _generateMapper(ClassElement entityClass) {
+    final className = '${entityClass.name}MapperImpl';
+    final mapperClass = Class((b) => b
+      ..name = className
+      ..extend = refer('EntityMapper<${entityClass.name}>',
+          'package:datapod_api/datapod_api.dart')
+      ..methods.add(Method((m) => m
+        ..name = 'mapRow'
+        ..annotations.add(refer('override'))
+        ..returns = refer(entityClass.name)
+        ..requiredParameters.addAll([
+          Parameter((p) => p
+            ..name = 'row'
+            ..type = refer('Map<String, dynamic>')),
+          Parameter((p) => p
+            ..name = 'database'
+            ..type = refer(
+                'DatapodDatabase', 'package:datapod_api/datapod_api.dart')),
+          Parameter((p) => p
+            ..name = 'relationshipContext'
+            ..type = refer(
+                'RelationshipContext', 'package:datapod_api/datapod_api.dart')),
+        ])
+        ..body = Code(
+            'return Managed${entityClass.name}.fromRow(row, database, relationshipContext);'))));
+
+    final emitter = DartEmitter();
+    return mapperClass.accept(emitter).toString();
   }
 }

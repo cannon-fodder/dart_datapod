@@ -15,6 +15,8 @@ export 'exceptions.dart';
 export 'repository.dart';
 export 'relationship_context.dart';
 export 'repository_registry.dart';
+export 'mapper.dart';
+export 'operations.dart';
 export 'query.dart';
 export 'schema.dart';
 export 'transaction.dart';

@@ -200,23 +200,26 @@ class InitializerGenerator extends Builder {
         for (final repo in dbRepos) {
           final repoName = repo['name']!;
           final repoVar = _toCamelCase(repoName);
+          final entityName = _getEntityName(repoName, entities);
           repoInstances[repoName] = repoVar;
           result.writeln(
-              "    final $repoVar = ${repoName}Impl($databaseVar, sharedContext);");
+              "    final ${repoVar}Ops = ${repoName}OperationsImpl($databaseVar, sharedContext);");
+          result.writeln(
+              "    final ${repoVar}Mapper = ${entityName}MapperImpl();");
+          result.writeln(
+              "    final $repoVar = ${repoName}Impl($databaseVar, ${repoVar}Ops, ${repoVar}Mapper, sharedContext);");
+
+          result.writeln(
+              "    sharedContext.registerOperations<$entityName>(${repoVar}Ops);");
+          result.writeln(
+              "    sharedContext.registerMapper<$entityName>(${repoVar}Mapper);");
         }
         result.writeln();
       }
     }
 
     // Register all instances in the shared context and global registry
-    result.writeln("    // Register all repositories in shared context");
-    for (final entry in repoInstances.entries) {
-      final repoName = entry.key;
-      final repoVar = entry.value;
-      final entityName = _getEntityName(repoName, entities);
-      result.writeln(
-          "    sharedContext.registerForEntity<$entityName>($repoVar);");
-    }
+    result.writeln("    // All components registered in shared context");
 
     result.writeln();
     if (dbInstances.isEmpty && repoInstances.isEmpty) {

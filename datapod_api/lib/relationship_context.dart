@@ -6,38 +6,59 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-import 'repository.dart';
+import 'mapper.dart';
+import 'operations.dart';
 
 /// Context for managing relationships between repositories.
 ///
 /// This is used internally by repositories to find other repositories
 /// they need for cascading and lazy loading.
 abstract interface class RelationshipContext {
-  /// Gets the repository that manages entities of type [E].
-  BaseRepository<E, dynamic> getForEntity<E extends Object>();
+  /// Gets the mapper for an entity type.
+  EntityMapper<E> getMapper<E extends Object>();
 
-  /// Registers a repository for an entity type.
-  void registerForEntity<E extends Object>(
-      BaseRepository<E, dynamic> repository);
+  /// Registers a mapper for an entity type.
+  void registerMapper<E extends Object>(EntityMapper<E> mapper);
+
+  /// Gets the operations for an entity type.
+  DatabaseOperations<E> getOperations<E extends Object>();
+
+  /// Registers operations for an entity type.
+  void registerOperations<E extends Object>(DatabaseOperations<E> operations);
 }
 
 /// A simple implementation of [RelationshipContext].
 class RelationshipContextImpl implements RelationshipContext {
-  final Map<Type, dynamic> _repositoriesByEntity = {};
+  final Map<Type, dynamic> _mappersByEntity = {};
+  final Map<Type, dynamic> _operationsByEntity = {};
 
   @override
-  BaseRepository<E, dynamic> getForEntity<E extends Object>() {
-    final repo = _repositoriesByEntity[E];
-    if (repo == null) {
+  EntityMapper<E> getMapper<E extends Object>() {
+    final mapper = _mappersByEntity[E];
+    if (mapper == null) {
       throw StateError(
-          'No repository registered for entity type $E in this context.');
+          'No mapper registered for entity type $E in this context.');
     }
-    return repo as BaseRepository<E, dynamic>;
+    return mapper as EntityMapper<E>;
   }
 
   @override
-  void registerForEntity<E extends Object>(
-      BaseRepository<E, dynamic> repository) {
-    _repositoriesByEntity[E] = repository;
+  void registerMapper<E extends Object>(EntityMapper<E> mapper) {
+    _mappersByEntity[E] = mapper;
+  }
+
+  @override
+  DatabaseOperations<E> getOperations<E extends Object>() {
+    final operations = _operationsByEntity[E];
+    if (operations == null) {
+      throw StateError(
+          'No operations registered for entity type $E in this context.');
+    }
+    return operations as DatabaseOperations<E>;
+  }
+
+  @override
+  void registerOperations<E extends Object>(DatabaseOperations<E> operations) {
+    _operationsByEntity[E] = operations;
   }
 }

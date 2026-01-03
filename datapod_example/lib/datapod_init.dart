@@ -53,8 +53,16 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: []),
     ]));
 
-    final userRepository = UserRepositoryImpl(databasePostgresDb, sharedContext);
-    final roleRepository = RoleRepositoryImpl(databasePostgresDb, sharedContext);
+    final userRepositoryOps = UserRepositoryOperationsImpl(databasePostgresDb, sharedContext);
+    final userRepositoryMapper = UserMapperImpl();
+    final userRepository = UserRepositoryImpl(databasePostgresDb, userRepositoryOps, userRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<User>(userRepositoryOps);
+    sharedContext.registerMapper<User>(userRepositoryMapper);
+    final roleRepositoryOps = RoleRepositoryOperationsImpl(databasePostgresDb, sharedContext);
+    final roleRepositoryMapper = RoleMapperImpl();
+    final roleRepository = RoleRepositoryImpl(databasePostgresDb, roleRepositoryOps, roleRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<Role>(roleRepositoryOps);
+    sharedContext.registerMapper<Role>(roleRepositoryMapper);
 
     // Initialize mysql_db
     final pluginMysqlDb = MySqlPlugin();
@@ -71,8 +79,16 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: []),
     ]));
 
-    final postRepository = PostRepositoryImpl(databaseMysqlDb, sharedContext);
-    final commentRepository = CommentRepositoryImpl(databaseMysqlDb, sharedContext);
+    final postRepositoryOps = PostRepositoryOperationsImpl(databaseMysqlDb, sharedContext);
+    final postRepositoryMapper = PostMapperImpl();
+    final postRepository = PostRepositoryImpl(databaseMysqlDb, postRepositoryOps, postRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<Post>(postRepositoryOps);
+    sharedContext.registerMapper<Post>(postRepositoryMapper);
+    final commentRepositoryOps = CommentRepositoryOperationsImpl(databaseMysqlDb, sharedContext);
+    final commentRepositoryMapper = CommentMapperImpl();
+    final commentRepository = CommentRepositoryImpl(databaseMysqlDb, commentRepositoryOps, commentRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<Comment>(commentRepositoryOps);
+    sharedContext.registerMapper<Comment>(commentRepositoryMapper);
 
     // Initialize sqlite_db
     final pluginSqliteDb = SqlitePlugin();
@@ -89,16 +105,18 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: []),
     ]));
 
-    final settingRepository = SettingRepositoryImpl(databaseSqliteDb, sharedContext);
-    final settingAuditRepository = SettingAuditRepositoryImpl(databaseSqliteDb, sharedContext);
+    final settingRepositoryOps = SettingRepositoryOperationsImpl(databaseSqliteDb, sharedContext);
+    final settingRepositoryMapper = SettingMapperImpl();
+    final settingRepository = SettingRepositoryImpl(databaseSqliteDb, settingRepositoryOps, settingRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<Setting>(settingRepositoryOps);
+    sharedContext.registerMapper<Setting>(settingRepositoryMapper);
+    final settingAuditRepositoryOps = SettingAuditRepositoryOperationsImpl(databaseSqliteDb, sharedContext);
+    final settingAuditRepositoryMapper = SettingAuditMapperImpl();
+    final settingAuditRepository = SettingAuditRepositoryImpl(databaseSqliteDb, settingAuditRepositoryOps, settingAuditRepositoryMapper, sharedContext);
+    sharedContext.registerOperations<SettingAudit>(settingAuditRepositoryOps);
+    sharedContext.registerMapper<SettingAudit>(settingAuditRepositoryMapper);
 
-    // Register all repositories in shared context
-    sharedContext.registerForEntity<User>(userRepository);
-    sharedContext.registerForEntity<Role>(roleRepository);
-    sharedContext.registerForEntity<Post>(postRepository);
-    sharedContext.registerForEntity<Comment>(commentRepository);
-    sharedContext.registerForEntity<Setting>(settingRepository);
-    sharedContext.registerForEntity<SettingAudit>(settingAuditRepository);
+    // All components registered in shared context
 
     return DatapodContext(
       postgresDb: databasePostgresDb,

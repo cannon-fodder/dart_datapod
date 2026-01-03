@@ -104,8 +104,12 @@ void main() {
       // In the generated init, testEntityRepository is using databasePostgresTest.
       // We can manually create one for MySQL for testing or update generator to provide both.
       // For now, let's manually create it.
+      final relCtx = RelationshipContextImpl();
       final mysqlRepo = TestEntityRepositoryImpl(
-          context.mysqlTest, RelationshipContextImpl());
+          context.mysqlTest,
+          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+          TestEntityMapperImpl(),
+          relCtx);
 
       // CREATE
       var entity = TestEntity()
