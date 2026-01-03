@@ -11,9 +11,18 @@ import 'package:datapod_api/datapod_api.dart';
 class SqliteTransaction implements Transaction {
   final Future<void> Function() _commit;
   final Future<void> Function() _rollback;
+  final Future<void> Function(String) _createSavepoint;
+  final Future<void> Function(String) _rollbackToSavepoint;
+  final Future<void> Function(String) _releaseSavepoint;
   bool _completed = false;
 
-  SqliteTransaction(this._commit, this._rollback);
+  SqliteTransaction(
+    this._commit,
+    this._rollback,
+    this._createSavepoint,
+    this._rollbackToSavepoint,
+    this._releaseSavepoint,
+  );
 
   @override
   Future<void> commit() async {
@@ -27,5 +36,23 @@ class SqliteTransaction implements Transaction {
     if (_completed) return;
     await _rollback();
     _completed = true;
+  }
+
+  @override
+  Future<void> createSavepoint(String name) async {
+    if (_completed) return;
+    await _createSavepoint(name);
+  }
+
+  @override
+  Future<void> rollbackToSavepoint(String name) async {
+    if (_completed) return;
+    await _rollbackToSavepoint(name);
+  }
+
+  @override
+  Future<void> releaseSavepoint(String name) async {
+    if (_completed) return;
+    await _releaseSavepoint(name);
   }
 }

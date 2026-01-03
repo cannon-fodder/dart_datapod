@@ -92,6 +92,9 @@ class InitializerGenerator extends Builder {
     final result = StringBuffer();
     // ... imports ...
     result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
+    result.writeln("//");
+    result.writeln(
+        "// This software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.");
     result.writeln();
     result.writeln("import 'dart:io';");
     result.writeln("import 'package:datapod_api/datapod_api.dart';");

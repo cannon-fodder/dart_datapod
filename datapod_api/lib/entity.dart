@@ -20,6 +20,9 @@ abstract interface class ManagedEntity {
   /// Whether the entity has unsaved changes.
   bool get isDirty;
 
+  /// The primary key of this entity.
+  dynamic get $id;
+
   /// Marks the entity as managed and persistent.
   void markPersistent();
 

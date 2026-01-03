@@ -101,6 +101,9 @@ class MySqlConnection implements DatabaseConnection {
     return MySqlTransaction(
       () => execute('COMMIT'),
       () => execute('ROLLBACK'),
+      (name) => execute('SAVEPOINT `$name`'),
+      (name) => execute('ROLLBACK TO SAVEPOINT `$name`'),
+      (name) => execute('RELEASE SAVEPOINT `$name`'),
     );
   }
 

@@ -13,6 +13,9 @@ import 'package:datapod_engine/datapod_engine.dart';
 class MockTransaction implements Transaction {
   bool committed = false;
   bool rolledBack = false;
+  final List<String> savepoints = [];
+  final List<String> rolledBackSavepoints = [];
+  final List<String> releasedSavepoints = [];
 
   @override
   Future<void> commit() async {
@@ -22,6 +25,21 @@ class MockTransaction implements Transaction {
   @override
   Future<void> rollback() async {
     rolledBack = true;
+  }
+
+  @override
+  Future<void> createSavepoint(String name) async {
+    savepoints.add(name);
+  }
+
+  @override
+  Future<void> rollbackToSavepoint(String name) async {
+    rolledBackSavepoints.add(name);
+  }
+
+  @override
+  Future<void> releaseSavepoint(String name) async {
+    releasedSavepoints.add(name);
   }
 }
 

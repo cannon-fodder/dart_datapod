@@ -32,4 +32,13 @@ abstract interface class Transaction {
 
   /// Rolls back the transaction.
   Future<void> rollback();
+
+  /// Creates a savepoint within the transaction.
+  Future<void> createSavepoint(String name);
+
+  /// Rolls back to a previously created savepoint.
+  Future<void> rollbackToSavepoint(String name);
+
+  /// Releases a previously created savepoint.
+  Future<void> releaseSavepoint(String name);
 }

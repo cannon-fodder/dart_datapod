@@ -42,6 +42,11 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     final entityClass = entityType.element as ClassElement;
 
     final result = StringBuffer();
+    result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
+    result.writeln("//");
+    result.writeln(
+        "// This software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.");
+    result.writeln();
     result.writeln(_generateRepositoryImpl(element, entityClass, keyType));
 
     return result.toString();

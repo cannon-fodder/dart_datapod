@@ -24,6 +24,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     if (element is! ClassElement) return '';
 
     final result = StringBuffer();
+    result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
+    result.writeln("//");
+    result.writeln(
+        "// This software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.");
+    result.writeln();
     result.writeln(_generateManagedEntity(element));
 
     return result.toString();
@@ -196,6 +201,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             ..type = refer('RelationshipContext?',
                 'package:datapod_api/datapod_api.dart')))
           ..body = Code('_relationshipContext = value;')),
+        Method((m) => m
+          ..name = r'$id'
+          ..type = MethodType.getter
+          ..annotations.add(refer('override'))
+          ..returns = refer('dynamic')
+          ..body = refer(metadata.idColumn?.fieldName ?? 'null').code),
         ...entityClass.fields
             .where((f) => !f.isStatic && !f.isSynthetic && !_isRelation(f))
             .map((f) => Method((m) => m
@@ -306,7 +317,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code('if (value != $loadedField) {'),
         Code('  $loadedField = value;'),
         Code('  _isDirty = true;'),
-        Code('  // TODO: If value is persistent, update $foreignKeyField'),
+        if (!isLazy) ...[
+          Code('  if (value is ManagedEntity && value.isPersistent) {'),
+          Code('    $foreignKeyField = value.\$id;'),
+          Code('  }'),
+        ],
         Code('}'),
       ])));
 

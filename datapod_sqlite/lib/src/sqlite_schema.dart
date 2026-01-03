@@ -71,7 +71,27 @@ class SqliteSchemaManager implements SchemaManager {
 
   @override
   Future<void> migrateSchema() async {
-    // TODO: Implementation
+    if (_schema == null) return;
+
+    // First ensure all tables exist
+    await initializeSchema();
+
+    final existingTables = await getTables();
+    for (final table in _schema!.tables) {
+      final existingTable =
+          existingTables.firstWhere((t) => t.name == table.name);
+      final existingColumnNames =
+          existingTable.columns.map((c) => c.name).toSet();
+
+      for (final column in table.columns) {
+        if (!existingColumnNames.contains(column.name)) {
+          final type = _mapType(column);
+          final nullable = column.isNullable ? '' : ' NOT NULL';
+          await _connection.execute(
+              'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable');
+        }
+      }
+    }
   }
 
   @override

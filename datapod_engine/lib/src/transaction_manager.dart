@@ -21,9 +21,18 @@ abstract class BaseTransactionManager implements TransactionManager {
   Future<T> runInTransaction<T>(Future<T> Function() action) async {
     final existing = currentTransaction;
     if (existing != null) {
-      // Already in a transaction, just run the action.
-      // TODO: Support nested transactions/savepoints if needed.
-      return await action();
+      // Already in a transaction, use a savepoint for nested transaction.
+      final savepointName =
+          'datapod_sp_${Zone.current.hashCode}_${DateTime.now().microsecondsSinceEpoch}';
+      await existing.createSavepoint(savepointName);
+      try {
+        final result = await action();
+        await existing.releaseSavepoint(savepointName);
+        return result;
+      } catch (e) {
+        await existing.rollbackToSavepoint(savepointName);
+        rethrow;
+      }
     }
 
     final transaction = await beginTransaction();

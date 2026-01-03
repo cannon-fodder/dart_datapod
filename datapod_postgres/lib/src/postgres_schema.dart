@@ -58,7 +58,27 @@ class PostgresSchemaManager implements SchemaManager {
 
   @override
   Future<void> migrateSchema() async {
-    // TODO: Implementation of diff-based migration
+    if (_schema == null) return;
+
+    // First ensure all tables exist
+    await initializeSchema();
+
+    final existingTables = await getTables();
+    for (final table in _schema!.tables) {
+      final existingTable =
+          existingTables.firstWhere((t) => t.name == table.name);
+      final existingColumnNames =
+          existingTable.columns.map((c) => c.name).toSet();
+
+      for (final column in table.columns) {
+        if (!existingColumnNames.contains(column.name)) {
+          final type = _mapType(column);
+          final nullable = column.isNullable ? '' : ' NOT NULL';
+          await _connection.execute(
+              'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable');
+        }
+      }
+    }
   }
 
   String _mapType(ColumnDefinition c) {
@@ -95,18 +115,28 @@ class PostgresSchemaManager implements SchemaManager {
   }
 
   Future<List<ColumnMetadata>> _getColumns(String tableName) async {
-    final result = await _connection.execute(
+    final columnsResult = await _connection.execute(
       "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = @table",
       {'table': tableName},
     );
 
-    return result.rows.map((row) {
+    final pkResult = await _connection.execute(
+      "SELECT kcu.column_name FROM information_schema.table_constraints tc "
+      "JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema "
+      "WHERE tc.constraint_type = 'PRIMARY KEY' AND tc.table_name = @table",
+      {'table': tableName},
+    );
+
+    final pkColumns =
+        pkResult.rows.map((r) => r['column_name'] as String).toSet();
+
+    return columnsResult.rows.map((row) {
+      final name = row['column_name'] as String;
       return ColumnMetadata(
-        name: row['column_name'] as String,
+        name: name,
         type: row['data_type'] as String,
         isNullable: row['is_nullable'] == 'YES',
-        // In PostgreSQL, primary key detection is more complex, typically via pg_index
-        isPrimaryKey: false, // TODO: Implement PK detection
+        isPrimaryKey: pkColumns.contains(name),
       );
     }).toList();
   }

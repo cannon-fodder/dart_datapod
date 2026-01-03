@@ -126,6 +126,9 @@ class SqliteConnection implements DatabaseConnection {
     return SqliteTransaction(
       () => execute('COMMIT'),
       () => execute('ROLLBACK'),
+      (name) => execute('SAVEPOINT "$name"'),
+      (name) => execute('ROLLBACK TO SAVEPOINT "$name"'),
+      (name) => execute('RELEASE SAVEPOINT "$name"'),
     );
   }
 
