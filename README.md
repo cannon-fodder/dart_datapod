@@ -13,6 +13,8 @@ Datapod is a powerful, modular Dart ORM (Object-Relational Mapper) inspired by t
 - **Type Safety**: Fully typed queries and result mapping using Dart's powerful type system.
 - **Enterprise-Ready**: Support for connection pooling, transactions, and environment-based configuration.
 
+📚 **Check out the [Usage Examples](EXAMPLES.md) for comprehensive code snippets.**
+
 ---
 
 ## 📦 Package Ecosystem
