@@ -7,6 +7,7 @@ The execution engine for the Datapod ORM framework. It manages database plugins,
 - **Plugin Management**: Load and manage multiple database plugins in the same application.
 - **Relationship Orchestration**: Handles cascading saves and deletes across different database backends.
 - **Transaction Support**: Core logic for zone-based and manual transactions.
+- **Configuration & Environment**: Parses `datapod.yaml` and resolves environment substitutions.
 - **Build-Time Integration**: Supports the plugin discovery mechanism used by `datapod_generator`.
 
 ## 📖 Usage
