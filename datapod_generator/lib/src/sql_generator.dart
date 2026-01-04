@@ -10,6 +10,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:source_gen/source_gen.dart';
+import 'package:datapod_api/datapod_api.dart' show Sort, Direction;
 import 'package:datapod_api/datapod_api.dart' as api;
 
 class EntitySqlMetadata {
@@ -325,8 +326,9 @@ class SqlGenerator {
   }
 
   static String generateUpdate(EntitySqlMetadata metadata) {
-    if (metadata.idColumn == null)
+    if (metadata.idColumn == null) {
       throw Exception('Cannot update entity without ID');
+    }
     final cols = metadata.columns
         .where((c) => !c.isId && c.columnName.isNotEmpty)
         .toList();
@@ -340,19 +342,28 @@ class SqlGenerator {
   }
 
   static String generateDelete(EntitySqlMetadata metadata) {
-    if (metadata.idColumn == null)
+    if (metadata.idColumn == null) {
       throw Exception('Cannot delete entity without ID');
+    }
     return 'DELETE FROM ${metadata.tableName} WHERE ${metadata.idColumn!.columnName} = @id';
   }
 
   static String generateFindById(EntitySqlMetadata metadata) {
-    if (metadata.idColumn == null)
+    if (metadata.idColumn == null) {
       throw Exception('Cannot find entity without ID');
+    }
     return 'SELECT * FROM ${metadata.tableName} WHERE ${metadata.idColumn!.columnName} = @id';
   }
 
-  static String generateDslQuery(EntitySqlMetadata metadata,
-      List<dynamic> components, String type, List<String> parameterNames) {
+  static String generateDslQuery(
+    EntitySqlMetadata metadata,
+    List<dynamic> components,
+    String type,
+    List<String> parameterNames, {
+    List<Sort>? sort,
+    int? limit,
+    int? offset,
+  }) {
     String sql;
     switch (type) {
       case 'count':
@@ -390,6 +401,27 @@ class SqlGenerator {
 
     if (type == 'exists') {
       sql += ')';
+    }
+
+    if (sort != null && sort.isNotEmpty) {
+      final orderClauses = <String>[];
+      for (final s in sort) {
+        final column = metadata.columns.firstWhere(
+          (c) => c.fieldName == s.field,
+          orElse: () => throw Exception(
+              'Field ${s.field} not found in entity for table ${metadata.tableName}'),
+        );
+        orderClauses.add(
+            '${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
+      }
+      sql += ' ORDER BY ${orderClauses.join(', ')}';
+    }
+
+    if (limit != null) {
+      sql += ' LIMIT $limit';
+    }
+    if (offset != null) {
+      sql += ' OFFSET $offset';
     }
 
     return sql;

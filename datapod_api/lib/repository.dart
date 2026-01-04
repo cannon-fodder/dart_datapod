@@ -8,6 +8,7 @@
 
 import 'dart:async';
 
+import 'pagination.dart';
 import 'relationship_context.dart';
 
 /// Base repository interface for entity operations.
@@ -65,6 +66,14 @@ abstract class BaseRepository<E, K> {
   ///
   /// Throws an exception if the entity cannot be found or deleted.
   Future<void> delete(K id);
+
+  /// Finds all entities.
+  ///
+  /// Optionally accepts [sort] to order the results.
+  Future<List<E>> findAll({List<Sort>? sort});
+
+  /// Finds a page of entities.
+  Future<Page<E>> findAllPaged(Pageable pageable);
 
   /// Finds an entity by its primary key [id].
   ///

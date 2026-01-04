@@ -47,6 +47,15 @@ class InitializerGenerator extends Builder {
       for (final annotated in reader.annotatedWith(repoChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
+          final superType = element.allSupertypes.firstWhere(
+            (t) => t.element.name == 'BaseRepository',
+            orElse: () => throw InvalidGenerationSourceError(
+              'Repository must extend BaseRepository<E, K>',
+              element: element,
+            ),
+          );
+          final entityType = superType.typeArguments[0];
+          final keyType = superType.typeArguments[1];
           String? dbName;
           if (dbChecker.hasAnnotationOf(element)) {
             final dbAnnot = dbChecker.firstAnnotationOf(element);
@@ -55,11 +64,13 @@ class InitializerGenerator extends Builder {
           repos.add({
             'name': element.name,
             'import': asset.uri.toString(),
+            'entity': entityType.getDisplayString(withNullability: true),
+            'key': keyType.getDisplayString(withNullability: true),
             if (dbName != null) 'database': dbName,
           });
         }
       }
-      // ... entities remains the same ...
+
       for (final annotated in reader.annotatedWith(entityChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
@@ -72,6 +83,7 @@ class InitializerGenerator extends Builder {
           });
         }
       }
+
       for (final annotated in reader.annotatedWith(pluginDefChecker)) {
         if (annotated.element is ClassElement) {
           final element = annotated.element as ClassElement;
@@ -86,7 +98,6 @@ class InitializerGenerator extends Builder {
 
     if (repos.isEmpty && entities.isEmpty) return;
 
-    // ... YAML reading remains same ...
     YamlMap? databasesYaml;
     var databasesAsset = AssetId(buildStep.inputId.package, 'databases.yaml');
     if (!await buildStep.canRead(databasesAsset)) {
@@ -104,7 +115,6 @@ class InitializerGenerator extends Builder {
     }
 
     final result = StringBuffer();
-    // ... imports ...
     result.writeln("// GENERATED CODE - DO NOT MODIFY BY HAND");
     result.writeln("//");
     result.writeln(
@@ -173,7 +183,7 @@ class InitializerGenerator extends Builder {
         if (discoveredPlugins.containsKey(pluginName)) {
           pluginClassName = discoveredPlugins[pluginName]!['class']!;
         } else {
-          pluginClassName = _toPascalCase(pluginName) + 'Plugin';
+          pluginClassName = '${_toPascalCase(pluginName)}Plugin';
         }
 
         result.writeln("    // Initialize $dbName");
@@ -192,21 +202,14 @@ class InitializerGenerator extends Builder {
             "    final $databaseVar = await $pluginVar.createDatabase($dbConfigVar, $connConfigVar);");
         result.writeln();
 
-        // Pass schema to the database
         result.writeln(
             "    $databaseVar.connection.schemaManager.setSchema(const SchemaDefinition(tables: [");
-        final dbEntities = entities.where((e) {
-          // For now, assume all entities belong to all databases or we need a way to filter
-          // We'll use the same logic as repos: if an entity's corresponding repo is in this DB
-          return true; // Simplified: all entities for now
-        });
-        for (final entity in dbEntities) {
+        for (final entity in entities) {
           result.writeln("      ${entity['tableDef']},");
         }
         result.writeln("    ]));");
         result.writeln();
 
-        // Repositories mapped to this database via @Database(name) or default
         final allDbNames = (databasesYaml['databases'] as YamlList)
             .map((d) => d['name'] as String)
             .toList();
@@ -223,7 +226,8 @@ class InitializerGenerator extends Builder {
         for (final repo in dbRepos) {
           final repoName = repo['name']!;
           final repoVar = _toCamelCase(repoName);
-          final entityName = _getEntityName(repoName, entities);
+          final entityName = repo['entity']!;
+          final keyName = repo['key']!;
           repoInstances[repoName] = repoVar;
           result.writeln(
               "    final ${repoVar}Ops = ${repoName}OperationsImpl($databaseVar, sharedContext);");
@@ -233,7 +237,7 @@ class InitializerGenerator extends Builder {
               "    final $repoVar = ${repoName}Impl($databaseVar, ${repoVar}Ops, ${repoVar}Mapper, sharedContext);");
 
           result.writeln(
-              "    sharedContext.registerOperations<$entityName>(${repoVar}Ops);");
+              "    sharedContext.registerOperations<$entityName, $keyName>(${repoVar}Ops);");
           result.writeln(
               "    sharedContext.registerMapper<$entityName>(${repoVar}Mapper);");
         }
@@ -241,10 +245,6 @@ class InitializerGenerator extends Builder {
       }
     }
 
-    // Register all instances in the shared context and global registry
-    result.writeln("    // All components registered in shared context");
-
-    result.writeln();
     if (dbInstances.isEmpty && repoInstances.isEmpty) {
       result.writeln("    return DatapodContext();");
     } else {
@@ -309,21 +309,6 @@ class InitializerGenerator extends Builder {
   String _toCamelCase(String s) {
     final pascal = _toPascalCase(s);
     return pascal[0].toLowerCase() + pascal.substring(1);
-  }
-
-  String _getEntityName(String repoName, List<Map<String, String>> entities) {
-    var entityName = repoName.replaceAll('Repository', '');
-    if (entities.any((e) => e['name'] == entityName)) {
-      return entityName;
-    }
-    // Try plural to singular if needed, or other common patterns
-    if (entities.isNotEmpty) {
-      // If we only have one entity and one repository, they likely match
-      if (entities.length == 1 && repoName.contains(entities[0]['name']!)) {
-        return entities[0]['name']!;
-      }
-    }
-    return 'Object';
   }
 
   String _generateTableDefCode(api.TableDefinition def) {

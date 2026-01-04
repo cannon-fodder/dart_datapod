@@ -1,6 +1,7 @@
 name: datapod_generator
-description: Code generation logic and build_runner integration for the Datapod ORM framework.
-version: 0.1.0
+description: Code generator for Datapod ORM classes.
+publish_to: none
+version: 0.0.1
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod
 issue_tracker: https://github.com/cannon-fodder/dart_datapod/issues
@@ -23,6 +24,7 @@ dependencies:
   meta: ^1.11.0
   yaml: ^3.1.3
   path: ^1.9.1
+  glob: ^2.1.2
 
 dev_dependencies:
   lints: ^3.0.0

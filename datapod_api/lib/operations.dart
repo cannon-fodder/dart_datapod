@@ -7,20 +7,24 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'dart:async';
+import 'pagination.dart';
 import 'query.dart';
 
 /// Interface for executing database operations for a specific entity.
-abstract interface class DatabaseOperations<E extends Object> {
+abstract interface class DatabaseOperations<E extends Object, K> {
   /// Finds an entity by its primary key.
-  Future<QueryResult> findById(dynamic id);
+  Future<QueryResult> findById(K id);
+
+  /// Finds all entities.
+  Future<QueryResult> findAll({List<Sort>? sort, int? limit, int? offset});
 
   /// Saves an entity (insert or update).
   Future<QueryResult> save(Map<String, dynamic> params,
       {bool isUpdate = false});
 
   /// Saves an entity (insert or update), handling conversion to/from managed state.
-  Future<E> saveEntity<E extends Object>(E entity);
+  Future<E> saveEntity(E entity);
 
   /// Deletes an entity by its primary key.
-  Future<void> delete(dynamic id);
+  Future<void> delete(K id);
 }

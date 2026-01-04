@@ -12,7 +12,6 @@ import 'package:datapod_test/datapod_init.dart';
 import 'package:datapod_test/test_entities.dart';
 import 'package:datapod_test/repositories/test_entity_repository.dart';
 import 'package:datapod_test/repositories/unique_entity_repository.dart';
-import 'package:datapod_engine/datapod_engine.dart';
 import 'package:logging/logging.dart';
 
 void main() {

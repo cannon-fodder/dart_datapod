@@ -1,5 +1,6 @@
 name: datapod_core
 description: Shared configuration and environment resolution for the Datapod ORM.
+publish_to: none
 version: 0.1.0
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod

@@ -303,7 +303,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code(
             'if ($loadedField == null && $foreignKeyField != null && \$relationshipContext != null) {'),
         Code(
-            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}>();'),
+            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}, dynamic>();'),
         Code(
             '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();'),
         Code('  final result = await ops.findById($foreignKeyField);'),
@@ -360,7 +360,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         Code(
             'if ($loadedField == null && id != null && \$relationshipContext != null) {'),
         Code(
-            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}>();'),
+            '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}, dynamic>();'),
         Code(
             '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();'),
         Code('  final result = await (ops as dynamic).$methodName(id!);'),

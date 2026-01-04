@@ -21,10 +21,11 @@ abstract interface class RelationshipContext {
   void registerMapper<E extends Object>(EntityMapper<E> mapper);
 
   /// Gets the operations for an entity type.
-  DatabaseOperations<E> getOperations<E extends Object>();
+  DatabaseOperations<E, K> getOperations<E extends Object, K>();
 
   /// Registers operations for an entity type.
-  void registerOperations<E extends Object>(DatabaseOperations<E> operations);
+  void registerOperations<E extends Object, K>(
+      DatabaseOperations<E, K> operations);
 }
 
 /// A simple implementation of [RelationshipContext].
@@ -48,17 +49,18 @@ class RelationshipContextImpl implements RelationshipContext {
   }
 
   @override
-  DatabaseOperations<E> getOperations<E extends Object>() {
+  DatabaseOperations<E, K> getOperations<E extends Object, K>() {
     final operations = _operationsByEntity[E];
     if (operations == null) {
       throw StateError(
           'No operations registered for entity type $E in this context.');
     }
-    return operations as DatabaseOperations<E>;
+    return operations as DatabaseOperations<E, K>;
   }
 
   @override
-  void registerOperations<E extends Object>(DatabaseOperations<E> operations) {
+  void registerOperations<E extends Object, K>(
+      DatabaseOperations<E, K> operations) {
     _operationsByEntity[E] = operations;
   }
 }

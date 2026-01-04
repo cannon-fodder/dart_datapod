@@ -16,4 +16,6 @@ part 'test_entity_repository.datapod.dart';
 abstract class TestEntityRepository extends BaseRepository<TestEntity, int> {
   TestEntityRepository(super.relationshipContext);
   Future<TestEntity?> findByName(String name);
+  Future<Page<TestEntity>> findByNameContaining(String part, Pageable pageable);
+  Future<List<TestEntity>> findByFlagTrue(List<Sort> sort);
 }
