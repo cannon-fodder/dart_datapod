@@ -14,7 +14,7 @@ import 'relationship_context.dart';
 /// Managed entities carry additional state information used for persistence
 /// orchestration, such as dirty tracking and persistence status. This allows
 /// Datapod to efficiently decide between `INSERT` and `UPDATE` operations
-/// when [save] is called on a repository.
+/// when `save` is called on a repository.
 ///
 /// Datapod automatically generates [ManagedEntity] implementations for your
 /// entity classes during the build process. You typically do not need to
@@ -25,7 +25,7 @@ abstract interface class ManagedEntity {
 
   /// Whether the entity represents a persistent record in the database.
   ///
-  /// Persistent entities will be updated on [save], while non-persistent
+  /// Persistent entities will be updated on save, while non-persistent
   /// ones will be inserted.
   bool get isPersistent;
 

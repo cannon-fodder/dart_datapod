@@ -6,7 +6,7 @@ import '../entities/role.dart';
 part 'role_repository.datapod.dart';
 
 @Repository()
-@Database('postgres_db')
+@Database('identity_db')
 abstract class RoleRepository extends BaseRepository<Role, int> {
   RoleRepository(super.relationshipContext);
 }

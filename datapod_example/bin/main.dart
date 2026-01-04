@@ -35,33 +35,33 @@ void main(List<String> args) async {
   try {
     // 2. Setup Schemas
     print('Dropping existing tables...');
-    final postgresDb = context.postgresDb;
-    final mysqlDb = context.mysqlDb;
-    final sqliteDb = context.sqliteDb;
+    final identityDb = context.identityDb;
+    final contentDb = context.contentDb;
+    final configDb = context.configDb;
 
-    await postgresDb.connection.execute('DROP TABLE IF EXISTS roles CASCADE');
-    await postgresDb.connection.execute('DROP TABLE IF EXISTS users CASCADE');
-    await mysqlDb.connection.execute('DROP TABLE IF EXISTS comments');
-    await mysqlDb.connection.execute('DROP TABLE IF EXISTS posts');
-    await sqliteDb.connection.execute('DROP TABLE IF EXISTS setting_audits');
-    await sqliteDb.connection.execute('DROP TABLE IF EXISTS settings');
+    await identityDb.connection.execute('DROP TABLE IF EXISTS roles CASCADE');
+    await identityDb.connection.execute('DROP TABLE IF EXISTS users CASCADE');
+    await contentDb.connection.execute('DROP TABLE IF EXISTS comments');
+    await contentDb.connection.execute('DROP TABLE IF EXISTS posts');
+    await configDb.connection.execute('DROP TABLE IF EXISTS setting_audits');
+    await configDb.connection.execute('DROP TABLE IF EXISTS settings');
 
     print('Initializing schemas via SchemaManager...');
-    await postgresDb.connection.schemaManager.initializeSchema();
-    await mysqlDb.connection.schemaManager.initializeSchema();
-    await sqliteDb.connection.schemaManager.initializeSchema();
+    await identityDb.connection.schemaManager.initializeSchema();
+    await contentDb.connection.schemaManager.initializeSchema();
+    await configDb.connection.schemaManager.initializeSchema();
 
     // In a real cross-database scenario, physical FKs across DB servers don't exist.
     // We'll drop the physical FK in MySQL that points to a table in Postgres.
     try {
-      await mysqlDb.connection
+      await contentDb.connection
           .execute('ALTER TABLE posts DROP FOREIGN KEY fk_posts_author_id');
     } catch (_) {
       // Ignore if it fails (e.g. if it wasn't created)
     }
 
-    // 3. Exercise Identity (Postgres)
-    print('\n[IDENTITY] Creating User with Roles in PostgreSQL...');
+    // 3. Exercise Identity (Postgres -> Identity DB)
+    print('\n[IDENTITY] Creating User with Roles in Identity DB...');
     var alice = User()..name = 'Alice';
     final adminRole = Role()..name = 'ADMIN';
     final userRole = Role()..name = 'USER';
@@ -72,9 +72,9 @@ void main(List<String> args) async {
     print('  - Created at: ${alice.createdAt}');
     print('  - Updated at: ${alice.updatedAt}');
 
-    // 4. Exercise Content (MySQL)
+    // 4. Exercise Content (MySQL -> Content DB)
     print(
-        '\n[CONTENT] Creating Post with Comments in MySQL (related to Postgres User)...');
+        '\n[CONTENT] Creating Post with Comments in Content DB (related to Identity User)...');
     var post1 = Post()
       ..title = 'Enterprise Architecture'
       ..readingTime = const Duration(minutes: 15)
@@ -95,8 +95,8 @@ void main(List<String> args) async {
     print('  - Created at: ${post1.createdAt}');
     print('  - Updated at: ${post1.updatedAt}');
 
-    // 5. Exercise Config (SQLite)
-    print('\n[CONFIG] Creating Settings with Audits in SQLite...');
+    // 5. Exercise Config (SQLite -> Config DB)
+    print('\n[CONFIG] Creating Settings with Audits in Config DB...');
     var themeSetting = Setting()
       ..key = 'ui.theme'
       ..value = 'dark';
@@ -112,11 +112,11 @@ void main(List<String> args) async {
       ..key = 'app.language'
       ..value = 'en_US';
     langSetting = await settingRepo.save(langSetting);
-    print('Saved settings with audit trail to SQLite.');
+    print('Saved settings with audit trail to Config DB.');
 
     // 6. Verify cross-database lazy loading
     print(
-        '\n[VERIFICATION] Testing Lazy Loading (MySQL Post -> Postgres Author)...');
+        '\n[VERIFICATION] Testing Lazy Loading (Content DB Post -> Identity DB Author)...');
     final fetchedPost = await postRepo.findById(post1.id!);
     if (fetchedPost != null) {
       final author = await fetchedPost.author;
@@ -124,12 +124,29 @@ void main(List<String> args) async {
           'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}');
       print(
           '  - Status: ${fetchedPost.status}, Metadata: ${fetchedPost.metadata}, Tags: ${fetchedPost.tags}');
+
+      // 7. Verify Eager Loading (Same DB: Comment -> Post)
+      print(
+          '\n[VERIFICATION] Testing Eager Loading (Fetch Join: Content DB Comment -> Content DB Post)...');
+      final comments = await fetchedPost.comments;
+      if (comments != null && comments.isNotEmpty) {
+        final firstCommentId = comments.first.id!;
+        final commentRepo = context.commentRepository;
+        final fetchedComment = await commentRepo.findById(firstCommentId);
+        if (fetchedComment != null) {
+          print(' fetchedComment: ${fetchedComment.content}');
+          // Accessing .post should return the eagerly loaded entity (future completes immediately with value)
+          // To prove it, we can print it.
+          final post = await fetchedComment.post;
+          print(' Comment Post Title (Eager): ${post?.title}');
+        }
+      }
     }
 
-    // 7. Verify Config DB
+    // 8. Verify Config DB
     print('\n[VERIFICATION] Verifying Settings and Audits in Config DB...');
     final dbTheme = await settingRepo.findByKey('ui.theme');
-    print('Found setting in SQLite: ${dbTheme?.key} = ${dbTheme?.value}');
+    print('Found setting in Config DB: ${dbTheme?.key} = ${dbTheme?.value}');
     final audits = await dbTheme?.auditTrail;
     if (audits != null) {
       print('Audit trail count: ${audits.length}');
@@ -139,19 +156,19 @@ void main(List<String> args) async {
     }
 
     // 8. Exercise Memory DB (Custom Plugin)
-    print('\n[MEMORY] Using custom MemoryPlugin...');
-    final memoryDb = context.memoryDb;
+    print('\n[MEMORY] Using custom MemoryPlugin (Cache DB)...');
+    final cacheDb = context.cacheDb;
     // We can use the connection directly for raw operations on the custom plugin
-    await memoryDb.connection.execute(
+    await cacheDb.connection.execute(
         'INSERT INTO test (id, info) VALUES (@id, @info)',
         {'id': 1, 'info': 'Found in memory!'});
-    final memResult = await memoryDb.connection
+    final memResult = await cacheDb.connection
         .execute('SELECT * FROM test WHERE id = @id', {'id': 1});
     if (memResult.isNotEmpty) {
-      print('Retrieved from Memory DB: ${memResult.rows.first['info']}');
+      print('Retrieved from Cache DB: ${memResult.rows.first['info']}');
     }
 
-    // 9. Exercise Streams (Postgres)
+    // 9. Exercise Streams (Identity DB)
     print('\n[STREAM] Using Stream-based queries...');
     await userRepo.save(User()..name = 'Bob');
     await userRepo.save(User()..name = 'Charlie');

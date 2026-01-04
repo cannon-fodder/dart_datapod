@@ -510,7 +510,7 @@ class SqlGenerator {
       // Select all from main table
       for (final col in metadata.columns) {
         if (col.columnName.isNotEmpty) {
-          selectList.add('${mainAlias}.${col.columnName} AS ${col.columnName}');
+          selectList.add('$mainAlias.${col.columnName} AS ${col.columnName}');
         }
       }
       // Select from joined tables
@@ -546,7 +546,7 @@ class SqlGenerator {
     if (joins != null && joins.isNotEmpty) {
       for (final join in joins) {
         sql +=
-            ' LEFT JOIN ${join.tableName} ${join.alias} ON ${mainAlias}.${join.joinColumn} = ${join.alias}.${join.referencedColumn}';
+            ' LEFT JOIN ${join.tableName} ${join.alias} ON $mainAlias.${join.joinColumn} = ${join.alias}.${join.referencedColumn}';
       }
     }
 
@@ -566,7 +566,7 @@ class SqlGenerator {
 
         final paramName = parameterNames[i];
         sql += _generateOperatorSql(
-            '${selectAlias}${column.columnName}', comp.operator, paramName);
+            '$selectAlias${column.columnName}', comp.operator, paramName);
       }
     }
 
@@ -583,7 +583,7 @@ class SqlGenerator {
               'Field ${s.field} not found in entity for table ${metadata.tableName}'),
         );
         orderClauses.add(
-            '${selectAlias}${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
+            '$selectAlias${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
       }
       sql += ' ORDER BY ${orderClauses.join(', ')}';
     }

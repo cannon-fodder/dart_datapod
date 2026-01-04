@@ -14,7 +14,7 @@ import '../entities/role.dart';
 part 'user_repository.datapod.dart';
 
 @Repository()
-@Database('postgres_db')
+@Database('identity_db')
 abstract class UserRepository extends BaseRepository<User, int> {
   UserRepository(super.relationshipContext);
   Future<User?> findByName(String name);

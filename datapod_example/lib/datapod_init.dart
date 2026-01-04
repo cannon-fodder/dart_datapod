@@ -39,13 +39,13 @@ class DatapodInitializer {
 
     final sharedContext = RelationshipContextImpl();
 
-    // Initialize postgres_db
-    final pluginPostgresDb = PostgresPlugin();
-    final dbConfigPostgresDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'postgres_db');
-    final connConfigPostgresDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'postgres_db');
-    final databasePostgresDb = await pluginPostgresDb.createDatabase(dbConfigPostgresDb, connConfigPostgresDb);
+    // Initialize identity_db
+    final pluginIdentityDb = PostgresPlugin();
+    final dbConfigIdentityDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'identity_db');
+    final connConfigIdentityDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'identity_db');
+    final databaseIdentityDb = await pluginIdentityDb.createDatabase(dbConfigIdentityDb, connConfigIdentityDb);
 
-    databasePostgresDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
+    databaseIdentityDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
       TableDefinition(name: 'roles', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'user_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_roles_user_id', columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'setting_audits', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'action', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'timestamp', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'setting_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_setting_audits_setting_id', columns: ['setting_id'], referencedTable: 'settings', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'posts', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'reading_time', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'created_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'updated_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'status', type: 'PostStatus', isNullable: true, isAutoIncrement: false, enumValues: ['draft', 'published', 'archived'], isJson: false, isList: false), ColumnDefinition(name: 'metadata', type: 'Map<String, dynamic>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: false), ColumnDefinition(name: 'tags', type: 'List<String>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: true), ColumnDefinition(name: 'author_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_posts_author_id', columns: ['author_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: [IndexDefinition(name: 'idx_posts_title', columns: ['title'], unique: false)]),
@@ -54,24 +54,24 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final userRepositoryOps = UserRepositoryOperationsImpl(databasePostgresDb, sharedContext);
+    final userRepositoryOps = UserRepositoryOperationsImpl(databaseIdentityDb, sharedContext);
     final userRepositoryMapper = UserMapperImpl();
-    final userRepository = UserRepositoryImpl(databasePostgresDb, userRepositoryOps, userRepositoryMapper, sharedContext);
+    final userRepository = UserRepositoryImpl(databaseIdentityDb, userRepositoryOps, userRepositoryMapper, sharedContext);
     sharedContext.registerOperations<User, int>(userRepositoryOps);
     sharedContext.registerMapper<User>(userRepositoryMapper);
-    final roleRepositoryOps = RoleRepositoryOperationsImpl(databasePostgresDb, sharedContext);
+    final roleRepositoryOps = RoleRepositoryOperationsImpl(databaseIdentityDb, sharedContext);
     final roleRepositoryMapper = RoleMapperImpl();
-    final roleRepository = RoleRepositoryImpl(databasePostgresDb, roleRepositoryOps, roleRepositoryMapper, sharedContext);
+    final roleRepository = RoleRepositoryImpl(databaseIdentityDb, roleRepositoryOps, roleRepositoryMapper, sharedContext);
     sharedContext.registerOperations<Role, int>(roleRepositoryOps);
     sharedContext.registerMapper<Role>(roleRepositoryMapper);
 
-    // Initialize mysql_db
-    final pluginMysqlDb = MySqlPlugin();
-    final dbConfigMysqlDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'mysql_db');
-    final connConfigMysqlDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'mysql_db');
-    final databaseMysqlDb = await pluginMysqlDb.createDatabase(dbConfigMysqlDb, connConfigMysqlDb);
+    // Initialize content_db
+    final pluginContentDb = MySqlPlugin();
+    final dbConfigContentDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'content_db');
+    final connConfigContentDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'content_db');
+    final databaseContentDb = await pluginContentDb.createDatabase(dbConfigContentDb, connConfigContentDb);
 
-    databaseMysqlDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
+    databaseContentDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
       TableDefinition(name: 'roles', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'user_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_roles_user_id', columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'setting_audits', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'action', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'timestamp', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'setting_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_setting_audits_setting_id', columns: ['setting_id'], referencedTable: 'settings', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'posts', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'reading_time', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'created_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'updated_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'status', type: 'PostStatus', isNullable: true, isAutoIncrement: false, enumValues: ['draft', 'published', 'archived'], isJson: false, isList: false), ColumnDefinition(name: 'metadata', type: 'Map<String, dynamic>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: false), ColumnDefinition(name: 'tags', type: 'List<String>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: true), ColumnDefinition(name: 'author_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_posts_author_id', columns: ['author_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: [IndexDefinition(name: 'idx_posts_title', columns: ['title'], unique: false)]),
@@ -80,24 +80,24 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final postRepositoryOps = PostRepositoryOperationsImpl(databaseMysqlDb, sharedContext);
+    final postRepositoryOps = PostRepositoryOperationsImpl(databaseContentDb, sharedContext);
     final postRepositoryMapper = PostMapperImpl();
-    final postRepository = PostRepositoryImpl(databaseMysqlDb, postRepositoryOps, postRepositoryMapper, sharedContext);
+    final postRepository = PostRepositoryImpl(databaseContentDb, postRepositoryOps, postRepositoryMapper, sharedContext);
     sharedContext.registerOperations<Post, int>(postRepositoryOps);
     sharedContext.registerMapper<Post>(postRepositoryMapper);
-    final commentRepositoryOps = CommentRepositoryOperationsImpl(databaseMysqlDb, sharedContext);
+    final commentRepositoryOps = CommentRepositoryOperationsImpl(databaseContentDb, sharedContext);
     final commentRepositoryMapper = CommentMapperImpl();
-    final commentRepository = CommentRepositoryImpl(databaseMysqlDb, commentRepositoryOps, commentRepositoryMapper, sharedContext);
+    final commentRepository = CommentRepositoryImpl(databaseContentDb, commentRepositoryOps, commentRepositoryMapper, sharedContext);
     sharedContext.registerOperations<Comment, int>(commentRepositoryOps);
     sharedContext.registerMapper<Comment>(commentRepositoryMapper);
 
-    // Initialize sqlite_db
-    final pluginSqliteDb = SqlitePlugin();
-    final dbConfigSqliteDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'sqlite_db');
-    final connConfigSqliteDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'sqlite_db');
-    final databaseSqliteDb = await pluginSqliteDb.createDatabase(dbConfigSqliteDb, connConfigSqliteDb);
+    // Initialize config_db
+    final pluginConfigDb = SqlitePlugin();
+    final dbConfigConfigDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'config_db');
+    final connConfigConfigDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'config_db');
+    final databaseConfigDb = await pluginConfigDb.createDatabase(dbConfigConfigDb, connConfigConfigDb);
 
-    databaseSqliteDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
+    databaseConfigDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
       TableDefinition(name: 'roles', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'user_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_roles_user_id', columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'setting_audits', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'action', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'timestamp', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'setting_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_setting_audits_setting_id', columns: ['setting_id'], referencedTable: 'settings', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'posts', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'reading_time', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'created_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'updated_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'status', type: 'PostStatus', isNullable: true, isAutoIncrement: false, enumValues: ['draft', 'published', 'archived'], isJson: false, isList: false), ColumnDefinition(name: 'metadata', type: 'Map<String, dynamic>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: false), ColumnDefinition(name: 'tags', type: 'List<String>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: true), ColumnDefinition(name: 'author_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_posts_author_id', columns: ['author_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: [IndexDefinition(name: 'idx_posts_title', columns: ['title'], unique: false)]),
@@ -106,24 +106,24 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final settingRepositoryOps = SettingRepositoryOperationsImpl(databaseSqliteDb, sharedContext);
+    final settingRepositoryOps = SettingRepositoryOperationsImpl(databaseConfigDb, sharedContext);
     final settingRepositoryMapper = SettingMapperImpl();
-    final settingRepository = SettingRepositoryImpl(databaseSqliteDb, settingRepositoryOps, settingRepositoryMapper, sharedContext);
+    final settingRepository = SettingRepositoryImpl(databaseConfigDb, settingRepositoryOps, settingRepositoryMapper, sharedContext);
     sharedContext.registerOperations<Setting, int>(settingRepositoryOps);
     sharedContext.registerMapper<Setting>(settingRepositoryMapper);
-    final settingAuditRepositoryOps = SettingAuditRepositoryOperationsImpl(databaseSqliteDb, sharedContext);
+    final settingAuditRepositoryOps = SettingAuditRepositoryOperationsImpl(databaseConfigDb, sharedContext);
     final settingAuditRepositoryMapper = SettingAuditMapperImpl();
-    final settingAuditRepository = SettingAuditRepositoryImpl(databaseSqliteDb, settingAuditRepositoryOps, settingAuditRepositoryMapper, sharedContext);
+    final settingAuditRepository = SettingAuditRepositoryImpl(databaseConfigDb, settingAuditRepositoryOps, settingAuditRepositoryMapper, sharedContext);
     sharedContext.registerOperations<SettingAudit, int>(settingAuditRepositoryOps);
     sharedContext.registerMapper<SettingAudit>(settingAuditRepositoryMapper);
 
-    // Initialize memory_db
-    final pluginMemoryDb = MemoryPlugin();
-    final dbConfigMemoryDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'memory_db');
-    final connConfigMemoryDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'memory_db');
-    final databaseMemoryDb = await pluginMemoryDb.createDatabase(dbConfigMemoryDb, connConfigMemoryDb);
+    // Initialize cache_db
+    final pluginCacheDb = MemoryPlugin();
+    final dbConfigCacheDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'cache_db');
+    final connConfigCacheDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == 'cache_db');
+    final databaseCacheDb = await pluginCacheDb.createDatabase(dbConfigCacheDb, connConfigCacheDb);
 
-    databaseMemoryDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
+    databaseCacheDb.connection.schemaManager.setSchema(const SchemaDefinition(tables: [
       TableDefinition(name: 'roles', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'name', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'user_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_roles_user_id', columns: ['user_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'setting_audits', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'action', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'timestamp', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'setting_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_setting_audits_setting_id', columns: ['setting_id'], referencedTable: 'settings', referencedColumns: ['id'])], uniqueConstraints: [], indexes: []),
       TableDefinition(name: 'posts', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'reading_time', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'created_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'updated_at', type: 'DateTime', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'content', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'status', type: 'PostStatus', isNullable: true, isAutoIncrement: false, enumValues: ['draft', 'published', 'archived'], isJson: false, isList: false), ColumnDefinition(name: 'metadata', type: 'Map<String, dynamic>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: false), ColumnDefinition(name: 'tags', type: 'List<String>', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: true, isList: true), ColumnDefinition(name: 'author_id', type: 'int', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [ForeignKeyDefinition(name: 'fk_posts_author_id', columns: ['author_id'], referencedTable: 'users', referencedColumns: ['id'])], uniqueConstraints: [], indexes: [IndexDefinition(name: 'idx_posts_title', columns: ['title'], unique: false)]),
@@ -134,10 +134,10 @@ class DatapodInitializer {
 
 
     return DatapodContext(
-      postgresDb: databasePostgresDb,
-      mysqlDb: databaseMysqlDb,
-      sqliteDb: databaseSqliteDb,
-      memoryDb: databaseMemoryDb,
+      identityDb: databaseIdentityDb,
+      contentDb: databaseContentDb,
+      configDb: databaseConfigDb,
+      cacheDb: databaseCacheDb,
       userRepository: userRepository,
       roleRepository: roleRepository,
       postRepository: postRepository,
@@ -149,10 +149,10 @@ class DatapodInitializer {
 }
 
 class DatapodContext {
-  final DatapodDatabase postgresDb;
-  final DatapodDatabase mysqlDb;
-  final DatapodDatabase sqliteDb;
-  final DatapodDatabase memoryDb;
+  final DatapodDatabase identityDb;
+  final DatapodDatabase contentDb;
+  final DatapodDatabase configDb;
+  final DatapodDatabase cacheDb;
   final UserRepository userRepository;
   final RoleRepository roleRepository;
   final PostRepository postRepository;
@@ -161,10 +161,10 @@ class DatapodContext {
   final SettingAuditRepository settingAuditRepository;
 
   DatapodContext({
-    required this.postgresDb,
-    required this.mysqlDb,
-    required this.sqliteDb,
-    required this.memoryDb,
+    required this.identityDb,
+    required this.contentDb,
+    required this.configDb,
+    required this.cacheDb,
     required this.userRepository,
     required this.roleRepository,
     required this.postRepository,
@@ -174,9 +174,9 @@ class DatapodContext {
   });
 
   Future<void> close() async {
-    await postgresDb.close();
-    await mysqlDb.close();
-    await sqliteDb.close();
-    await memoryDb.close();
+    await identityDb.close();
+    await contentDb.close();
+    await configDb.close();
+    await cacheDb.close();
   }
 }

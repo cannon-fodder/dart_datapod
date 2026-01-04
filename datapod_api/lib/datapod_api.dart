@@ -6,6 +6,16 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+/// Core API definitions for Datapod ORM.
+///
+/// This library exports the essential annotations, interfaces, and classes
+/// required to use Datapod in your Dart applications.
+///
+/// Key components:
+/// *   [Entity], [Column], [Id]: Annotations for defining data models.
+/// *   [Repository]: Annotation for defining data access interfaces.
+/// *   [BaseRepository]: The base class for all repositories.
+/// *   [Pageable], [Page], [Sort]: Classes for pagination and sorting.
 library datapod_api;
 
 export 'annotations.dart';

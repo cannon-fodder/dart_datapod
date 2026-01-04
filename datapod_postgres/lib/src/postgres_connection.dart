@@ -84,10 +84,11 @@ class PostgresConnection implements DatabaseConnection {
       }
 
       final rows = filteredParams != null && filteredParams.isNotEmpty
-          ? _executor.query(pg.Sql.named(sql), parameters: filteredParams)
-          : _executor.query(pg.Sql.named(sql));
+          ? await _executor.execute(pg.Sql.named(sql),
+              parameters: filteredParams)
+          : await _executor.execute(pg.Sql.named(sql));
 
-      await for (final pg.ResultRow row in rows) {
+      for (final pg.ResultRow row in rows) {
         yield row.toColumnMap();
       }
     } catch (e) {

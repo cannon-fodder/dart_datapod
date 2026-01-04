@@ -1,9 +1,9 @@
 databases:
-  - name: postgres_db
+  - name: identity_db
     plugin: datapod_postgres
-  - name: mysql_db
+  - name: content_db
     plugin: datapod_mysql
-  - name: sqlite_db
+  - name: config_db
     plugin: datapod_sqlite
-  - name: memory_db
+  - name: cache_db
     plugin: memory

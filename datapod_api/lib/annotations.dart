@@ -111,7 +111,7 @@ class Query {
 
 /// Indicates a repository interface for code generation.
 ///
-/// Annotated classes must be `abstract` and extend `BaseRepository<E, K>`.
+/// Annotated classes must be `abstract` and extend [BaseRepository].
 /// Datapod generates the implementation based on method naming conventions
 /// (DSL) or [Query] annotations.
 ///

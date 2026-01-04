@@ -14,7 +14,7 @@ import '../entities/comment.dart';
 part 'post_repository.datapod.dart';
 
 @Repository()
-@Database('mysql_db')
+@Database('content_db')
 abstract class PostRepository extends BaseRepository<Post, int> {
   PostRepository(super.relationshipContext);
   Future<List<Post>> findByTitleContains(String title);

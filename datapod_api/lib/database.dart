@@ -26,7 +26,8 @@ abstract interface class DatapodDatabase {
 
   /// The underlying connection provided by the plugin.
   ///
-  /// This provides direct access to [execute], [stream], and schema features.
+  /// This provides direct access to [DatabaseConnection.execute],
+  /// [DatabaseConnection.stream], and schema features.
   DatabaseConnection get connection;
 
   /// Closes the database connection and releases any pooled resources.

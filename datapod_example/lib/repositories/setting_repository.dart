@@ -7,7 +7,7 @@ import '../entities/setting_audit.dart';
 part 'setting_repository.datapod.dart';
 
 @Repository()
-@Database('sqlite_db')
+@Database('config_db')
 abstract class SettingRepository extends BaseRepository<Setting, int> {
   SettingRepository(super.relationshipContext);
 

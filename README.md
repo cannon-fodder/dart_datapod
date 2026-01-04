@@ -9,9 +9,10 @@ Datapod is a powerful, modular Dart ORM (Object-Relational Mapper) inspired by t
 - **Declarative Repositories**: Define repository interfaces; Datapod generates the implementation based on method naming conventions (e.g., `findByTitleContaining`).
 - **Managed Entities**: Intelligent state tracking handles `INSERT` vs `UPDATE` automatically.
 - **Lazy Loading**: Relationship fields can be defined as `Future<T>` for on-demand fetching.
-- **Schema Management**: Built-in support for schema initialization and automated table mapping.
-- **Type Safety**: Fully typed queries and result mapping using Dart's powerful type system.
-- **Enterprise-Ready**: Support for connection pooling, transactions, and environment-based configuration.
+- **Schema Management**: Built-in support for schema initialization, automated table mapping, **Unique Constraints**, and **indexes**.
+- **Type Safety**: Fully typed queries, result mapping, and **Custom Converters** for advanced type handling.
+- **Enterprise-Ready**: Support for connection pooling, transactions, environment-based configuration, and **Auditing** (`@CreatedAt`, `@UpdatedAt`).
+- **Advanced Querying**: Support for **Pagination** (`Pageable`), **Sorting**, and **Fetch Joins** for eager loading relationships.
 
 📚 **Check out the [Usage Examples](EXAMPLES.md) for comprehensive code snippets.**
 
