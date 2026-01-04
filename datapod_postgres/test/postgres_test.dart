@@ -7,7 +7,7 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'package:test/test.dart';
-import 'package:datapod_core/datapod_core.dart';
+import 'package:datapod_engine/datapod_engine.dart';
 import 'package:datapod_postgres/datapod_postgres.dart';
 
 void main() {

@@ -4,7 +4,7 @@
 
 import 'dart:io';
 import 'package:datapod_api/datapod_api.dart';
-import 'package:datapod_core/datapod_core.dart';
+import 'package:datapod_engine/datapod_engine.dart';
 import 'package:datapod_postgres/datapod_postgres.dart';
 import 'package:datapod_mysql/datapod_mysql.dart';
 import 'package:datapod_test/repositories/test_entity_repository.dart';

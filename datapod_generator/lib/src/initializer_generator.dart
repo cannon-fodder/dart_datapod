@@ -122,7 +122,7 @@ class InitializerGenerator extends Builder {
     result.writeln();
     result.writeln("import 'dart:io';");
     result.writeln("import 'package:datapod_api/datapod_api.dart';");
-    result.writeln("import 'package:datapod_core/datapod_core.dart';");
+    result.writeln("import 'package:datapod_engine/datapod_engine.dart';");
 
     final allImports = {
       ...repos.map((r) => r['import']!),

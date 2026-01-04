@@ -6,10 +6,29 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-library datapod_engine;
+import 'dart:io';
 
-export 'database_base.dart';
-export 'plugin.dart';
-export 'src/transaction_manager.dart';
-export 'config.dart';
-export 'env_resolver.dart';
+/// Resolves environment variables in a configuration value.
+///
+/// Syntax supported: ${VAR_NAME}
+class EnvResolver {
+  static final RegExp _envRegExp = RegExp(r'\$\{([^}]+)\}');
+
+  static String resolve(String value) {
+    return value.replaceAllMapped(_envRegExp, (match) {
+      final varName = match.group(1)!;
+      return Platform.environment[varName] ?? '';
+    });
+  }
+
+  static dynamic resolveValue(dynamic value) {
+    if (value is String) {
+      return resolve(value);
+    } else if (value is Map) {
+      return value.map((k, v) => MapEntry(k, resolveValue(v)));
+    } else if (value is List) {
+      return value.map((v) => resolveValue(v)).toList();
+    }
+    return value;
+  }
+}

@@ -8,7 +8,6 @@
 
 import 'dart:async';
 import 'package:datapod_api/datapod_api.dart';
-import 'package:datapod_core/datapod_core.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 
 @DatapodPluginDef('memory')

@@ -9,8 +9,6 @@ environment:
 dependencies:
   datapod_api:
     path: ../datapod_api
-  datapod_core:
-    path: ../datapod_core
   datapod_postgres:
     path: ../datapod_postgres
   datapod_mysql:
@@ -28,3 +26,17 @@ dev_dependencies:
     path: ../datapod_generator
   test: ^1.24.0
   lints: ^3.0.0
+
+dependency_overrides:
+  datapod_api:
+    path: ../datapod_api
+  datapod_engine:
+    path: ../datapod_engine
+  datapod_postgres:
+    path: ../datapod_postgres
+  datapod_mysql:
+    path: ../datapod_mysql
+  datapod_sqlite:
+    path: ../datapod_sqlite
+  datapod_generator:
+    path: ../datapod_generator

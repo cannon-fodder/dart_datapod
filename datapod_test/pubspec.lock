@@ -192,15 +192,8 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
-  datapod_core:
-    dependency: "direct main"
-    description:
-      path: "../datapod_core"
-      relative: true
-    source: path
-    version: "0.1.0"
   datapod_engine:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../datapod_engine"
       relative: true
@@ -212,7 +205,7 @@ packages:
       path: "../datapod_generator"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.1.0"
   datapod_mysql:
     dependency: "direct main"
     description:

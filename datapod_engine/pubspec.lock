@@ -88,13 +88,6 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
-  datapod_core:
-    dependency: "direct main"
-    description:
-      path: "../datapod_core"
-      relative: true
-    source: path
-    version: "0.1.0"
   file:
     dependency: transitive
     description:
@@ -392,7 +385,7 @@ packages:
     source: hosted
     version: "1.2.1"
   yaml:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: yaml
       sha256: b9da305ac7c39faa3f030eccd175340f968459dae4af175130b3fc47e40d76ce

@@ -14,10 +14,8 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  datapod_api:
-    path: ../datapod_api
-  datapod_core:
-    path: ../datapod_core
+  datapod_api: ^0.1.0
+  yaml: ^3.1.3
   meta: ^1.11.0
   logging: ^1.2.0
 

@@ -38,7 +38,7 @@ class BootstrapGenerator extends Generator {
 
     final result = StringBuffer();
     result.writeln('// Generated Datapod initialization');
-    result.writeln('import \'package:datapod_core/datapod_core.dart\';');
+    result.writeln('import \'package:datapod_engine/datapod_engine.dart\';');
     for (final entity in entities) {
       result.writeln('import \'${entity.library.identifier}\';');
     }

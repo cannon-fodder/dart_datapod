@@ -13,12 +13,8 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  datapod_api:
-    path: ../datapod_api
-  datapod_core:
-    path: ../datapod_core
-  datapod_engine:
-    path: ../datapod_engine
+  datapod_api: ^0.1.0
+  datapod_engine: ^0.1.0
   sqlite3: ^2.3.0
   meta: ^1.11.0
   logging: ^1.2.0

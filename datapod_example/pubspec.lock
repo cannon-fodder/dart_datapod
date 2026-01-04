@@ -192,13 +192,6 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
-  datapod_core:
-    dependency: "direct main"
-    description:
-      path: "../datapod_core"
-      relative: true
-    source: path
-    version: "0.1.0"
   datapod_engine:
     dependency: "direct main"
     description:
@@ -226,7 +219,7 @@ packages:
       path: "../datapod_postgres"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.0.1"
   datapod_sqlite:
     dependency: "direct main"
     description:
