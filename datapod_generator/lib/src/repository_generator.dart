@@ -8,6 +8,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:build/build.dart';
 import 'package:datapod_api/datapod_api.dart' as api;
 import 'package:source_gen/source_gen.dart';
@@ -193,7 +194,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         _generateSaveMethod(entityClass, metadata),
         _generateSaveAllMethod(entityClass),
         _generateDeleteMethod(entityClass, keyType, metadata),
-        _generateFindByIdMethod(entityClass, keyType, metadata),
+        _generateFindByIdMethod(repoInterface, entityClass, keyType, metadata),
         _generateFindAllMethod(repoInterface, entityClass, metadata),
         _generateFindAllPagedMethod(repoInterface, entityClass, metadata),
         ..._generateRepoQueryResultMethods(
@@ -270,8 +271,14 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       ]));
   }
 
-  Method _generateFindByIdMethod(
+  Method _generateFindByIdMethod(ClassElement repoInterface,
       ClassElement entityClass, DartType keyType, EntitySqlMetadata metadata) {
+    final methods = repoInterface.methods.where((m) => m.name == 'findById');
+    final method = methods.isNotEmpty ? methods.first : null;
+    final fetchJoinAnns = method != null
+        ? const TypeChecker.fromRuntime(api.FetchJoin).annotationsOf(method)
+        : <DartObject>[];
+
     return Method((m) => m
       ..name = 'findById'
       ..annotations.add(refer('override'))
@@ -280,12 +287,127 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         ..types.add(refer('${entityClass.name}?')))
       ..requiredParameters.add(Parameter((p) => p..name = 'id'))
       ..modifier = MethodModifier.async
-      ..body = Block.of([
-        Code('final result = await operations.findById(id);'),
-        Code('if (result.isEmpty) return null;'),
-        Code(
-            'return mapper.mapRow(result.rows.first, database, relationshipContext);'),
-      ]));
+      ..body = _generateRepoReturnBody(
+          'findById', method, entityClass, metadata, fetchJoinAnns));
+  }
+
+  Code _generateRepoReturnBody(
+      String type,
+      MethodElement? method,
+      ClassElement entityClass,
+      EntitySqlMetadata metadata,
+      Iterable<DartObject> fetchJoinAnns) {
+    if (fetchJoinAnns.isEmpty) {
+      if (type == 'findById') {
+        return Block.of([
+          Code('final result = await operations.findById(id);'),
+          Code('if (result.isEmpty) return null;'),
+          Code(
+              'return mapper.mapRow(result.rows.first, database, relationshipContext);'),
+        ]);
+      }
+      // ... handle other standard methods if needed
+    }
+
+    final joinInfos = <Map<String, String>>[];
+    int joinIdx = 1;
+
+    for (final ann in fetchJoinAnns) {
+      final property = ann.getField('property')?.toStringValue();
+      if (property != null) {
+        final col = metadata.columns.firstWhere((c) => c.fieldName == property);
+        if (col.relationType == 'ManyToOne' ||
+            (col.relationType == 'OneToOne' && col.columnName.isNotEmpty)) {
+          joinInfos.add({
+            'property': property,
+            'alias': 't$joinIdx',
+            'entityType': col.relatedEntityType!,
+          });
+          joinIdx++;
+        }
+      }
+    }
+
+    final sqlCode = StringBuffer();
+
+    if (type == 'findById') {
+      final mainColumns = metadata.columns
+          .where((c) => c.columnName.isNotEmpty)
+          .map((c) => 't0.${c.columnName} AS ${c.columnName}')
+          .join(', ');
+
+      final joinSelects = <String>[];
+      final joinClauses = <String>[];
+
+      int jIdx = 1;
+      for (final ann in fetchJoinAnns) {
+        final property = ann.getField('property')?.toStringValue();
+        if (property != null) {
+          final col =
+              metadata.columns.firstWhere((c) => c.fieldName == property);
+          if (col.relationType == 'ManyToOne' ||
+              (col.relationType == 'OneToOne' && col.columnName.isNotEmpty)) {
+            final entityField = (method!.enclosingElement as ClassElement)
+                .allSupertypes
+                .firstWhere((s) => s.element.name == 'BaseRepository')
+                .typeArguments[0]
+                .element as ClassElement;
+            final relationField =
+                entityField.fields.firstWhere((f) => f.name == property);
+            final relatedType =
+                (relationField.type as InterfaceType).typeArguments.first;
+            final relatedClass = relatedType.element as ClassElement;
+            final relatedMetadata = SqlGenerator.parseEntity(relatedClass);
+
+            for (final c in relatedMetadata.columns) {
+              if (c.columnName.isNotEmpty) {
+                joinSelects
+                    .add('t$jIdx.${c.columnName} AS t${jIdx}_${c.columnName}');
+              }
+            }
+
+            joinClauses.add(
+                'LEFT JOIN ${relatedMetadata.tableName} t$jIdx ON t0.${col.columnName} = t$jIdx.id');
+            jIdx++;
+          }
+        }
+      }
+
+      var selectClause = mainColumns;
+      if (joinSelects.isNotEmpty) {
+        selectClause += ', ${joinSelects.join(', ')}';
+      }
+
+      var joinClause = '';
+      if (joinClauses.isNotEmpty) {
+        joinClause = ' ${joinClauses.join(' ')}';
+      }
+
+      sqlCode.writeln(
+          "final sql = 'SELECT $selectClause FROM ${metadata.tableName} t0$joinClause WHERE t0.id = @id';");
+      sqlCode.writeln(
+          'final result = await database.connection.execute(sql, {\'id\': id});');
+    }
+
+    final mappingCode = StringBuffer();
+    mappingCode.writeln('if (result.isEmpty) return null;');
+    mappingCode.writeln('final row = result.rows.first;');
+    mappingCode.writeln(
+        'final entity = mapper.mapRow(row, database, relationshipContext);');
+    mappingCode
+        .writeln('final managed = entity as Managed${entityClass.name};');
+    for (final join in joinInfos) {
+      mappingCode.writeln('if (row[\'${join['alias']}_id\'] != null) {');
+      mappingCode.writeln(
+          '  managed.${join['property']} = Future.value(Managed${join['entityType']}.fromRow(row, database, relationshipContext, aliasPrefix: \'${join['alias']}_\'));');
+      mappingCode.writeln('}');
+    }
+    mappingCode.writeln('return entity;');
+
+    return Block.of([
+      Code(sqlCode.toString()),
+      Code(mappingCode.toString()),
+    ]);
   }
 
   Method _generateOperationsSaveMethod(
@@ -453,6 +575,46 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       }
     }
 
+    final fetchJoinAnns =
+        const TypeChecker.fromRuntime(api.FetchJoin).annotationsOf(method);
+    final joinMetadata = <JoinMetadata>[];
+    int joinIdx = 1;
+    for (final ann in fetchJoinAnns) {
+      final property = ann.getField('property')?.toStringValue();
+      if (property != null) {
+        final field = metadata.columns.firstWhere(
+            (c) => c.fieldName == property,
+            orElse: () => throw Exception(
+                'Property $property not found for @FetchJoin on ${method.name}'));
+
+        if (field.relationType == 'ManyToOne' ||
+            (field.relationType == 'OneToOne' && field.columnName.isNotEmpty)) {
+          final entityField = (method.enclosingElement as ClassElement)
+              .allSupertypes
+              .firstWhere((s) => s.element.name == 'BaseRepository')
+              .typeArguments[0]
+              .element as ClassElement;
+
+          final relationField =
+              entityField.fields.firstWhere((f) => f.name == property);
+          final relatedType =
+              (relationField.type as InterfaceType).typeArguments.first;
+          final relatedClass = relatedType.element as ClassElement;
+          final relatedMetadata = SqlGenerator.parseEntity(relatedClass);
+
+          joinMetadata.add(JoinMetadata(
+            property: property,
+            tableName: relatedMetadata.tableName,
+            joinColumn: field.columnName,
+            referencedColumn: relatedMetadata.idColumn!.columnName,
+            alias: 't$joinIdx',
+            columns: relatedMetadata.columns,
+          ));
+          joinIdx++;
+        }
+      }
+    }
+
     final returnType = method.returnType;
     final isStream =
         returnType is InterfaceType && returnType.isDartAsyncStream;
@@ -478,7 +640,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         Code(
             'final params = ${_generateDslParamMap(components, otherParams)};'),
         Code(
-            "final sql = applyPagination('''${SqlGenerator.generateDslQuery(metadata, components, type, paramNames)}''', sort: ${sortVar ?? (pageableVar != null ? '$pageableVar.sort' : 'null')}, limit: ${pageableVar != null ? '$pageableVar.size' : 'null'}, offset: ${pageableVar != null ? '$pageableVar.offset' : 'null'}, fieldToColumn: _fieldToColumn);"),
+            "final sql = applyPagination('''${SqlGenerator.generateDslQuery(metadata, components, type, paramNames, joins: joinMetadata.isNotEmpty ? joinMetadata : null)}''', sort: ${sortVar ?? (pageableVar != null ? '$pageableVar.sort' : 'null')}, limit: ${pageableVar != null ? '$pageableVar.size' : 'null'}, offset: ${pageableVar != null ? '$pageableVar.offset' : 'null'}, fieldToColumn: _fieldToColumn);"),
         isStream
             ? Code('return database.connection.stream(sql, params);')
             : Code('return database.connection.execute(sql, params);'),
@@ -524,8 +686,24 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           ],
           Code('}'),
         ],
+        if (metadata.columns.any((c) => c.isCreatedAt || c.isUpdatedAt)) ...[
+          Code('final now = DateTime.now();'),
+          for (final col in metadata.columns.where((c) => c.isCreatedAt)) ...[
+            Code(
+                'if (!managed.isPersistent && managed.${col.fieldName} == null) {'),
+            Code('  managed.${col.fieldName} = now;'),
+            Code('}'),
+          ],
+          for (final col in metadata.columns.where((c) => c.isUpdatedAt)) ...[
+            Code('managed.${col.fieldName} = now;'),
+          ],
+        ],
         Code('final params = <String, dynamic>{'),
         ...metadata.columns.map((c) {
+          if (c.converterType != null) {
+            return Code(
+                "r'${c.fieldName}': managed.${c.fieldName} != null ? const ${c.converterType}().convertToDatabaseColumn(managed.${c.fieldName}!) : null,");
+          }
           if (c.relationType != null && c.columnName.isNotEmpty) {
             return Code("'${c.fieldName}Id': managed.${c.fieldName}Id,");
           }
@@ -691,6 +869,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       }
     }
 
+    final fetchJoinAnns =
+        const TypeChecker.fromRuntime(api.FetchJoin).annotationsOf(method);
+
     final isStream = method.returnType is InterfaceType &&
         (method.returnType as InterfaceType).isDartAsyncStream;
 
@@ -743,7 +924,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
                   'final result = operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});')
               : Code(
                   'final result = await operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});'),
-          _generateRepoDslReturn(type, method, entityClass),
+          _generateRepoDslReturn(
+              type, method, entityClass, metadata, fetchJoinAnns),
         ]
       ]));
   }
@@ -791,7 +973,11 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
   }
 
   Code _generateRepoDslReturn(
-      String type, MethodElement method, ClassElement entityClass) {
+      String type,
+      MethodElement method,
+      ClassElement entityClass,
+      EntitySqlMetadata metadata,
+      Iterable<DartObject> fetchJoinAnns) {
     switch (type) {
       case 'count':
         return Code('return result.rows.first.values.first as int;');
@@ -808,18 +994,95 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         final isStream =
             returnType is InterfaceType && returnType.isDartAsyncStream;
 
-        if (isStream) {
-          return Code(
-              'return result.map((row) => mapper.mapRow(row, database, relationshipContext));');
-        } else if (isList) {
-          return Code(
-              'return mapper.mapRows(result.rows, database, relationshipContext);');
+        if (fetchJoinAnns.isEmpty) {
+          if (isStream) {
+            return Code(
+                'return result.map((row) => mapper.mapRow(row, database, relationshipContext));');
+          } else if (isList) {
+            return Code(
+                'return mapper.mapRows(result.rows, database, relationshipContext);');
+          } else {
+            return Block.of([
+              Code('if (result.isEmpty) return null;'),
+              Code(
+                  'return mapper.mapRow(result.rows.first, database, relationshipContext);'),
+            ]);
+          }
         } else {
-          return Block.of([
-            Code('if (result.isEmpty) return null;'),
-            Code(
-                'return mapper.mapRow(result.rows.first, database, relationshipContext);'),
-          ]);
+          final joinInfos = <Map<String, String>>[];
+          int joinIdx = 1;
+
+          for (final ann in fetchJoinAnns) {
+            final property = ann.getField('property')?.toStringValue();
+            if (property != null) {
+              final col =
+                  metadata.columns.firstWhere((c) => c.fieldName == property);
+              if (col.relationType == 'ManyToOne' ||
+                  (col.relationType == 'OneToOne' &&
+                      col.columnName.isNotEmpty)) {
+                joinInfos.add({
+                  'property': property,
+                  'alias': 't$joinIdx',
+                  'entityType': col.relatedEntityType!,
+                });
+                joinIdx++;
+              }
+            }
+          }
+
+          if (isStream) {
+            // Stream mapping with joins
+            final streamCode = StringBuffer();
+            streamCode.writeln('return result.map((row) {');
+            streamCode.writeln(
+                '  final entity = mapper.mapRow(row, database, relationshipContext);');
+            streamCode.writeln(
+                '  final managed = entity as Managed${entityClass.name};');
+            for (final join in joinInfos) {
+              streamCode
+                  .writeln('  if (row[\'${join['alias']}_id\'] != null) {');
+              streamCode.writeln(
+                  '    managed.${join['property']} = Future.value(Managed${join['entityType']}.fromRow(row, database, relationshipContext, aliasPrefix: \'${join['alias']}_\'));');
+              streamCode.writeln('  }');
+            }
+            streamCode.writeln('  return entity;');
+            streamCode.writeln('});');
+            return Code(streamCode.toString());
+          } else if (isList) {
+            // List mapping with joins
+            final listCode = StringBuffer();
+            listCode.writeln('return result.rows.map((row) {');
+            listCode.writeln(
+                '  final entity = mapper.mapRow(row, database, relationshipContext);');
+            listCode.writeln(
+                '  final managed = entity as Managed${entityClass.name};');
+            for (final join in joinInfos) {
+              listCode.writeln('  if (row[\'${join['alias']}_id\'] != null) {');
+              listCode.writeln(
+                  '    managed.${join['property']} = Future.value(Managed${join['entityType']}.fromRow(row, database, relationshipContext, aliasPrefix: \'${join['alias']}_\'));');
+              listCode.writeln('  }');
+            }
+            listCode.writeln('  return entity;');
+            listCode.writeln('}).toList();');
+            return Code(listCode.toString());
+          } else {
+            // Single result mapping with joins
+            final singleCode = StringBuffer();
+            singleCode.writeln('if (result.isEmpty) return null;');
+            singleCode.writeln('final row = result.rows.first;');
+            singleCode.writeln(
+                'final entity = mapper.mapRow(row, database, relationshipContext);');
+            singleCode.writeln(
+                'final managed = entity as Managed${entityClass.name};');
+            for (final join in joinInfos) {
+              singleCode.writeln('if (row[\'${join['alias']}_id\'] != null) {');
+              singleCode.writeln(
+                  '  managed.${join['property']} = Future.value(Managed${join['entityType']}.fromRow(row, database, relationshipContext, aliasPrefix: \'${join['alias']}_\'));');
+              singleCode.writeln('}');
+            }
+            singleCode.writeln('return entity;');
+            return Code(singleCode.toString());
+          }
         }
     }
   }

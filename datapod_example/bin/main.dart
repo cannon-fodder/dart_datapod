@@ -69,12 +69,15 @@ void main(List<String> args) async {
 
     alice = await userRepo.save(alice);
     print('Saved User: ${alice.name} with roles');
+    print('  - Created at: ${alice.createdAt}');
+    print('  - Updated at: ${alice.updatedAt}');
 
     // 4. Exercise Content (MySQL)
     print(
         '\n[CONTENT] Creating Post with Comments in MySQL (related to Postgres User)...');
     var post1 = Post()
       ..title = 'Enterprise Architecture'
+      ..readingTime = const Duration(minutes: 15)
       ..content = 'Using multiple databases for different functions.'
       ..status = PostStatus.published
       ..metadata = {'version': '1.0', 'priority': 'high'}
@@ -88,6 +91,9 @@ void main(List<String> args) async {
     post1 = await postRepo.save(post1);
     print(
         'Saved post: ${post1.title} with status ${post1.status}, metadata ${post1.metadata}, and tags ${post1.tags}');
+    print('  - Reading time: ${post1.readingTime}');
+    print('  - Created at: ${post1.createdAt}');
+    print('  - Updated at: ${post1.updatedAt}');
 
     // 5. Exercise Config (SQLite)
     print('\n[CONFIG] Creating Settings with Audits in SQLite...');

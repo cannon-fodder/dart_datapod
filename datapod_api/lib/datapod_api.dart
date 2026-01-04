@@ -9,6 +9,7 @@
 library datapod_api;
 
 export 'annotations.dart';
+export 'converters.dart';
 export 'database.dart';
 export 'entity.dart';
 export 'exceptions.dart';

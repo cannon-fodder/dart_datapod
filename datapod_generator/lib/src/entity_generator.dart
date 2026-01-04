@@ -28,6 +28,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     result.writeln("//");
     result.writeln(
         "// This software is provided \"as is\", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.");
+    result.writeln(
+        '// ignore_for_file: prefer_interpolation_to_compose_strings, duplicate_ignore');
     result.writeln();
     result.writeln(_generateManagedEntity(element));
     result.writeln();
@@ -83,6 +85,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             ..name = 'relationshipContext'
             ..type = refer(
                 'RelationshipContext', 'package:datapod_api/datapod_api.dart')))
+          ..optionalParameters.add(Parameter((p) => p
+            ..name = 'aliasPrefix'
+            ..type = refer('String')
+            ..named = true
+            ..defaultTo = Code("''")))
           ..initializers.add(Code('_database = database'))
           ..initializers.add(Code('_relationshipContext = relationshipContext'))
           ..body = Block.of([
@@ -92,29 +99,33 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                 .map((c) {
               final colName = c.columnName;
               final fieldName = c.fieldName;
+              if (c.converterType != null) {
+                return Code(
+                    'super.$fieldName = row[aliasPrefix + "$colName"] != null ? const ${c.converterType}().convertToEntityAttribute(row[aliasPrefix + "$colName"]) : null;');
+              }
               if (c.fieldType == 'DateTime') {
                 return Code(
-                    'super.$fieldName = row[\'$colName\'] is String ? DateTime.parse(row[\'$colName\']) : row[\'$colName\'];');
+                    'super.$fieldName = row[aliasPrefix + "$colName"] is String ? DateTime.parse(row[aliasPrefix + "$colName"]) : row[aliasPrefix + "$colName"];');
               }
               if (c.fieldType == 'bool') {
                 return Code(
-                    'super.$fieldName = row[\'$colName\'] is int ? row[\'$colName\'] == 1 : row[\'$colName\'];');
+                    'super.$fieldName = row[aliasPrefix + "$colName"] is int ? row[aliasPrefix + "$colName"] == 1 : row[aliasPrefix + "$colName"];');
               }
               if (c.isJson || c.isList) {
                 if (c.isList) {
                   return Code(
-                      'super.$fieldName = row[\'$colName\'] is String ? (jsonDecode(row[\'$colName\']) as List?)?.cast<String>() : (row[\'$colName\'] != null ? List<String>.from(row[\'$colName\']) : null);');
+                      'super.$fieldName = row[aliasPrefix + "$colName"] is String ? (jsonDecode(row[aliasPrefix + "$colName"]) as List?)?.cast<String>() : (row[aliasPrefix + "$colName"] != null ? List<String>.from(row[aliasPrefix + "$colName"]) : null);');
                 }
                 return Code(
-                    'super.$fieldName = row[\'$colName\'] is String ? (jsonDecode(row[\'$colName\']) as Map?)?.cast<String, dynamic>() : (row[\'$colName\'] != null ? Map<String, dynamic>.from(row[\'$colName\']) : null);');
+                    'super.$fieldName = row[aliasPrefix + "$colName"] is String ? (jsonDecode(row[aliasPrefix + "$colName"]) as Map?)?.cast<String, dynamic>() : (row[aliasPrefix + "$colName"] != null ? Map<String, dynamic>.from(row[aliasPrefix + "$colName"]) : null);');
               }
               if (c.enumValues != null) {
                 return Code(
-                    'super.$fieldName = row[\'$colName\'] != null ? ${c.fieldType}.values.firstWhere((e) => e.name == row[\'$colName\']) : super.$fieldName;');
+                    'super.$fieldName = row[aliasPrefix + "$colName"] != null ? ${c.fieldType}.values.firstWhere((e) => e.name == row[aliasPrefix + "$colName"]) : super.$fieldName;');
               }
-              return Code('super.$fieldName = row[\'$colName\'];');
+              return Code('super.$fieldName = row[aliasPrefix + "$colName"];');
             }),
-            ..._generateRelationFieldInitializers(entityClass),
+            ..._generateRelationFieldInitializers(entityClass, 'aliasPrefix'),
           ])),
         Constructor((c) => c
           ..name = 'fromEntity'
@@ -419,7 +430,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     return fields;
   }
 
-  Iterable<Code> _generateRelationFieldInitializers(ClassElement entityClass) {
+  Iterable<Code> _generateRelationFieldInitializers(
+      ClassElement entityClass, String aliasPrefix) {
     final codes = <Code>[];
     for (final field in entityClass.fields) {
       if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
@@ -427,7 +439,8 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
           const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
         final colName = SqlGenerator.parseColumn(field).columnName;
-        codes.add(Code('${field.name}Id = row[\'$colName\'];'));
+        codes.add(Code(
+            '${field.name}Id = row[aliasPrefix + "$colName"] ?? row["${field.name}Id"];'));
       }
     }
     return codes;
@@ -473,8 +486,13 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             ..type = refer(
                 'RelationshipContext', 'package:datapod_api/datapod_api.dart')),
         ])
+        ..optionalParameters.add(Parameter((p) => p
+          ..name = 'aliasPrefix'
+          ..type = refer('String')
+          ..named = true
+          ..defaultTo = Code("''")))
         ..body = Code(
-            'return Managed${entityClass.name}.fromRow(row, database, relationshipContext);'))));
+            'return Managed${entityClass.name}.fromRow(row, database, relationshipContext, aliasPrefix: aliasPrefix);'))));
 
     final emitter = DartEmitter();
     return mapperClass.accept(emitter).toString();

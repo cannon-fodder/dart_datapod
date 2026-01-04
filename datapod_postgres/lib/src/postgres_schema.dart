@@ -64,6 +64,18 @@ class PostgresSchemaManager implements SchemaManager {
           // Ignore if constraint already exists
         }
       }
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        try {
+          await _connection.execute(
+              'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)');
+        } catch (_) {
+          // Ignore if index already exists
+        }
+      }
     }
   }
 

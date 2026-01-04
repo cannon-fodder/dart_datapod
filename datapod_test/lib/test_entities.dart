@@ -11,13 +11,35 @@ import 'package:datapod_api/datapod_api.dart';
 
 part 'test_entities.datapod.dart';
 
-enum TestEnum { alpha, beta, gamma }
+enum TestEnum {
+  alpha,
+  beta,
+  gamma,
+}
+
+class DurationConverter extends AttributeConverter<Duration, int> {
+  const DurationConverter();
+
+  @override
+  int convertToDatabaseColumn(Duration entityValue) =>
+      entityValue.inMilliseconds;
+
+  @override
+  Duration convertToEntityAttribute(int databaseValue) =>
+      Duration(milliseconds: databaseValue);
+}
 
 @Entity(tableName: 'test_entities')
+@Index(name: 'idx_name', columns: ['name'])
 class TestEntity {
   @Id()
   int? id;
 
+  @Convert(DurationConverter)
+  @Column()
+  Duration? duration;
+
+  @Index()
   @Column()
   String? name;
 
@@ -30,8 +52,13 @@ class TestEntity {
   @Column()
   bool? flag;
 
+  @CreatedAt()
   @Column()
   DateTime? createdAt;
+
+  @UpdatedAt()
+  @Column()
+  DateTime? updatedAt;
 
   @Column()
   TestEnum? type;
@@ -41,10 +68,14 @@ class TestEntity {
 
   @Column()
   List<String>? tags;
+
+  @ManyToOne()
+  Future<TestEntity?>? parent;
 }
 
 @Entity(tableName: 'unique_entities')
 @Unique(name: 'uidx_composite', columns: ['folder', 'filename'])
+@Index(name: 'idx_composite', columns: ['folder', 'filename'])
 class UniqueEntity {
   @Id()
   int? id;

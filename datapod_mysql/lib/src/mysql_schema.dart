@@ -62,6 +62,18 @@ class MySqlSchemaManager implements SchemaManager {
           // Ignore if constraint already exists or other error
         }
       }
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.map((c) => '`$c`').join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        try {
+          await _connection.execute(
+              'CREATE ${unique}INDEX `${index.name}` ON `${table.name}` ($cols)');
+        } catch (_) {
+          // Ignore if index already exists
+        }
+      }
     }
   }
 

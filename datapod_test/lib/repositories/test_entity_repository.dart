@@ -18,4 +18,8 @@ abstract class TestEntityRepository extends BaseRepository<TestEntity, int> {
   Future<TestEntity?> findByName(String name);
   Future<Page<TestEntity>> findByNameContaining(String part, Pageable pageable);
   Future<List<TestEntity>> findByFlagTrue(List<Sort> sort);
+
+  @FetchJoin('parent')
+  @override
+  Future<TestEntity?> findById(int id);
 }

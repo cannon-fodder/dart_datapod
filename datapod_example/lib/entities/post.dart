@@ -15,13 +15,38 @@ part 'post.datapod.dart';
 
 enum PostStatus { draft, published, archived }
 
+class DurationConverter extends AttributeConverter<Duration, int> {
+  const DurationConverter();
+
+  @override
+  int convertToDatabaseColumn(Duration entityValue) =>
+      entityValue.inMilliseconds;
+
+  @override
+  Duration convertToEntityAttribute(int databaseValue) =>
+      Duration(milliseconds: databaseValue);
+}
+
 @Entity(tableName: 'posts')
 class Post {
   @Id()
   int? id;
 
+  @Index()
   @Column()
   String? title;
+
+  @Convert(DurationConverter)
+  @Column()
+  Duration? readingTime;
+
+  @CreatedAt()
+  @Column()
+  DateTime? createdAt;
+
+  @UpdatedAt()
+  @Column()
+  DateTime? updatedAt;
 
   @Column()
   String? content;

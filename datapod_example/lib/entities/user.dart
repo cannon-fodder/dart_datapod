@@ -17,8 +17,18 @@ class User {
   @Id()
   int? id;
 
+  @Unique()
+  @Index()
   @Column()
   String? name;
+
+  @CreatedAt()
+  @Column()
+  DateTime? createdAt;
+
+  @UpdatedAt()
+  @Column()
+  DateTime? updatedAt;
 
   @OneToMany(mappedBy: 'author', cascade: [CascadeType.all])
   Future<List<Post>>? posts;

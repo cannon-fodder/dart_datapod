@@ -327,7 +327,11 @@ class InitializerGenerator extends Builder {
         .map((u) =>
             "UniqueConstraintDefinition(name: '${u.name}', columns: [${u.columns.map((c) => "'$c'").join(', ')}])")
         .join(', ');
+    final indexes = def.indexes
+        .map((idx) =>
+            "IndexDefinition(name: '${idx.name}', columns: [${idx.columns.map((c) => "'$c'").join(', ')}], unique: ${idx.unique})")
+        .join(', ');
 
-    return "TableDefinition(name: '${def.name}', columns: [$columns], primaryKey: [$pks], foreignKeys: [$fks], uniqueConstraints: [$unique])";
+    return "TableDefinition(name: '${def.name}', columns: [$columns], primaryKey: [$pks], foreignKeys: [$fks], uniqueConstraints: [$unique], indexes: [$indexes])";
   }
 }

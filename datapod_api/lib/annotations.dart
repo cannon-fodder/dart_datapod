@@ -302,3 +302,76 @@ class DatapodPluginDef {
   final String name;
   const DatapodPluginDef(this.name);
 }
+
+/// Indicates that a field or a combination of fields should be indexed.
+///
+/// When applied to a field, that field alone will be indexed.
+/// When applied to a class, specify the [columns] that form a composite index.
+///
+/// Example (Field):
+/// ```dart
+/// @Entity()
+/// class User {
+///   @Index()
+///   @Column()
+///   late String email;
+/// }
+/// ```
+///
+/// Example (Class - Composite):
+/// ```dart
+/// @Entity()
+/// @Index(name: 'idx_name_org', columns: ['name', 'orgId'])
+/// class Person {
+///   @Column()
+///   late String name;
+///   @Column()
+///   late int orgId;
+/// }
+/// ```
+@Target({TargetKind.field, TargetKind.classType})
+class Index {
+  /// Optional name for the index.
+  final String? name;
+
+  /// List of column names for composite indexes.
+  /// Only used when applied to a class.
+  final List<String>? columns;
+
+  /// Whether the index should be unique.
+  final bool unique;
+
+  const Index({this.name, this.columns, this.unique = false});
+}
+
+/// Indicates that a field should automatically store the creation timestamp.
+///
+/// The field must be of type `DateTime`.
+@Target({TargetKind.field})
+class CreatedAt {
+  const CreatedAt();
+}
+
+/// Indicates that a field should automatically store the last update timestamp.
+///
+/// The field must be of type `DateTime`.
+@Target({TargetKind.field})
+class UpdatedAt {
+  const UpdatedAt();
+}
+
+/// Specifies a custom converter for a field.
+///
+/// The converter must extend [AttributeConverter].
+@Target({TargetKind.field})
+class Convert {
+  final Type converter;
+  const Convert(this.converter);
+}
+
+/// Indicates that the specified property should be eagerly fetched using a JOIN.
+@Target({TargetKind.method})
+class FetchJoin {
+  final String property;
+  const FetchJoin(this.property);
+}

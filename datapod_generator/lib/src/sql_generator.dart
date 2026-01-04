@@ -18,13 +18,23 @@ class EntitySqlMetadata {
   final List<ColumnMetadata> columns;
   final ColumnMetadata? idColumn;
   final List<UniqueConstraintMetadata> uniqueConstraints;
+  final List<IndexMetadata> indexes;
 
   EntitySqlMetadata({
     required this.tableName,
     required this.columns,
     this.idColumn,
     this.uniqueConstraints = const [],
+    this.indexes = const [],
   });
+}
+
+class IndexMetadata {
+  final String? name;
+  final List<String> columns;
+  final bool unique;
+
+  IndexMetadata({this.name, required this.columns, this.unique = false});
 }
 
 class UniqueConstraintMetadata {
@@ -32,6 +42,24 @@ class UniqueConstraintMetadata {
   final List<String> columns;
 
   UniqueConstraintMetadata({this.name, required this.columns});
+}
+
+class JoinMetadata {
+  final String property;
+  final String tableName;
+  final String joinColumn;
+  final String referencedColumn;
+  final String alias;
+  final List<ColumnMetadata> columns;
+
+  JoinMetadata({
+    required this.property,
+    required this.tableName,
+    required this.joinColumn,
+    required this.referencedColumn,
+    required this.alias,
+    required this.columns,
+  });
 }
 
 class ColumnMetadata {
@@ -50,6 +78,9 @@ class ColumnMetadata {
   final bool isList;
   final List<String>? enumValues;
   final bool isNullable;
+  final bool isCreatedAt;
+  final bool isUpdatedAt;
+  final String? converterType;
 
   ColumnMetadata({
     required this.fieldName,
@@ -67,6 +98,9 @@ class ColumnMetadata {
     this.isList = false,
     this.enumValues,
     this.isNullable = true,
+    this.isCreatedAt = false,
+    this.isUpdatedAt = false,
+    this.converterType,
   });
 }
 
@@ -81,6 +115,7 @@ class SqlGenerator {
     final columns = <ColumnMetadata>[];
     ColumnMetadata? idColumn;
     final uniqueConstraints = <UniqueConstraintMetadata>[];
+    final indexes = <IndexMetadata>[];
 
     // Class-level unique constraints
     final classUniqueAnns = const TypeChecker.fromRuntime(api.Unique)
@@ -113,12 +148,21 @@ class SqlGenerator {
           const TypeChecker.fromRuntime(api.OneToOne).firstAnnotationOf(field);
       final oneToMany =
           const TypeChecker.fromRuntime(api.OneToMany).firstAnnotationOf(field);
+      final createdAt =
+          const TypeChecker.fromRuntime(api.CreatedAt).firstAnnotationOf(field);
+      final updatedAt =
+          const TypeChecker.fromRuntime(api.UpdatedAt).firstAnnotationOf(field);
+      final convertAnn =
+          const TypeChecker.fromRuntime(api.Convert).firstAnnotationOf(field);
 
       if (columnAnn == null &&
           idAnn == null &&
           manyToOne == null &&
           oneToOne == null &&
           oneToMany == null &&
+          createdAt == null &&
+          updatedAt == null &&
+          convertAnn == null &&
           !_isPrimitive(field.type)) {
         continue; // Only process relevant fields
       }
@@ -217,13 +261,15 @@ class SqlGenerator {
         } else if (type.isDartCoreList || type.isDartCoreMap) {
           isJson = true;
           if (type.isDartCoreList) isList = true;
-        } else if (!_isPrimitive(type) && relationType == null) {
+        } else if (!_isPrimitive(type) &&
+            relationType == null &&
+            convertAnn == null) {
           // Custom class not marked as entity, treat as JSON
           isJson = true;
         }
       }
 
-      final metadata = ColumnMetadata(
+      ColumnMetadata metadata = ColumnMetadata(
         fieldName: field.name,
         columnName:
             isId ? colName : (relationType != null ? '${colName}_id' : colName),
@@ -242,7 +288,54 @@ class SqlGenerator {
         isList: isList,
         enumValues: enumValues,
         isNullable: field.type.nullabilitySuffix == NullabilitySuffix.question,
+        isCreatedAt: createdAt != null,
+        isUpdatedAt: updatedAt != null,
+        converterType: convertAnn != null
+            ? ConstantReader(convertAnn)
+                .peek('converter')
+                ?.typeValue
+                .getDisplayString(withNullability: false)
+            : null,
       );
+
+      if (metadata.converterType != null) {
+        final convertType =
+            ConstantReader(convertAnn).peek('converter')!.typeValue;
+        if (convertType is InterfaceType) {
+          final converterBase = convertType.allSupertypes.firstWhere(
+            (s) => s.element.name == 'AttributeConverter',
+          );
+          final dbType = converterBase.typeArguments[1]
+              .getDisplayString(withNullability: false);
+
+          // Update metadata with the database type
+          final updated = ColumnMetadata(
+            fieldName: metadata.fieldName,
+            columnName: metadata.columnName,
+            fieldType: dbType, // Use DB type for schema generation
+            isId: metadata.isId,
+            autoIncrement: metadata.autoIncrement,
+            relationType: metadata.relationType,
+            relatedEntityType: metadata.relatedEntityType,
+            relatedTable: metadata.relatedTable,
+            mappedBy: metadata.mappedBy,
+            cascadePersist: metadata.cascadePersist,
+            cascadeRemove: metadata.cascadeRemove,
+            isJson: metadata.isJson,
+            isList: metadata.isList,
+            enumValues: metadata.enumValues,
+            isNullable: metadata.isNullable,
+            isCreatedAt: metadata.isCreatedAt,
+            isUpdatedAt: metadata.isUpdatedAt,
+            converterType: metadata.converterType,
+          );
+          columns.add(updated);
+        } else {
+          columns.add(metadata);
+        }
+      } else {
+        columns.add(metadata);
+      }
 
       final uniqueAnn =
           const TypeChecker.fromRuntime(api.Unique).firstAnnotationOf(field);
@@ -250,12 +343,43 @@ class SqlGenerator {
         final reader = ConstantReader(uniqueAnn);
         uniqueConstraints.add(UniqueConstraintMetadata(
           name: reader.peek('name')?.stringValue,
-          columns: [metadata.columnName],
+          columns: [_camelToSnake(field.name)],
         ));
       }
 
-      columns.add(metadata);
-      if (isId) idColumn = metadata;
+      final indexAnn =
+          const TypeChecker.fromRuntime(api.Index).firstAnnotationOf(field);
+      if (indexAnn != null) {
+        final reader = ConstantReader(indexAnn);
+        indexes.add(IndexMetadata(
+          name: reader.peek('name')?.stringValue,
+          columns: [_camelToSnake(field.name)],
+          unique: reader.peek('unique')?.boolValue ?? false,
+        ));
+      }
+
+      if (isId) idColumn = columns.last;
+    }
+
+    // Class-level indexes
+    final classIndexAnns = const TypeChecker.fromRuntime(api.Index)
+        .annotationsOf(element)
+        .map((a) => ConstantReader(a));
+    for (final ann in classIndexAnns) {
+      final cols = ann
+          .peek('columns')
+          ?.listValue
+          .map((v) => v.toStringValue())
+          .whereType<String>()
+          .map((c) => _camelToSnake(c))
+          .toList();
+      if (cols != null && cols.isNotEmpty) {
+        indexes.add(IndexMetadata(
+          name: ann.peek('name')?.stringValue,
+          columns: cols,
+          unique: ann.peek('unique')?.boolValue ?? false,
+        ));
+      }
     }
 
     return EntitySqlMetadata(
@@ -263,6 +387,7 @@ class SqlGenerator {
       columns: columns,
       idColumn: idColumn,
       uniqueConstraints: uniqueConstraints,
+      indexes: indexes,
     );
   }
 
@@ -301,6 +426,16 @@ class SqlGenerator {
         return api.UniqueConstraintDefinition(
           name: name,
           columns: u.columns,
+        );
+      }).toList(),
+      indexes: metadata.indexes.map((idx) {
+        final rawName = 'idx_${metadata.tableName}_${idx.columns.join('_')}';
+        final name = idx.name ??
+            (rawName.length > 63 ? rawName.substring(0, 63) : rawName);
+        return api.IndexDefinition(
+          name: name,
+          columns: idx.columns,
+          unique: idx.unique,
         );
       }).toList(),
     );
@@ -363,8 +498,35 @@ class SqlGenerator {
     List<Sort>? sort,
     int? limit,
     int? offset,
+    List<JoinMetadata>? joins,
   }) {
     String sql;
+    final mainAlias = joins != null && joins.isNotEmpty ? 't0' : '';
+    final selectAlias = mainAlias.isNotEmpty ? '$mainAlias.' : '';
+
+    String selectClause;
+    if (joins != null && joins.isNotEmpty) {
+      final selectList = <String>[];
+      // Select all from main table
+      for (final col in metadata.columns) {
+        if (col.columnName.isNotEmpty) {
+          selectList.add('${mainAlias}.${col.columnName} AS ${col.columnName}');
+        }
+      }
+      // Select from joined tables
+      for (final join in joins) {
+        for (final col in join.columns) {
+          if (col.columnName.isNotEmpty) {
+            selectList.add(
+                '${join.alias}.${col.columnName} AS ${join.alias}_${col.columnName}');
+          }
+        }
+      }
+      selectClause = selectList.join(', ');
+    } else {
+      selectClause = '*';
+    }
+
     switch (type) {
       case 'count':
         sql = 'SELECT COUNT(*) FROM ${metadata.tableName}';
@@ -373,10 +535,19 @@ class SqlGenerator {
         sql = 'DELETE FROM ${metadata.tableName}';
         break;
       case 'exists':
-        sql = 'SELECT EXISTS(SELECT 1 FROM ${metadata.tableName}';
+        sql =
+            'SELECT EXISTS(SELECT 1 FROM ${metadata.tableName}${mainAlias.isNotEmpty ? ' $mainAlias' : ''}';
         break;
       default:
-        sql = 'SELECT * FROM ${metadata.tableName}';
+        sql =
+            'SELECT $selectClause FROM ${metadata.tableName}${mainAlias.isNotEmpty ? ' $mainAlias' : ''}';
+    }
+
+    if (joins != null && joins.isNotEmpty) {
+      for (final join in joins) {
+        sql +=
+            ' LEFT JOIN ${join.tableName} ${join.alias} ON ${mainAlias}.${join.joinColumn} = ${join.alias}.${join.referencedColumn}';
+      }
     }
 
     if (components.isNotEmpty) {
@@ -394,8 +565,8 @@ class SqlGenerator {
         );
 
         final paramName = parameterNames[i];
-        sql +=
-            _generateOperatorSql(column.columnName, comp.operator, paramName);
+        sql += _generateOperatorSql(
+            '${selectAlias}${column.columnName}', comp.operator, paramName);
       }
     }
 
@@ -412,7 +583,7 @@ class SqlGenerator {
               'Field ${s.field} not found in entity for table ${metadata.tableName}'),
         );
         orderClauses.add(
-            '${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
+            '${selectAlias}${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
       }
       sql += ' ORDER BY ${orderClauses.join(', ')}';
     }

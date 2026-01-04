@@ -35,6 +35,7 @@ class TableDefinition {
   final List<String> primaryKey;
   final List<ForeignKeyDefinition> foreignKeys;
   final List<UniqueConstraintDefinition> uniqueConstraints;
+  final List<IndexDefinition> indexes;
 
   const TableDefinition({
     required this.name,
@@ -42,6 +43,7 @@ class TableDefinition {
     this.primaryKey = const [],
     this.foreignKeys = const [],
     this.uniqueConstraints = const [],
+    this.indexes = const [],
   });
 }
 
@@ -53,6 +55,19 @@ class UniqueConstraintDefinition {
   const UniqueConstraintDefinition({
     required this.name,
     required this.columns,
+  });
+}
+
+/// Represents an index definition.
+class IndexDefinition {
+  final String name;
+  final List<String> columns;
+  final bool unique;
+
+  const IndexDefinition({
+    required this.name,
+    required this.columns,
+    this.unique = false,
   });
 }
 

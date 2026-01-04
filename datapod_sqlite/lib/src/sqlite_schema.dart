@@ -52,6 +52,14 @@ class SqliteSchemaManager implements SchemaManager {
       final columns = columnStrings.join(', ');
       await _connection
           .execute('CREATE TABLE IF NOT EXISTS ${table.name} ($columns)');
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        await _connection.execute(
+            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)');
+      }
     }
   }
 
