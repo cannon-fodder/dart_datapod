@@ -34,12 +34,25 @@ class TableDefinition {
   final List<ColumnDefinition> columns;
   final List<String> primaryKey;
   final List<ForeignKeyDefinition> foreignKeys;
+  final List<UniqueConstraintDefinition> uniqueConstraints;
 
   const TableDefinition({
     required this.name,
     required this.columns,
     this.primaryKey = const [],
     this.foreignKeys = const [],
+    this.uniqueConstraints = const [],
+  });
+}
+
+/// Represents a unique constraint definition.
+class UniqueConstraintDefinition {
+  final String name;
+  final List<String> columns;
+
+  const UniqueConstraintDefinition({
+    required this.name,
+    required this.columns,
   });
 }
 

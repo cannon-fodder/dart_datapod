@@ -37,6 +37,17 @@ class MySqlSchemaManager implements SchemaManager {
       await _connection
           .execute('CREATE TABLE IF NOT EXISTS `${table.name}` ($columns)');
 
+      // Add unique constraints
+      for (final unique in table.uniqueConstraints) {
+        final cols = unique.columns.map((c) => '`$c`').join(', ');
+        try {
+          await _connection.execute(
+              'ALTER TABLE `${table.name}` ADD CONSTRAINT `${unique.name}` UNIQUE ($cols)');
+        } catch (_) {
+          // Ignore if constraint already exists
+        }
+      }
+
       for (final fk in table.foreignKeys) {
         final fkName = fk.name;
         final cols = fk.columns.map((c) => '`$c`').join(', ');
@@ -73,7 +84,7 @@ class MySqlSchemaManager implements SchemaManager {
         return 'DATETIME';
       case 'String':
       default:
-        return 'TEXT';
+        return 'VARCHAR(255)';
     }
   }
 

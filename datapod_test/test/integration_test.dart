@@ -11,6 +11,8 @@ import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_test/datapod_init.dart';
 import 'package:datapod_test/test_entities.dart';
 import 'package:datapod_test/repositories/test_entity_repository.dart';
+import 'package:datapod_test/repositories/unique_entity_repository.dart';
+import 'package:datapod_engine/datapod_engine.dart';
 import 'package:logging/logging.dart';
 
 void main() {
@@ -30,10 +32,14 @@ void main() {
     // Initialize schemas
     print('Initializing Postgres schema...');
     await context.postgresTest.connection
+        .execute('DROP TABLE IF EXISTS unique_entities CASCADE');
+    await context.postgresTest.connection
         .execute('DROP TABLE IF EXISTS test_entities CASCADE');
     await context.postgresTest.connection.schemaManager.initializeSchema();
 
     print('Initializing MySQL schema...');
+    await context.mysqlTest.connection
+        .execute('DROP TABLE IF EXISTS unique_entities');
     await context.mysqlTest.connection
         .execute('DROP TABLE IF EXISTS test_entities');
     await context.mysqlTest.connection.schemaManager.initializeSchema();
@@ -193,6 +199,53 @@ void main() {
         expect(result2.rows, isNotEmpty);
       });
     });
+
+    group('Unique Constraints', () {
+      setUp(() async {
+        await context.postgresTest.connection
+            .execute('DELETE FROM unique_entities');
+      });
+
+      test('Field-level unique constraint', () async {
+        final repo = context.uniqueEntityRepository;
+        await repo.save(UniqueEntity()
+          ..code = 'U1'
+          ..folder = 'f1'
+          ..filename = 'file1');
+
+        // Second insert with same code should fail
+        expect(
+          () => repo.save(UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'f2'
+            ..filename = 'file2'),
+          throwsA(isA<QueryException>()),
+        );
+      });
+
+      test('Composite unique constraint', () async {
+        final repo = context.uniqueEntityRepository;
+        await repo.save(UniqueEntity()
+          ..code = 'U1'
+          ..folder = 'same'
+          ..filename = 'same');
+
+        // Different folder/same name is OK
+        await repo.save(UniqueEntity()
+          ..code = 'U2'
+          ..folder = 'other'
+          ..filename = 'same');
+
+        // Same folder/same name should fail
+        expect(
+          () => repo.save(UniqueEntity()
+            ..code = 'U3'
+            ..folder = 'same'
+            ..filename = 'same'),
+          throwsA(isA<QueryException>()),
+        );
+      });
+    });
   });
 
   group('MySQL Integration', () {
@@ -339,6 +392,58 @@ void main() {
         final result2 = await context.mysqlTest.connection.execute(
             'SELECT * FROM test_entities WHERE name = @name', {'name': name});
         expect(result2.rows, isNotEmpty);
+      });
+    });
+
+    group('Unique Constraints', () {
+      late UniqueEntityRepository mysqlUniqueRepo;
+      setUp(() async {
+        await context.mysqlTest.connection
+            .execute('DELETE FROM unique_entities');
+        final relCtx = RelationshipContextImpl();
+        mysqlUniqueRepo = UniqueEntityRepositoryImpl(
+            context.mysqlTest,
+            UniqueEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+            UniqueEntityMapperImpl(),
+            relCtx);
+      });
+
+      test('Field-level unique constraint', () async {
+        await mysqlUniqueRepo.save(UniqueEntity()
+          ..code = 'U1'
+          ..folder = 'f1'
+          ..filename = 'file1');
+
+        // Second insert with same code should fail
+        expect(
+          () => mysqlUniqueRepo.save(UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'f2'
+            ..filename = 'file2'),
+          throwsA(isA<QueryException>()),
+        );
+      });
+
+      test('Composite unique constraint', () async {
+        await mysqlUniqueRepo.save(UniqueEntity()
+          ..code = 'U1'
+          ..folder = 'same'
+          ..filename = 'same');
+
+        // Different folder/same name is OK
+        await mysqlUniqueRepo.save(UniqueEntity()
+          ..code = 'U2'
+          ..folder = 'other'
+          ..filename = 'same');
+
+        // Same folder/same name should fail
+        expect(
+          () => mysqlUniqueRepo.save(UniqueEntity()
+            ..code = 'U3'
+            ..folder = 'same'
+            ..filename = 'same'),
+          throwsA(isA<QueryException>()),
+        );
       });
     });
   });

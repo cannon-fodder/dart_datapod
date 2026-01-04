@@ -35,6 +35,11 @@ class SqliteSchemaManager implements SchemaManager {
         return '${c.name} $type$pk$autoInc$nullable';
       }).toList();
 
+      for (final unique in table.uniqueConstraints) {
+        final cols = unique.columns.join(', ');
+        columnStrings.add('UNIQUE ($cols)');
+      }
+
       for (final fk in table.foreignKeys) {
         final cols = fk.columns.join(', ');
         final refTable = fk.referencedTable;

@@ -16,12 +16,21 @@ class EntitySqlMetadata {
   final String tableName;
   final List<ColumnMetadata> columns;
   final ColumnMetadata? idColumn;
+  final List<UniqueConstraintMetadata> uniqueConstraints;
 
   EntitySqlMetadata({
     required this.tableName,
     required this.columns,
     this.idColumn,
+    this.uniqueConstraints = const [],
   });
+}
+
+class UniqueConstraintMetadata {
+  final String? name;
+  final List<String> columns;
+
+  UniqueConstraintMetadata({this.name, required this.columns});
 }
 
 class ColumnMetadata {
@@ -70,6 +79,25 @@ class SqlGenerator {
 
     final columns = <ColumnMetadata>[];
     ColumnMetadata? idColumn;
+    final uniqueConstraints = <UniqueConstraintMetadata>[];
+
+    // Class-level unique constraints
+    final classUniqueAnns = const TypeChecker.fromRuntime(api.Unique)
+        .annotationsOf(element)
+        .map((a) => ConstantReader(a));
+    for (final ann in classUniqueAnns) {
+      final columns = ann
+          .peek('columns')
+          ?.listValue
+          .map((v) => v.toStringValue()!)
+          .toList();
+      if (columns != null && columns.isNotEmpty) {
+        uniqueConstraints.add(UniqueConstraintMetadata(
+          name: ann.peek('name')?.stringValue,
+          columns: columns,
+        ));
+      }
+    }
 
     for (final field in element.fields) {
       if (field.isStatic || field.isSynthetic) continue;
@@ -215,6 +243,16 @@ class SqlGenerator {
         isNullable: field.type.nullabilitySuffix == NullabilitySuffix.question,
       );
 
+      final uniqueAnn =
+          const TypeChecker.fromRuntime(api.Unique).firstAnnotationOf(field);
+      if (uniqueAnn != null) {
+        final reader = ConstantReader(uniqueAnn);
+        uniqueConstraints.add(UniqueConstraintMetadata(
+          name: reader.peek('name')?.stringValue,
+          columns: [metadata.columnName],
+        ));
+      }
+
       columns.add(metadata);
       if (isId) idColumn = metadata;
     }
@@ -223,6 +261,7 @@ class SqlGenerator {
       tableName: tableName,
       columns: columns,
       idColumn: idColumn,
+      uniqueConstraints: uniqueConstraints,
     );
   }
 
@@ -254,6 +293,15 @@ class SqlGenerator {
                 onDelete: c.cascadeRemove ? 'CASCADE' : null,
               ))
           .toList(),
+      uniqueConstraints: metadata.uniqueConstraints.map((u) {
+        final rawName = 'uidx_${metadata.tableName}_${u.columns.join('_')}';
+        final name = u.name ??
+            (rawName.length > 63 ? rawName.substring(0, 63) : rawName);
+        return api.UniqueConstraintDefinition(
+          name: name,
+          columns: u.columns,
+        );
+      }).toList(),
     );
   }
 

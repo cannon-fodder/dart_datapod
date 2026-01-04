@@ -338,7 +338,11 @@ class InitializerGenerator extends Builder {
         .map((fk) =>
             "ForeignKeyDefinition(name: '${fk.name}', columns: [${fk.columns.map((c) => "'$c'").join(', ')}], referencedTable: '${fk.referencedTable}', referencedColumns: [${fk.referencedColumns.map((c) => "'$c'").join(', ')}]${fk.onDelete != null ? ", onDelete: '${fk.onDelete}'" : ""})")
         .join(', ');
+    final unique = def.uniqueConstraints
+        .map((u) =>
+            "UniqueConstraintDefinition(name: '${u.name}', columns: [${u.columns.map((c) => "'$c'").join(', ')}])")
+        .join(', ');
 
-    return "TableDefinition(name: '${def.name}', columns: [$columns], primaryKey: [$pks], foreignKeys: [$fks])";
+    return "TableDefinition(name: '${def.name}', columns: [$columns], primaryKey: [$pks], foreignKeys: [$fks], uniqueConstraints: [$unique])";
   }
 }

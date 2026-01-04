@@ -42,3 +42,20 @@ class TestEntity {
   @Column()
   List<String>? tags;
 }
+
+@Entity(tableName: 'unique_entities')
+@Unique(name: 'uidx_composite', columns: ['folder', 'filename'])
+class UniqueEntity {
+  @Id()
+  int? id;
+
+  @Unique()
+  @Column()
+  late String code;
+
+  @Column()
+  late String folder;
+
+  @Column()
+  late String filename;
+}

@@ -255,6 +255,44 @@ class JoinColumn {
   const JoinColumn(this.name, {this.nullable = true});
 }
 
+/// Indicates that a field or a combination of fields must be unique.
+///
+/// When applied to a field, that field alone will have a unique constraint.
+/// When applied to a class, specify the [columns] that form a composite unique constraint.
+///
+/// Example (Field):
+/// ```dart
+/// @Entity()
+/// class User {
+///   @Unique()
+///   @Column()
+///   late String email;
+/// }
+/// ```
+///
+/// Example (Class - Composite):
+/// ```dart
+/// @Entity()
+/// @Unique(name: 'uidx_name_org', columns: ['name', 'orgId'])
+/// class Person {
+///   @Column()
+///   late String name;
+///   @Column()
+///   late int orgId;
+/// }
+/// ```
+@Target({TargetKind.field, TargetKind.classType})
+class Unique {
+  /// Optional name for the unique constraint.
+  final String? name;
+
+  /// List of column names for composite unique constraints.
+  /// Only used when applied to a class.
+  final List<String>? columns;
+
+  const Unique({this.name, this.columns});
+}
+
 /// Indicates a class is a Datapod plugin definition.
 ///
 /// This is used by the code generator to discover and register database plugins.
