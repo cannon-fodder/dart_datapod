@@ -10,34 +10,49 @@ import 'database.dart';
 import 'relationship_context.dart';
 
 /// Interface for entities that are managed by the Datapod ORM.
+///
+/// Managed entities carry additional state information used for persistence
+/// orchestration, such as dirty tracking and persistence status. This allows
+/// Datapod to efficiently decide between `INSERT` and `UPDATE` operations
+/// when [save] is called on a repository.
+///
+/// Datapod automatically generates [ManagedEntity] implementations for your
+/// entity classes during the build process. You typically do not need to
+/// implement this interface manually.
 abstract interface class ManagedEntity {
   /// Whether the entity is currently managed by the ORM.
   bool get isManaged;
 
   /// Whether the entity represents a persistent record in the database.
+  ///
+  /// Persistent entities will be updated on [save], while non-persistent
+  /// ones will be inserted.
   bool get isPersistent;
 
   /// Whether the entity has unsaved changes.
+  ///
+  /// Dirty entities will be processed during update operations.
   bool get isDirty;
 
-  /// The primary key of this entity.
+  /// The value of the primary key field for this entity.
   dynamic get $id;
 
-  /// Marks the entity as managed and persistent.
+  /// Marks the entity as managed and persistent (e.g., after a successful insert).
   void markPersistent();
 
-  /// Marks the entity as dirty.
+  /// Marks the entity as having unsaved changes.
   void markDirty();
 
-  /// Clears the dirty state of the entity.
+  /// Resets the dirty state of the entity.
   void clearDirty();
 
-  /// The database this entity is managed by.
+  /// The database instance that manages this entity.
   ///
-  /// This is used for lazy loading of relationships.
+  /// This is used internally for lazy loading of relationships.
   DatapodDatabase? get $database;
   set $database(DatapodDatabase? value);
 
+  /// The relationship context used for orchestrating associations.
   RelationshipContext? get $relationshipContext;
   set $relationshipContext(RelationshipContext? value);
 }

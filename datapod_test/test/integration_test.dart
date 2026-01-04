@@ -162,7 +162,6 @@ void main() {
       });
 
       test('Manual transaction control', () async {
-        final repo = context.testEntityRepository;
         final name = 'Manual Trans ${DateTime.now().millisecondsSinceEpoch}';
 
         final trans =

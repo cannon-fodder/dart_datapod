@@ -8,37 +8,48 @@
 
 import 'dart:async';
 
-/// Manages database transactions.
+/// Manages database transactions and provides nested transaction support.
 abstract interface class TransactionManager {
   /// Runs the given [action] within a transaction.
   ///
   /// The transaction is automatically committed if the action completes
   /// successfully, or rolled back if an exception is thrown.
   ///
-  /// Uses [Zone]s to propagate the transaction context.
+  /// Datapod supports nested transactions by using database savepoints.
+  /// If [runInTransaction] is called while already in a transaction,
+  /// a savepoint is created, and the inner action is executed relative to it.
+  ///
+  /// Uses [Zone]s to propagate the transaction context across asynchronous gaps.
   Future<T> runInTransaction<T>(Future<T> Function() action);
 
   /// Starts a new transaction manually.
   ///
   /// The caller is responsible for calling [Transaction.commit] or
-  /// [Transaction.rollback].
+  /// [Transaction.rollback] on the returned object.
+  ///
+  /// For most use cases, [runInTransaction] is preferred as it handles
+  /// lifecycle and nesting automatically.
   Future<Transaction> beginTransaction();
 }
 
-/// A handle to a manual database transaction.
+/// A handle for manual database transaction control.
 abstract interface class Transaction {
-  /// Commits the transaction.
+  /// Commits all changes made within this transaction to the database.
   Future<void> commit();
 
-  /// Rolls back the transaction.
+  /// Rolls back all changes made within this transaction.
   Future<void> rollback();
 
-  /// Creates a savepoint within the transaction.
+  /// Creates a named savepoint within the transaction.
+  ///
+  /// This allows for partial rollbacks to the savepoint without aborting
+  /// the entire transaction.
   Future<void> createSavepoint(String name);
 
-  /// Rolls back to a previously created savepoint.
+  /// Rolls back all changes made after the specified savepoint was created.
   Future<void> rollbackToSavepoint(String name);
 
-  /// Releases a previously created savepoint.
+  /// Releases a savepoint, making its changes permanent relative to the
+  /// parent transaction.
   Future<void> releaseSavepoint(String name);
 }

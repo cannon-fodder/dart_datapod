@@ -11,10 +11,13 @@ The code generation engine for the Datapod ORM. This package provides the `build
 
 ## 📖 Usage
 
-Add this package to your `dev_dependencies` and run the build command:
+Add this package to your `dev_dependencies`. The generator will automatically detect your entities and repositories.
 
 ```bash
+# Generate the boilerplate (datapod_init.dart) and implementations
 dart run build_runner build
 ```
+
+This will generate a `datapod_init.dart` file in your `lib` folder, which you use to bootstrap the ORM.
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

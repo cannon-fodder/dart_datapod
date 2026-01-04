@@ -11,35 +11,53 @@ import 'query.dart';
 import 'schema.dart';
 
 /// Represents a database connection instance and provides access to its features.
+///
+/// This is the primary interface for interacting with a specific database backend
+/// (e.g., Postgres, MySQL). It orchestrates transactions, schema management,
+/// and low-level SQL execution.
 abstract interface class DatapodDatabase {
-  /// The name of this database as defined in configuration.
+  /// The name of this database as defined in `databases.yaml`.
   String get name;
 
   /// The [TransactionManager] for this database.
+  ///
+  /// Use this to execute blocks of code within a transaction.
   TransactionManager get transactionManager;
 
   /// The underlying connection provided by the plugin.
+  ///
+  /// This provides direct access to [execute], [stream], and schema features.
   DatabaseConnection get connection;
 
-  /// Closes the database connection.
+  /// Closes the database connection and releases any pooled resources.
   Future<void> close();
 }
 
 /// Interface for database connections provided by plugins.
+///
+/// Plugin authors must implement this interface to support new database backends.
 abstract interface class DatabaseConnection {
-  /// Executes a raw SQL query and returns the results.
+  /// Executes a raw SQL query and returns the results as a [QueryResult].
+  ///
+  /// [sql] can contain named parameters like `@id`.
+  /// [params] is an optional map of parameter names to values.
   Future<QueryResult> execute(String sql, [Map<String, dynamic>? params]);
 
   /// Executes a raw SQL query and returns a stream of rows.
+  ///
+  /// This is suitable for large result sets to avoid loading everything into memory.
   Stream<Map<String, dynamic>> stream(String sql,
       [Map<String, dynamic>? params]);
 
-  /// Starts a new transaction.
+  /// Starts a new transaction manually.
+  ///
+  /// Consider using [TransactionManager.runInTransaction] instead for better
+  /// nested transaction support and automatic commit/rollback.
   Future<Transaction> beginTransaction();
 
-  /// Closes the connection.
+  /// Closes the underlying connection or pool.
   Future<void> close();
 
-  /// Provides access to schema management features.
+  /// Provides access to [SchemaManager] for DDL operations and migrations.
   SchemaManager get schemaManager;
 }

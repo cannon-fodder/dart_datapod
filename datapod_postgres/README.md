@@ -17,12 +17,22 @@ dependencies:
   datapod_postgres: any
 ```
 
-Then configure it in your `databases.yaml`:
-
 ```yaml
 databases:
-  - name: my_db
+  - name: main_db
     plugin: datapod_postgres
+```
+
+In your `connections.yaml`, provide the credentials (supports environment variables):
+
+```yaml
+connections:
+  - name: main_db
+    host: ${DB_HOST:-localhost}
+    port: 5432
+    username: my_user
+    password: ${DB_PASSWORD}
+    database: my_app
 ```
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).
