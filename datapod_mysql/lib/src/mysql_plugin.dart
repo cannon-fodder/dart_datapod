@@ -20,8 +20,9 @@ class MySqlPlugin implements DatapodPlugin {
   @override
   Future<DatapodDatabase> createDatabase(
     DatabaseConfig dbConfig,
-    ConnectionConfig connConfig,
-  ) async {
+    ConnectionConfig connConfig, {
+    ConnectionConfig? migrationConnConfig,
+  }) async {
     final settings = mysql.ConnectionSettings(
       host: connConfig.host ?? 'localhost',
       port: connConfig.port ?? 3306,
@@ -30,13 +31,32 @@ class MySqlPlugin implements DatapodPlugin {
       db: connConfig.database,
     );
 
+    MySqlConnection mainConnection;
     if (connConfig.maxConnections > 1) {
       final pool = await MySqlPool.connect(settings, connConfig.maxConnections);
-      return MySqlDatabase(dbConfig.name, MySqlConnection(pool));
+      mainConnection = MySqlConnection(pool);
     } else {
       final conn = await mysql.MySqlConnection.connect(settings);
-      return MySqlDatabase(
-          dbConfig.name, MySqlConnection(SingleMySqlExecutor(conn)));
+      mainConnection = MySqlConnection(SingleMySqlExecutor(conn));
     }
+
+    MySqlConnection? migrationConnection;
+    if (migrationConnConfig != null) {
+      final migrationSettings = mysql.ConnectionSettings(
+        host: migrationConnConfig.host ?? settings.host,
+        port: migrationConnConfig.port ?? settings.port,
+        user: migrationConnConfig.username,
+        password: migrationConnConfig.password,
+        db: migrationConnConfig.database ?? settings.db,
+      );
+      final conn = await mysql.MySqlConnection.connect(migrationSettings);
+      migrationConnection = MySqlConnection(SingleMySqlExecutor(conn));
+    }
+
+    return MySqlDatabase(
+      dbConfig.name,
+      mainConnection,
+      migrationConnection: migrationConnection,
+    );
   }
 }

@@ -9,10 +9,25 @@
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'sqlite_connection.dart';
+import 'sqlite_schema.dart';
 
 class SqliteDatabase extends DatapodDatabaseBase {
-  SqliteDatabase(String name, SqliteConnection connection)
-      : super(name, connection, SqliteTransactionManager(connection));
+  final SqliteConnection? _migrationConnection;
+
+  SqliteDatabase(
+    String name,
+    SqliteConnection connection, {
+    SqliteConnection? migrationConnection,
+  })  : _migrationConnection = migrationConnection,
+        super(name, connection, SqliteTransactionManager(connection));
+
+  @override
+  DatabaseConnection? get migrationConnection => _migrationConnection;
+
+  @override
+  SchemaManager get schemaManager => SqliteSchemaManager(
+        _migrationConnection ?? connection as SqliteConnection,
+      );
 }
 
 class SqliteTransactionManager extends BaseTransactionManager {

@@ -163,4 +163,51 @@ class PostgresSchemaManager implements SchemaManager {
       );
     }).toList();
   }
+
+  @override
+  Future<String> generateSchemaScript() async {
+    if (_schema == null) return '';
+    final buffer = StringBuffer();
+
+    for (final table in _schema!.tables) {
+      final columns = table.columns.map((c) {
+        String type = _mapType(c);
+        if (c.isAutoIncrement) {
+          type = 'SERIAL';
+        }
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        return '${c.name} $type$nullable$pk';
+      }).join(', ');
+
+      buffer.writeln('CREATE TABLE IF NOT EXISTS ${table.name} ($columns);');
+
+      // Add unique constraints
+      for (final unique in table.uniqueConstraints) {
+        final cols = unique.columns.join(', ');
+        buffer.writeln(
+            'ALTER TABLE ${table.name} ADD CONSTRAINT ${unique.name} UNIQUE ($cols);');
+      }
+
+      for (final fk in table.foreignKeys) {
+        final fkName = fk.name;
+        final cols = fk.columns.join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+
+        buffer.writeln(
+            'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel;');
+      }
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        buffer.writeln(
+            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);');
+      }
+    }
+    return buffer.toString();
+  }
 }

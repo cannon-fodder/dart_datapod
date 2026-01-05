@@ -94,7 +94,7 @@ packages:
       path: "../datapod_engine"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   file:
     dependency: transitive
     description:
@@ -168,7 +168,7 @@ packages:
     source: hosted
     version: "0.12.18"
   meta:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: meta
       sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"

@@ -20,6 +20,13 @@ abstract class DatapodDatabaseBase implements DatapodDatabase {
   @override
   final TransactionManager transactionManager;
 
+  @override
+  DatabaseConnection? get migrationConnection => null;
+
+  @override
+  SchemaManager get schemaManager =>
+      (migrationConnection ?? connection).schemaManager;
+
   DatapodDatabaseBase(this.name, this.connection, this.transactionManager);
 
   @override

@@ -1,5 +1,5 @@
 name: datapod_mysql
-description: MySQL database plugin for the Datapod ORM framework.
+description: MySQL plugin for Datapod ORM.
 version: 0.1.0
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod
@@ -8,7 +8,6 @@ topics:
   - orm
   - database
   - mysql
-  - persistence
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
@@ -16,9 +15,14 @@ dependencies:
   datapod_api: ^0.1.0
   datapod_engine: ^0.1.0
   mysql1: ^0.20.0
-  meta: ^1.11.0
   logging: ^1.2.0
 
 dev_dependencies:
   lints: ^3.0.0
   test: ^1.24.0
+
+dependency_overrides:
+  datapod_api:
+    path: ../datapod_api
+  datapod_engine:
+    path: ../datapod_engine

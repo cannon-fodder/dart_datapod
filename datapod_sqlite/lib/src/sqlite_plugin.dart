@@ -19,12 +19,27 @@ class SqlitePlugin implements DatapodPlugin {
   @override
   Future<DatapodDatabase> createDatabase(
     DatabaseConfig dbConfig,
-    ConnectionConfig connConfig,
-  ) async {
+    ConnectionConfig connConfig, {
+    ConnectionConfig? migrationConnConfig,
+  }) async {
     // For SQLite, the 'database' or a plugin specific 'path' would be the file path.
     final path = connConfig.database ?? ':memory:';
 
     final db = sqlite.sqlite3.open(path);
-    return SqliteDatabase(dbConfig.name, SqliteConnection(db));
+    final mainConnection = SqliteConnection(db);
+
+    SqliteConnection? migrationConnection;
+    if (migrationConnConfig != null) {
+      final migrationPath = migrationConnConfig.database ?? path;
+      // SQLite opens separate connections to the same file fine
+      final migrationDb = sqlite.sqlite3.open(migrationPath);
+      migrationConnection = SqliteConnection(migrationDb);
+    }
+
+    return SqliteDatabase(
+      dbConfig.name,
+      mainConnection,
+      migrationConnection: migrationConnection,
+    );
   }
 }

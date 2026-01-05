@@ -18,25 +18,18 @@ class MemoryPlugin implements DatapodPlugin {
   @override
   Future<DatapodDatabase> createDatabase(
     DatabaseConfig dbConfig,
-    ConnectionConfig connConfig,
-  ) async {
+    ConnectionConfig connConfig, {
+    ConnectionConfig? migrationConnConfig,
+  }) async {
     return MemoryDatabase(dbConfig.name);
   }
 }
 
-class MemoryDatabase implements DatapodDatabase {
-  @override
-  final String name;
-  @override
-  late final TransactionManager transactionManager =
-      TransactionManagerImpl(connection);
-  @override
-  final DatabaseConnection connection = MemoryConnection();
+class MemoryDatabase extends DatapodDatabaseBase {
+  MemoryDatabase(String name) : this._init(name, MemoryConnection());
 
-  MemoryDatabase(this.name);
-
-  @override
-  Future<void> close() async {}
+  MemoryDatabase._init(String name, DatabaseConnection conn)
+      : super(name, conn, TransactionManagerImpl(conn));
 }
 
 class MemoryConnection implements DatabaseConnection {
@@ -142,6 +135,9 @@ class MemorySchemaManager implements SchemaManager {
 
   @override
   Future<List<TableMetadata>> getTables() async => [];
+
+  @override
+  Future<String> generateSchemaScript() async => '';
 }
 
 class TransactionManagerImpl implements TransactionManager {

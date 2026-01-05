@@ -12,3 +12,15 @@ connections:
     password: datapod
     database: datapod_test
     maxConnections: 1
+  - name: migration_postgres
+    host: localhost
+    port: 5433
+    user: datapod
+    password: datapod
+    database: datapod_test
+  - name: migration_mysql
+    host: localhost
+    port: 3307
+    user: datapod
+    password: datapod
+    database: datapod_test

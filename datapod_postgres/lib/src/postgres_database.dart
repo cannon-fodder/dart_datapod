@@ -9,10 +9,29 @@
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'postgres_connection.dart';
+import 'postgres_schema.dart';
 
 class PostgresDatabase extends DatapodDatabaseBase {
-  PostgresDatabase(String name, PostgresConnection connection)
-      : super(name, connection, PostgresTransactionManager(connection));
+  final PostgresConnection? _migrationConnection;
+
+  PostgresDatabase(
+    String name,
+    PostgresConnection connection, {
+    PostgresConnection? migrationConnection,
+  })  : _migrationConnection = migrationConnection,
+        super(
+          name,
+          connection,
+          PostgresTransactionManager(connection),
+        );
+
+  @override
+  DatabaseConnection? get migrationConnection => _migrationConnection;
+
+  @override
+  SchemaManager get schemaManager => PostgresSchemaManager(
+        _migrationConnection ?? connection as PostgresConnection,
+      );
 }
 
 class PostgresTransactionManager extends BaseTransactionManager {

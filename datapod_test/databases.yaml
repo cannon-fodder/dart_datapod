@@ -3,3 +3,6 @@ databases:
     plugin: datapod_postgres
   - name: mysql_test
     plugin: datapod_mysql
+  - name: migration_test_db
+    plugin: datapod_postgres
+    migration_connection: migration_postgres

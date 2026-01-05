@@ -197,13 +197,21 @@ class InitializerGenerator extends Builder {
         result.writeln(
             "    final $dbConfigVar = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == '$dbName');");
         result.writeln(
-            "    final $connConfigVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == '$dbName');");
+            "    final $connConfigVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == $dbConfigVar.connection);");
+
+        final migrationConnVar = _toCamelCase('migrationConn_$dbName');
+        result.writeln("    ConnectionConfig? $migrationConnVar;");
+        result.writeln("    if ($dbConfigVar.migrationConnection != null) {");
         result.writeln(
-            "    final $databaseVar = await $pluginVar.createDatabase($dbConfigVar, $connConfigVar);");
+            "      $migrationConnVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == $dbConfigVar.migrationConnection);");
+        result.writeln("    }");
+
+        result.writeln(
+            "    final $databaseVar = await $pluginVar.createDatabase($dbConfigVar, $connConfigVar, migrationConnConfig: $migrationConnVar);");
         result.writeln();
 
         result.writeln(
-            "    $databaseVar.connection.schemaManager.setSchema(const SchemaDefinition(tables: [");
+            "    $databaseVar.schemaManager.setSchema(const SchemaDefinition(tables: [");
         for (final entity in entities) {
           result.writeln("      ${entity['tableDef']},");
         }

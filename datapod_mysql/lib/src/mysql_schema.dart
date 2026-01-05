@@ -150,4 +150,49 @@ class MySqlSchemaManager implements SchemaManager {
       );
     }).toList();
   }
+
+  @override
+  Future<String> generateSchemaScript() async {
+    if (_schema == null) return '';
+    final buffer = StringBuffer();
+
+    for (final table in _schema!.tables) {
+      final columns = table.columns.map((c) {
+        String type = _mapType(c);
+        final autoInc = c.isAutoIncrement ? ' AUTO_INCREMENT' : '';
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        return '`${c.name}` $type$nullable$autoInc$pk';
+      }).join(', ');
+
+      buffer.writeln('CREATE TABLE IF NOT EXISTS `${table.name}` ($columns);');
+
+      // Add unique constraints
+      for (final unique in table.uniqueConstraints) {
+        final cols = unique.columns.map((c) => '`$c`').join(', ');
+        buffer.writeln(
+            'ALTER TABLE `${table.name}` ADD CONSTRAINT `${unique.name}` UNIQUE ($cols);');
+      }
+
+      for (final fk in table.foreignKeys) {
+        final fkName = fk.name;
+        final cols = fk.columns.map((c) => '`$c`').join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.map((c) => '`$c`').join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+
+        buffer.writeln(
+            'ALTER TABLE `${table.name}` ADD CONSTRAINT `$fkName` FOREIGN KEY ($cols) REFERENCES `$refTable` ($refCols)$onDel;');
+      }
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.map((c) => '`$c`').join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        buffer.writeln(
+            'CREATE ${unique}INDEX `${index.name}` ON `${table.name}` ($cols);');
+      }
+    }
+    return buffer.toString();
+  }
 }

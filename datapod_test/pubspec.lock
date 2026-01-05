@@ -198,35 +198,35 @@ packages:
       path: "../datapod_engine"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   datapod_generator:
     dependency: "direct dev"
     description:
       path: "../datapod_generator"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   datapod_mysql:
     dependency: "direct main"
     description:
       path: "../datapod_mysql"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   datapod_postgres:
     dependency: "direct main"
     description:
       path: "../datapod_postgres"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.0.2"
   datapod_sqlite:
     dependency: "direct main"
     description:
       path: "../datapod_sqlite"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.1.1"
   ffi:
     dependency: transitive
     description:

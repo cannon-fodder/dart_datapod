@@ -132,4 +132,48 @@ class SqliteSchemaManager implements SchemaManager {
       );
     }).toList();
   }
+
+  @override
+  Future<String> generateSchemaScript() async {
+    if (_schema == null) return '';
+    final buffer = StringBuffer();
+
+    for (final table in _schema!.tables) {
+      final columnStrings = table.columns.map((c) {
+        String type = _mapType(c);
+        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+        final autoInc =
+            (c.isAutoIncrement && pk.isNotEmpty) ? ' AUTOINCREMENT' : '';
+        final nullable = c.isNullable ? '' : ' NOT NULL';
+        return '${c.name} $type$pk$autoInc$nullable';
+      }).toList();
+
+      for (final unique in table.uniqueConstraints) {
+        final cols = unique.columns.join(', ');
+        columnStrings.add('UNIQUE ($cols)');
+      }
+
+      for (final fk in table.foreignKeys) {
+        final cols = fk.columns.join(', ');
+        final refTable = fk.referencedTable;
+        final refCols = fk.referencedColumns.join(', ');
+        final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
+        columnStrings
+            .add('FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+      }
+
+      final columns = columnStrings.join(', ');
+      buffer.writeln('CREATE TABLE IF NOT EXISTS ${table.name} ($columns);');
+
+      // Add indexes
+      for (final index in table.indexes) {
+        final cols = index.columns.join(', ');
+        final unique = index.unique ? 'UNIQUE ' : '';
+        buffer.writeln(
+            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);');
+      }
+    }
+
+    return buffer.toString();
+  }
 }

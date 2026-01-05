@@ -19,8 +19,9 @@ class PostgresPlugin implements DatapodPlugin {
   @override
   Future<DatapodDatabase> createDatabase(
     DatabaseConfig dbConfig,
-    ConnectionConfig connConfig,
-  ) async {
+    ConnectionConfig connConfig, {
+    ConnectionConfig? migrationConnConfig,
+  }) async {
     final endpoint = pg.Endpoint(
       host: connConfig.host ?? 'localhost',
       port: connConfig.port ?? 5432,
@@ -29,6 +30,7 @@ class PostgresPlugin implements DatapodPlugin {
       password: connConfig.password,
     );
 
+    PostgresConnection mainConnection;
     if (connConfig.maxConnections > 1) {
       final pool = pg.Pool.withEndpoints(
         [endpoint],
@@ -37,19 +39,38 @@ class PostgresPlugin implements DatapodPlugin {
           sslMode: pg.SslMode.disable,
         ),
       );
-      return PostgresDatabase(
-        dbConfig.name,
-        PostgresConnection(pool, onClose: () => pool.close()),
-      );
+      mainConnection = PostgresConnection(pool, onClose: () => pool.close());
     } else {
       final conn = await pg.Connection.open(
         endpoint,
         settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable),
       );
-      return PostgresDatabase(
-        dbConfig.name,
-        PostgresConnection(conn),
-      );
+      mainConnection = PostgresConnection(conn);
     }
+
+    PostgresConnection? migrationConnection;
+    if (migrationConnConfig != null) {
+      // Create separate connection for migrations
+      final migrationEndpoint = pg.Endpoint(
+        host: migrationConnConfig.host ?? endpoint.host,
+        port: migrationConnConfig.port ?? endpoint.port,
+        database: migrationConnConfig.database ?? endpoint.database,
+        username: migrationConnConfig.username,
+        password: migrationConnConfig.password,
+      );
+
+      // Migrations are typically single-threaded, so a single connection is fine
+      final conn = await pg.Connection.open(
+        migrationEndpoint,
+        settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable),
+      );
+      migrationConnection = PostgresConnection(conn);
+    }
+
+    return PostgresDatabase(
+      dbConfig.name,
+      mainConnection,
+      migrationConnection: migrationConnection,
+    );
   }
 }

@@ -19,6 +19,9 @@ abstract interface class SchemaManager {
 
   /// Inspects the current database schema.
   Future<List<TableMetadata>> getTables();
+
+  /// Generates the SQL script to initialize the schema without executing it.
+  Future<String> generateSchemaScript();
 }
 
 /// Represents the desired state of the database schema.

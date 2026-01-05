@@ -17,6 +17,7 @@ abstract interface class DatapodPlugin {
   /// Creates a new [DatapodDatabase] instance using the provided configuration.
   Future<DatapodDatabase> createDatabase(
     DatabaseConfig dbConfig,
-    ConnectionConfig connConfig,
-  );
+    ConnectionConfig connConfig, {
+    ConnectionConfig? migrationConnConfig,
+  });
 }

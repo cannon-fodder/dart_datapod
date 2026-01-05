@@ -30,6 +30,18 @@ abstract interface class DatapodDatabase {
   /// [DatabaseConnection.stream], and schema features.
   DatabaseConnection get connection;
 
+  /// An optional connection with elevated privileges for migrations.
+  ///
+  /// If provided in `databases.yaml` via `migration_connection`, this connection
+  /// should be used for all [SchemaManager] operations.
+  DatabaseConnection? get migrationConnection;
+
+  /// The schema manager for this database.
+  ///
+  /// This handles table creation and migration, automatically using the
+  /// [migrationConnection] if available.
+  SchemaManager get schemaManager;
+
   /// Closes the database connection and releases any pooled resources.
   Future<void> close();
 }

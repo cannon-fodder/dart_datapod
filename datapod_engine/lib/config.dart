@@ -14,12 +14,14 @@ class DatabaseConfig {
   final String name;
   final String plugin;
   final String connection;
+  final String? migrationConnection;
   final Map<String, dynamic> attributes;
 
   const DatabaseConfig({
     required this.name,
     required this.plugin,
     required this.connection,
+    this.migrationConnection,
     this.attributes = const {},
   });
 
@@ -28,6 +30,7 @@ class DatabaseConfig {
       name: yaml['name'] as String,
       plugin: yaml['plugin'] as String,
       connection: (yaml['connection'] ?? yaml['name']) as String,
+      migrationConnection: yaml['migration_connection'] as String?,
       attributes: (yaml['attributes'] as Map<dynamic, dynamic>? ?? {})
           .cast<String, dynamic>(),
     );

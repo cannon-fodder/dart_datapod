@@ -1,6 +1,5 @@
 name: datapod_postgres
-description: Postgres plugin for Datapod ORM.
-
+description: PostgreSQL plugin for Datapod ORM.
 version: 0.0.1
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod
@@ -8,8 +7,7 @@ issue_tracker: https://github.com/cannon-fodder/dart_datapod/issues
 topics:
   - orm
   - database
-  - postgres
-  - persistence
+  - postgresql
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
@@ -17,9 +15,14 @@ dependencies:
   datapod_api: ^0.1.0
   datapod_engine: ^0.1.0
   postgres: ^3.0.0
-  meta: ^1.11.0
   logging: ^1.2.0
 
 dev_dependencies:
   lints: ^3.0.0
   test: ^1.24.0
+
+dependency_overrides:
+  datapod_api:
+    path: ../datapod_api
+  datapod_engine:
+    path: ../datapod_engine

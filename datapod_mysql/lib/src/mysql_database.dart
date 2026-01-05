@@ -9,10 +9,25 @@
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_engine/datapod_engine.dart';
 import 'mysql_connection.dart';
+import 'mysql_schema.dart';
 
 class MySqlDatabase extends DatapodDatabaseBase {
-  MySqlDatabase(String name, MySqlConnection connection)
-      : super(name, connection, MySqlTransactionManager(connection));
+  final MySqlConnection? _migrationConnection;
+
+  MySqlDatabase(
+    String name,
+    MySqlConnection connection, {
+    MySqlConnection? migrationConnection,
+  })  : _migrationConnection = migrationConnection,
+        super(name, connection, MySqlTransactionManager(connection));
+
+  @override
+  DatabaseConnection? get migrationConnection => _migrationConnection;
+
+  @override
+  SchemaManager get schemaManager => MySqlSchemaManager(
+        _migrationConnection ?? connection as MySqlConnection,
+      );
 }
 
 class MySqlTransactionManager extends BaseTransactionManager {
