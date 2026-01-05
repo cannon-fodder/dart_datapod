@@ -20,8 +20,8 @@ void main() {
     );
 
     // Initialize schemas
-    await context.postgresTest.connection.schemaManager.initializeSchema();
-    await context.mysqlTest.connection.schemaManager.initializeSchema();
+    await context.postgresTest.schemaManager.initializeSchema();
+    await context.mysqlTest.schemaManager.initializeSchema();
   });
 
   tearDownAll(() async {

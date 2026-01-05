@@ -24,7 +24,7 @@ void main() {
         .execute('DROP TABLE IF EXISTS unique_entities CASCADE');
     await context.postgresTest.connection
         .execute('DROP TABLE IF EXISTS test_entities CASCADE');
-    await context.postgresTest.connection.schemaManager.initializeSchema();
+    await context.postgresTest.schemaManager.initializeSchema();
   });
 
   tearDownAll(() async {

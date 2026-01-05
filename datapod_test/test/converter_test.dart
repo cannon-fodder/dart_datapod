@@ -22,7 +22,7 @@ void main() {
     // Initialize schemas
     await context.postgresTest.connection
         .execute('DROP TABLE IF EXISTS test_entities CASCADE');
-    await context.postgresTest.connection.schemaManager.initializeSchema();
+    await context.postgresTest.schemaManager.initializeSchema();
   });
 
   tearDownAll(() async {

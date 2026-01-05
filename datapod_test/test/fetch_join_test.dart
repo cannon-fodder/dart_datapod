@@ -21,7 +21,7 @@ void main() {
     // Sync schema (simplistic for test)
     try {
       await database.connection.execute('DROP TABLE IF EXISTS test_entities');
-      await database.connection.schemaManager.initializeSchema();
+      await database.schemaManager.initializeSchema();
     } catch (e) {
       print('Error syncing schema: $e');
     }

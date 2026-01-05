@@ -47,9 +47,9 @@ void main(List<String> args) async {
     await configDb.connection.execute('DROP TABLE IF EXISTS settings');
 
     print('Initializing schemas via SchemaManager...');
-    await identityDb.connection.schemaManager.initializeSchema();
-    await contentDb.connection.schemaManager.initializeSchema();
-    await configDb.connection.schemaManager.initializeSchema();
+    await identityDb.schemaManager.initializeSchema();
+    await contentDb.schemaManager.initializeSchema();
+    await configDb.schemaManager.initializeSchema();
 
     // In a real cross-database scenario, physical FKs across DB servers don't exist.
     // We'll drop the physical FK in MySQL that points to a table in Postgres.

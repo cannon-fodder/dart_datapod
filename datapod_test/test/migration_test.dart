@@ -31,7 +31,7 @@ void main() {
       final configs = await DatabaseConfig.load('databases.yaml');
       final dbConfig = configs.firstWhere((c) => c.name == 'migration_test_db');
 
-      expect(dbConfig.migrationConnection, equals('migration_conn_admin'));
+      expect(dbConfig.migrationConnection, equals('migration_postgres'));
     });
 
     test('Should initialize database with migration connection', () async {

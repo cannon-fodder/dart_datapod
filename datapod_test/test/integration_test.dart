@@ -34,14 +34,14 @@ void main() {
         .execute('DROP TABLE IF EXISTS unique_entities CASCADE');
     await context.postgresTest.connection
         .execute('DROP TABLE IF EXISTS test_entities CASCADE');
-    await context.postgresTest.connection.schemaManager.initializeSchema();
+    await context.postgresTest.schemaManager.initializeSchema();
 
     print('Initializing MySQL schema...');
     await context.mysqlTest.connection
         .execute('DROP TABLE IF EXISTS unique_entities');
     await context.mysqlTest.connection
         .execute('DROP TABLE IF EXISTS test_entities');
-    await context.mysqlTest.connection.schemaManager.initializeSchema();
+    await context.mysqlTest.schemaManager.initializeSchema();
   });
 
   tearDownAll(() async {
