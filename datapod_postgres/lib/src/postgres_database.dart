@@ -23,15 +23,17 @@ class PostgresDatabase extends DatapodDatabaseBase {
           name,
           connection,
           PostgresTransactionManager(connection),
-        );
+        ) {
+    _schemaManager = PostgresSchemaManager(migrationConnection ?? connection);
+  }
 
   @override
   DatabaseConnection? get migrationConnection => _migrationConnection;
 
+  late final SchemaManager _schemaManager;
+
   @override
-  SchemaManager get schemaManager => PostgresSchemaManager(
-        _migrationConnection ?? connection as PostgresConnection,
-      );
+  SchemaManager get schemaManager => _schemaManager;
 }
 
 class PostgresTransactionManager extends BaseTransactionManager {

@@ -19,15 +19,17 @@ class SqliteDatabase extends DatapodDatabaseBase {
     SqliteConnection connection, {
     SqliteConnection? migrationConnection,
   })  : _migrationConnection = migrationConnection,
-        super(name, connection, SqliteTransactionManager(connection));
+        super(name, connection, SqliteTransactionManager(connection)) {
+    _schemaManager = SqliteSchemaManager(migrationConnection ?? connection);
+  }
+
+  late final SchemaManager _schemaManager;
 
   @override
   DatabaseConnection? get migrationConnection => _migrationConnection;
 
   @override
-  SchemaManager get schemaManager => SqliteSchemaManager(
-        _migrationConnection ?? connection as SqliteConnection,
-      );
+  SchemaManager get schemaManager => _schemaManager;
 }
 
 class SqliteTransactionManager extends BaseTransactionManager {

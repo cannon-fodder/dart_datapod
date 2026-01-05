@@ -19,15 +19,17 @@ class MySqlDatabase extends DatapodDatabaseBase {
     MySqlConnection connection, {
     MySqlConnection? migrationConnection,
   })  : _migrationConnection = migrationConnection,
-        super(name, connection, MySqlTransactionManager(connection));
+        super(name, connection, MySqlTransactionManager(connection)) {
+    _schemaManager = MySqlSchemaManager(migrationConnection ?? connection);
+  }
+
+  late final SchemaManager _schemaManager;
 
   @override
   DatabaseConnection? get migrationConnection => _migrationConnection;
 
   @override
-  SchemaManager get schemaManager => MySqlSchemaManager(
-        _migrationConnection ?? connection as MySqlConnection,
-      );
+  SchemaManager get schemaManager => _schemaManager;
 }
 
 class MySqlTransactionManager extends BaseTransactionManager {
