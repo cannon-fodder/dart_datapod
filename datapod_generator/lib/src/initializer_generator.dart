@@ -155,17 +155,36 @@ class InitializerGenerator extends Builder {
     result.writeln("  static Future<DatapodContext> initialize({");
     result.writeln("    String databasesPath = 'databases.yaml',");
     result.writeln("    String connectionsPath = 'connections.yaml',");
+    result.writeln("    String? databasesYamlContent,");
+    result.writeln("    String? connectionsYamlContent,");
     result.writeln("  }) async {");
-    result.writeln("    final databasesFile = File(databasesPath);");
-    result.writeln("    final connectionsFile = File(connectionsPath);");
+    result.writeln("    List<DatabaseConfig> dbConfigs = [];");
+    result.writeln("    List<ConnectionConfig> connConfigs = [];");
     result.writeln();
-    result.writeln("    if (!await databasesFile.exists()) {");
+    result.writeln("    if (databasesYamlContent != null) {");
     result.writeln(
-        "      throw ConfigurationException('databases.yaml not found at \$databasesPath');");
+        "      dbConfigs = DatabaseConfig.parse(databasesYamlContent);");
+    result.writeln("    } else {");
+    result.writeln("      final databasesFile = File(databasesPath);");
+    result.writeln("      if (!await databasesFile.exists()) {");
+    result.writeln(
+        "        throw ConfigurationException('databases.yaml not found at \$databasesPath');");
+    result.writeln("      }");
+    result
+        .writeln("      dbConfigs = await DatabaseConfig.load(databasesPath);");
     result.writeln("    }");
-    result.writeln("    if (!await connectionsFile.exists()) {");
+    result.writeln();
+    result.writeln("    if (connectionsYamlContent != null) {");
     result.writeln(
-        "      throw ConfigurationException('connections.yaml not found at \$connectionsPath');");
+        "      connConfigs = ConnectionConfig.parse(connectionsYamlContent);");
+    result.writeln("    } else {");
+    result.writeln("      final connectionsFile = File(connectionsPath);");
+    result.writeln("      if (!await connectionsFile.exists()) {");
+    result.writeln(
+        "        throw ConfigurationException('connections.yaml not found at \$connectionsPath');");
+    result.writeln("      }");
+    result.writeln(
+        "      connConfigs = await ConnectionConfig.load(connectionsPath);");
     result.writeln("    }");
     result.writeln();
     result.writeln("    final sharedContext = RelationshipContextImpl();");
@@ -195,15 +214,15 @@ class InitializerGenerator extends Builder {
 
         result.writeln("    final $pluginVar = $pluginClassName();");
         result.writeln(
-            "    final $dbConfigVar = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == '$dbName');");
+            "    final $dbConfigVar = dbConfigs.firstWhere((c) => c.name == '$dbName');");
         result.writeln(
-            "    final $connConfigVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == $dbConfigVar.connection);");
+            "    final $connConfigVar = connConfigs.firstWhere((c) => c.name == $dbConfigVar.connection);");
 
         final migrationConnVar = _toCamelCase('migrationConn_$dbName');
         result.writeln("    ConnectionConfig? $migrationConnVar;");
         result.writeln("    if ($dbConfigVar.migrationConnection != null) {");
         result.writeln(
-            "      $migrationConnVar = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == $dbConfigVar.migrationConnection);");
+            "      $migrationConnVar = connConfigs.firstWhere((c) => c.name == $dbConfigVar.migrationConnection);");
         result.writeln("    }");
 
         result.writeln(

@@ -26,26 +26,41 @@ class DatapodInitializer {
   static Future<DatapodContext> initialize({
     String databasesPath = 'databases.yaml',
     String connectionsPath = 'connections.yaml',
+    String? databasesYamlContent,
+    String? connectionsYamlContent,
   }) async {
-    final databasesFile = File(databasesPath);
-    final connectionsFile = File(connectionsPath);
+    List<DatabaseConfig> dbConfigs = [];
+    List<ConnectionConfig> connConfigs = [];
 
-    if (!await databasesFile.exists()) {
-      throw ConfigurationException('databases.yaml not found at $databasesPath');
+    if (databasesYamlContent != null) {
+      dbConfigs = DatabaseConfig.parse(databasesYamlContent);
+    } else {
+      final databasesFile = File(databasesPath);
+      if (!await databasesFile.exists()) {
+        throw ConfigurationException('databases.yaml not found at $databasesPath');
+      }
+      dbConfigs = await DatabaseConfig.load(databasesPath);
     }
-    if (!await connectionsFile.exists()) {
-      throw ConfigurationException('connections.yaml not found at $connectionsPath');
+
+    if (connectionsYamlContent != null) {
+      connConfigs = ConnectionConfig.parse(connectionsYamlContent);
+    } else {
+      final connectionsFile = File(connectionsPath);
+      if (!await connectionsFile.exists()) {
+        throw ConfigurationException('connections.yaml not found at $connectionsPath');
+      }
+      connConfigs = await ConnectionConfig.load(connectionsPath);
     }
 
     final sharedContext = RelationshipContextImpl();
 
     // Initialize identity_db
     final pluginIdentityDb = PostgresPlugin();
-    final dbConfigIdentityDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'identity_db');
-    final connConfigIdentityDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigIdentityDb.connection);
+    final dbConfigIdentityDb = dbConfigs.firstWhere((c) => c.name == 'identity_db');
+    final connConfigIdentityDb = connConfigs.firstWhere((c) => c.name == dbConfigIdentityDb.connection);
     ConnectionConfig? migrationConnIdentityDb;
     if (dbConfigIdentityDb.migrationConnection != null) {
-      migrationConnIdentityDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigIdentityDb.migrationConnection);
+      migrationConnIdentityDb = connConfigs.firstWhere((c) => c.name == dbConfigIdentityDb.migrationConnection);
     }
     final databaseIdentityDb = await pluginIdentityDb.createDatabase(dbConfigIdentityDb, connConfigIdentityDb, migrationConnConfig: migrationConnIdentityDb);
 
@@ -71,11 +86,11 @@ class DatapodInitializer {
 
     // Initialize content_db
     final pluginContentDb = MySqlPlugin();
-    final dbConfigContentDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'content_db');
-    final connConfigContentDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigContentDb.connection);
+    final dbConfigContentDb = dbConfigs.firstWhere((c) => c.name == 'content_db');
+    final connConfigContentDb = connConfigs.firstWhere((c) => c.name == dbConfigContentDb.connection);
     ConnectionConfig? migrationConnContentDb;
     if (dbConfigContentDb.migrationConnection != null) {
-      migrationConnContentDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigContentDb.migrationConnection);
+      migrationConnContentDb = connConfigs.firstWhere((c) => c.name == dbConfigContentDb.migrationConnection);
     }
     final databaseContentDb = await pluginContentDb.createDatabase(dbConfigContentDb, connConfigContentDb, migrationConnConfig: migrationConnContentDb);
 
@@ -101,11 +116,11 @@ class DatapodInitializer {
 
     // Initialize config_db
     final pluginConfigDb = SqlitePlugin();
-    final dbConfigConfigDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'config_db');
-    final connConfigConfigDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigConfigDb.connection);
+    final dbConfigConfigDb = dbConfigs.firstWhere((c) => c.name == 'config_db');
+    final connConfigConfigDb = connConfigs.firstWhere((c) => c.name == dbConfigConfigDb.connection);
     ConnectionConfig? migrationConnConfigDb;
     if (dbConfigConfigDb.migrationConnection != null) {
-      migrationConnConfigDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigConfigDb.migrationConnection);
+      migrationConnConfigDb = connConfigs.firstWhere((c) => c.name == dbConfigConfigDb.migrationConnection);
     }
     final databaseConfigDb = await pluginConfigDb.createDatabase(dbConfigConfigDb, connConfigConfigDb, migrationConnConfig: migrationConnConfigDb);
 
@@ -131,11 +146,11 @@ class DatapodInitializer {
 
     // Initialize cache_db
     final pluginCacheDb = MemoryPlugin();
-    final dbConfigCacheDb = (await DatabaseConfig.load(databasesPath)).firstWhere((c) => c.name == 'cache_db');
-    final connConfigCacheDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigCacheDb.connection);
+    final dbConfigCacheDb = dbConfigs.firstWhere((c) => c.name == 'cache_db');
+    final connConfigCacheDb = connConfigs.firstWhere((c) => c.name == dbConfigCacheDb.connection);
     ConnectionConfig? migrationConnCacheDb;
     if (dbConfigCacheDb.migrationConnection != null) {
-      migrationConnCacheDb = (await ConnectionConfig.load(connectionsPath)).firstWhere((c) => c.name == dbConfigCacheDb.migrationConnection);
+      migrationConnCacheDb = connConfigs.firstWhere((c) => c.name == dbConfigCacheDb.migrationConnection);
     }
     final databaseCacheDb = await pluginCacheDb.createDatabase(dbConfigCacheDb, connConfigCacheDb, migrationConnConfig: migrationConnCacheDb);
 

@@ -36,15 +36,19 @@ class DatabaseConfig {
     );
   }
 
-  static Future<List<DatabaseConfig>> load(String path) async {
-    final file = File(path);
-    if (!await file.exists()) return [];
-    final content = await file.readAsString();
+  static List<DatabaseConfig> parse(String content) {
     final yaml = loadYaml(content);
     if (yaml is! YamlMap || yaml['databases'] == null) return [];
     return (yaml['databases'] as YamlList)
         .map((db) => DatabaseConfig.fromYaml(db as YamlMap))
         .toList();
+  }
+
+  static Future<List<DatabaseConfig>> load(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return [];
+    final content = await file.readAsString();
+    return parse(content);
   }
 }
 
@@ -78,14 +82,18 @@ class ConnectionConfig {
     return ConnectionConfig(name: yaml['name'] as String, attributes: attrs);
   }
 
-  static Future<List<ConnectionConfig>> load(String path) async {
-    final file = File(path);
-    if (!await file.exists()) return [];
-    final content = await file.readAsString();
+  static List<ConnectionConfig> parse(String content) {
     final yaml = loadYaml(content);
     if (yaml is! YamlMap || yaml['connections'] == null) return [];
     return (yaml['connections'] as YamlList)
         .map((conn) => ConnectionConfig.fromYaml(conn as YamlMap))
         .toList();
+  }
+
+  static Future<List<ConnectionConfig>> load(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return [];
+    final content = await file.readAsString();
+    return parse(content);
   }
 }
