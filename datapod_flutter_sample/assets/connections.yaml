@@ -1,0 +1,7 @@
+connections:
+  - name: sample_db
+    host: localhost
+    port: 5433
+    user: datapod
+    password: datapod
+    database: datapod_test

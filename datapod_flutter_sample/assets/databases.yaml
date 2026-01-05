@@ -1,0 +1,3 @@
+databases:
+  - name: sample_db
+    plugin: datapod_postgres
