@@ -33,6 +33,24 @@ connections:
     username: my_user
     password: ${DB_PASSWORD}
     database: my_app
+
+  # Optional: Separate connection for migrations (e.g. admin user)
+  - name: migration_db
+    host: localhost
+    port: 5432
+    username: admin_user
+    password: admin_password
+    database: my_app
+```
+
+Then link it in `databases.yaml`:
+
+```yaml
+databases:
+  - name: main_db
+    plugin: datapod_postgres
+    connection: main_db
+    migrationConnection: migration_db # Optional
 ```
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

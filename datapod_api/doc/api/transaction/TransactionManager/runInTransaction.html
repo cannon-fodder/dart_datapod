@@ -54,8 +54,8 @@
 
     <section class="multi-line-signature">
       
-<span class="returntype"><a href="https://api.dart.dev/stable/3.10.4/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
-<span class="name ">runInTransaction</span>&lt;<wbr><span class="type-parameter">T</span>&gt;(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="runInTransaction-param-action"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.10.4/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">action</span>()</span></li>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+<span class="name ">runInTransaction</span>&lt;<wbr><span class="type-parameter">T</span>&gt;(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="runInTransaction-param-action"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">action</span>()</span></li>
 </ol>)
 
       
@@ -69,7 +69,7 @@ successfully, or rolled back if an exception is thrown.</p>
 <p>Datapod supports nested transactions by using database savepoints.
 If <a href="../../transaction/TransactionManager/runInTransaction.html">runInTransaction</a> is called while already in a transaction,
 a savepoint is created, and the inner action is executed relative to it.</p>
-<p>Uses <a href="https://api.dart.dev/stable/3.10.4/dart-async/Zone-class.html">Zone</a>s to propagate the transaction context across asynchronous gaps.</p>
+<p>Uses <a href="https://api.flutter.dev/flutter/dart-async/Zone-class.html">Zone</a>s to propagate the transaction context across asynchronous gaps.</p>
 </section>
 
 

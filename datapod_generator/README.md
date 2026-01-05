@@ -6,7 +6,9 @@ The code generation engine for the Datapod ORM. This package provides the `build
 
 - **Entity Generation**: Generates managed entity implementations with lazy loading support.
 - **Repository Generation**: Implements repository interfaces based on method naming conventions.
-- **Initializer Generation**: Discovers all entities, repositories, and plugins to generate `datapod_init.dart`.
+- **Initializer Generation**:
+    - Discovers all entities, repositories, and plugins.
+    - Generates `DatapodInitializer.initialize()` which supports both file-based and string-based (Flutter) configuration loading.
 - **Plugin Discovery**: Automatically detects local plugins annotated with `@DatapodPluginDef`.
 
 ## 📖 Usage

@@ -23,6 +23,27 @@ Then configure it in your `databases.yaml`:
 databases:
   - name: my_db
     plugin: datapod_mysql
+    connection: my_conn
+    migrationConnection: my_migration_conn # Optional
+```
+
+In `connections.yaml`:
+
+```yaml
+connections:
+  - name: my_conn
+    host: localhost
+    port: 3306
+    user: app_user
+    password: password
+    database: my_db
+
+  - name: my_migration_conn
+    host: localhost
+    port: 3306
+    user: admin_user
+    password: admin_password
+    database: my_db
 ```
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

@@ -4,9 +4,15 @@ The core API for the Datapod ORM. This package contains the annotations and base
 
 ## ✨ Features
 
-- **Annotations**: `@Entity`, `@Repository`, `@Column`, `@Id`, `@OneToMany`, etc.
-- **Base Interfaces**: `BaseRepository`, `DatapodDatabase`, `DatabaseConnection`.
+- **Annotations**:
+    - **Modeling**: `@Entity`, `@Column`, `@Id`
+    - **Relationships**: `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany`, `@FetchJoin`
+    - **Constraints & Indexing**: `@Unique`, `@Index`
+    - **Auditing**: `@CreatedAt`, `@UpdatedAt`
+    - **Type Conversion**: `@Convert`
+- **Base Interfaces**: `BaseRepository`, `DatapodDatabase`, `DatabaseConnection`, `ManagedEntity`.
 - **Relationship Support**: Definitions for `FetchType` and `CascadeType`.
+- **Query Utilities**: `Pageable`, `Sort`, `Direction`, `Page`.
 
 ## 📖 Usage
 

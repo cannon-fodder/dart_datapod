@@ -23,6 +23,16 @@ Then configure it in your `databases.yaml`:
 databases:
   - name: my_db
     plugin: datapod_sqlite
+    connection: my_sqlite_conn
+```
+
+In `connections.yaml`:
+
+```yaml
+connections:
+  - name: my_sqlite_conn
+    path: my_db.sqlite
+    # or path: ":memory:" for in-memory database
 ```
 
 For full documentation, see the [root README](https://github.com/cannon-fodder/dart_datapod/blob/main/README.md).

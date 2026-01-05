@@ -47,9 +47,18 @@
 <p>The core API for the Datapod ORM. This package contains the annotations and base interfaces required to define entities and repositories.</p>
 <h2 id="-features">✨ Features</h2>
 <ul>
-<li><strong>Annotations</strong>: <code>@Entity</code>, <code>@Repository</code>, <code>@Column</code>, <code>@Id</code>, <code>@OneToMany</code>, etc.</li>
-<li><strong>Base Interfaces</strong>: <code>BaseRepository</code>, <code>DatapodDatabase</code>, <code>DatabaseConnection</code>.</li>
+<li><strong>Annotations</strong>:
+<ul>
+<li><strong>Modeling</strong>: <code>@Entity</code>, <code>@Column</code>, <code>@Id</code></li>
+<li><strong>Relationships</strong>: <code>@OneToOne</code>, <code>@OneToMany</code>, <code>@ManyToOne</code>, <code>@ManyToMany</code>, <code>@FetchJoin</code></li>
+<li><strong>Constraints &amp; Indexing</strong>: <code>@Unique</code>, <code>@Index</code></li>
+<li><strong>Auditing</strong>: <code>@CreatedAt</code>, <code>@UpdatedAt</code></li>
+<li><strong>Type Conversion</strong>: <code>@Convert</code></li>
+</ul>
+</li>
+<li><strong>Base Interfaces</strong>: <code>BaseRepository</code>, <code>DatapodDatabase</code>, <code>DatabaseConnection</code>, <code>ManagedEntity</code>.</li>
 <li><strong>Relationship Support</strong>: Definitions for <code>FetchType</code> and <code>CascadeType</code>.</li>
+<li><strong>Query Utilities</strong>: <code>Pageable</code>, <code>Sort</code>, <code>Direction</code>, <code>Page</code>.</li>
 </ul>
 <h2 id="-usage">📖 Usage</h2>
 <p>This package is intended to be used as a dependency in your application code where you define your data models.</p>

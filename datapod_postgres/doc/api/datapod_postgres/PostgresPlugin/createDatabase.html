@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the createDatabase method from the PostgresPlugin class, for the Dart programming language.">
+  <title>createDatabase method - PostgresPlugin class - datapod_postgres library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">datapod_postgres</a></li>
+    <li><a href="../../datapod_postgres/">datapod_postgres.dart</a></li>
+    <li><a href="../../datapod_postgres/PostgresPlugin-class.html">PostgresPlugin</a></li>
+    <li class="self-crumb">createDatabase method</li>
+  </ol>
+  <div class="self-name">createDatabase</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="datapod_postgres&#47;PostgresPlugin-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">createDatabase</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">DatapodDatabase</span>&gt;</span></span>
+<span class="name ">createDatabase</span>(<wbr><ol class="parameter-list"> <li><span class="parameter" id="createDatabase-param-dbConfig"><span class="type-annotation">DatabaseConfig</span> <span class="parameter-name">dbConfig</span>, </span></li>
+<li><span class="parameter" id="createDatabase-param-connConfig"><span class="type-annotation">ConnectionConfig</span> <span class="parameter-name">connConfig</span>, {</span></li>
+<li><span class="parameter" id="createDatabase-param-migrationConnConfig"><span class="type-annotation">ConnectionConfig?</span> <span class="parameter-name">migrationConnConfig</span>, </span></li>
+</ol>})
+
+      <div class="features"><span class="feature">override</span></div>
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Creates a new <code>DatapodDatabase</code> instance using the provided configuration.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+Future&lt;DatapodDatabase&gt; createDatabase(
+  DatabaseConfig dbConfig,
+  ConnectionConfig connConfig, {
+  ConnectionConfig? migrationConnConfig,
+}) async {
+  final endpoint = pg.Endpoint(
+    host: connConfig.host ?? &#39;localhost&#39;,
+    port: connConfig.port ?? 5432,
+    database: connConfig.database ?? &#39;postgres&#39;,
+    username: connConfig.username,
+    password: connConfig.password,
+  );
+
+  PostgresConnection mainConnection;
+  if (connConfig.maxConnections &gt; 1) {
+    final pool = pg.Pool.withEndpoints(
+      [endpoint],
+      settings: pg.PoolSettings(
+        maxConnectionCount: connConfig.maxConnections,
+        sslMode: pg.SslMode.disable,
+      ),
+    );
+    mainConnection = PostgresConnection(pool, onClose: () =&gt; pool.close());
+  } else {
+    final conn = await pg.Connection.open(
+      endpoint,
+      settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable),
+    );
+    mainConnection = PostgresConnection(conn);
+  }
+
+  PostgresConnection? migrationConnection;
+  if (migrationConnConfig != null) {
+    &#47;&#47; Create separate connection for migrations
+    final migrationEndpoint = pg.Endpoint(
+      host: migrationConnConfig.host ?? endpoint.host,
+      port: migrationConnConfig.port ?? endpoint.port,
+      database: migrationConnConfig.database ?? endpoint.database,
+      username: migrationConnConfig.username,
+      password: migrationConnConfig.password,
+    );
+
+    &#47;&#47; Migrations are typically single-threaded, so a single connection is fine
+    final conn = await pg.Connection.open(
+      migrationEndpoint,
+      settings: pg.ConnectionSettings(sslMode: pg.SslMode.disable),
+    );
+    migrationConnection = PostgresConnection(conn);
+  }
+
+  return PostgresDatabase(
+    dbConfig.name,
+    mainConnection,
+    migrationConnection: migrationConnection,
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">datapod_postgres</a></li>
+    <li><a href="../../datapod_postgres/">datapod_postgres</a></li>
+    <li><a href="../../datapod_postgres/PostgresPlugin-class.html">PostgresPlugin</a></li>
+    <li class="self-crumb">createDatabase method</li>
+</ol>
+
+    <h5>PostgresPlugin class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    datapod_postgres
+      0.0.1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
