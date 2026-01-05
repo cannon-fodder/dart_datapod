@@ -44,7 +44,7 @@ void main() {
 
       // Insert
       final result = await db.connection.execute(
-        'INSERT INTO users (name) VALUES (?)',
+        'INSERT INTO users (name) VALUES (@name)',
         {'name': 'Alice'},
       );
       print(

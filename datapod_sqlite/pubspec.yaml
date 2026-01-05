@@ -1,6 +1,6 @@
 name: datapod_sqlite
 description: SQLite plugin for Datapod ORM.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod
 issue_tracker: https://github.com/cannon-fodder/dart_datapod/issues
@@ -12,8 +12,8 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  datapod_api: ^0.1.0
-  datapod_engine: ^0.1.0
+  datapod_api: ^0.2.0
+  datapod_engine: ^0.2.0
   sqlite3: ^2.0.0
   logging: ^1.2.0
   path: ^1.9.0

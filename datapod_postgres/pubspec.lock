@@ -103,14 +103,14 @@ packages:
       path: "../datapod_api"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.2.0"
   datapod_engine:
     dependency: "direct main"
     description:
       path: "../datapod_engine"
       relative: true
     source: path
-    version: "0.1.1"
+    version: "0.2.0"
   file:
     dependency: transitive
     description:
