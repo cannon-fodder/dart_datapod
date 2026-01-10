@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Updated SDK constraint to `^3.10.0`.
+- Updated dependencies (`lints`, `test`).
+
 ## 0.2.0
 
 - Added support for initializing framework from a connection string (Flutter compatibility).
