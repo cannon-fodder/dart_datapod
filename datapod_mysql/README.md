@@ -1,5 +1,7 @@
 # datapod_mysql
 
+![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+
 The MySQL database plugin for the Datapod ORM framework.
 
 ## ✨ Features

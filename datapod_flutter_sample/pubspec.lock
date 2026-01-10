@@ -199,28 +199,28 @@ packages:
       path: "../datapod_api"
       relative: true
     source: path
-    version: "0.2.0"
+    version: "0.2.1"
   datapod_engine:
     dependency: "direct main"
     description:
       path: "../datapod_engine"
       relative: true
     source: path
-    version: "0.2.0"
+    version: "0.2.1"
   datapod_generator:
     dependency: "direct dev"
     description:
       path: "../datapod_generator"
       relative: true
     source: path
-    version: "0.2.0"
+    version: "0.2.1"
   datapod_postgres:
     dependency: "direct main"
     description:
       path: "../datapod_postgres"
       relative: true
     source: path
-    version: "0.2.0"
+    version: "0.2.1"
   fake_async:
     dependency: transitive
     description:

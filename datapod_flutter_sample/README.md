@@ -1,5 +1,7 @@
 # Datapod Flutter Sample
 
+![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+
 A Flutter sample application demonstrating how to use the Datapod ORM with Flutter.
 
 ## ✨ Features

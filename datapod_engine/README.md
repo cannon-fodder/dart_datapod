@@ -1,5 +1,7 @@
 # datapod_engine
 
+![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+
 The execution engine for the Datapod ORM framework. It manages database plugins, orchestrates cross-database relationships, and handles transaction boundaries.
 
 ## ✨ Features

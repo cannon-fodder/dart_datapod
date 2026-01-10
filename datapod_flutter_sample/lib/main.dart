@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Datapod Flutter Sample',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
       home: TodoListScreen(context: context),
@@ -94,7 +94,13 @@ class _TodoListScreenState extends State<TodoListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Datapod Todos'),
+        title: Row(
+          children: [
+            Image.asset('assets/datapod_logo.png', height: 32),
+            const SizedBox(width: 8),
+            const Text('Datapod Todos'),
+          ],
+        ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: FutureBuilder<List<Todo>>(

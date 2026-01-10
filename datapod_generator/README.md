@@ -1,5 +1,7 @@
 # datapod_generator
 
+![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+
 The code generation engine for the Datapod ORM. This package provides the `build_runner` builders that transform your annotated classes into fully functional database implementations.
 
 ## ✨ Features

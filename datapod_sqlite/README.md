@@ -1,5 +1,7 @@
 # datapod_sqlite
 
+![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+
 The SQLite database plugin for the Datapod ORM framework.
 
 ## ✨ Features

@@ -53,6 +53,7 @@ flutter:
   assets:
     - assets/databases.yaml
     - assets/connections.yaml
+    - assets/datapod_logo.png
 
 dependency_overrides:
   datapod_api:
