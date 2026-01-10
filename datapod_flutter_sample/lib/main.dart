@@ -100,7 +100,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
               child: Align(
                 alignment: Alignment.center,
                 widthFactor: 1.0,
-                heightFactor: 0.71, // 40/56 scale
+                heightFactor: 0.85, // reduced clipping
                 child: Image.asset('assets/datapod_logo.png', height: 56),
               ),
             ),
