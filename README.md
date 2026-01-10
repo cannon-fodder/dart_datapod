@@ -1,6 +1,6 @@
 # Datapod ORM
 
-![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+<img src="https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png" width="300">
 
 Datapod is a powerful, modular Dart ORM (Object-Relational Mapper) inspired by the flexibility and convenience of Spring Data JPA. It provides a uniform API for interacting with various database backends, automated code generation for repositories, and intelligent entity management.
 

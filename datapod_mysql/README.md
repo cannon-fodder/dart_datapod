@@ -1,6 +1,6 @@
 # datapod_mysql
 
-![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+<img src="https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png" width="300">
 
 The MySQL database plugin for the Datapod ORM framework.
 

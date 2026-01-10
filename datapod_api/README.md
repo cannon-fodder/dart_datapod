@@ -1,6 +1,6 @@
 # datapod_api
 
-![Datapod Logo](https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png)
+<img src="https://raw.githubusercontent.com/cannon-fodder/dart_datapod/main/assets/datapod_logo.png" width="300">
 
 The core API for the Datapod ORM. This package contains the annotations and base interfaces required to define entities and repositories.
 

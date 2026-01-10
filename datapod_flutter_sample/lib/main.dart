@@ -96,7 +96,14 @@ class _TodoListScreenState extends State<TodoListScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset('assets/datapod_logo.png', height: 32),
+            ClipRect(
+              child: Align(
+                alignment: Alignment.center,
+                widthFactor: 1.0,
+                heightFactor: 0.71, // 40/56 scale
+                child: Image.asset('assets/datapod_logo.png', height: 56),
+              ),
+            ),
             const SizedBox(width: 8),
             const Text('Datapod Todos'),
           ],
