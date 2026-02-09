@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the findById method from the TestEntityRepositoryImpl class, for the Dart programming language.">
+  <title>findById method - TestEntityRepositoryImpl class - test_entity_repository library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">datapod_test</a></li>
+    <li><a href="../../repositories_test_entity_repository/">repositories&#47;test_entity_repository.dart</a></li>
+    <li><a href="../../repositories_test_entity_repository/TestEntityRepositoryImpl-class.html">TestEntityRepositoryImpl</a></li>
+    <li class="self-crumb">findById method</li>
+  </ol>
+  <div class="self-name">findById</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="repositories_test_entity_repository&#47;TestEntityRepositoryImpl-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">findById</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../test_entities/TestEntity-class.html">TestEntity</a>?</span>&gt;</span></span>
+<span class="name ">findById</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="findById-param-id"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">id</span></span></li>
+</ol>)
+
+      <div class="features"><span class="feature">override</span></div>
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Finds an entity by its primary key <code>id</code>.</p>
+<p>Returns the entity if found, otherwise <code>null</code>.</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+Future&lt;TestEntity?&gt; findById(id) async {
+  final sql =
+      &#39;SELECT t0.id AS id, t0.duration AS duration, t0.name AS name, t0.value AS value, t0.rating AS rating, t0.flag AS flag, t0.created_at AS created_at, t0.updated_at AS updated_at, t0.type AS type, t0.data AS data, t0.tags AS tags, t0.parent_id AS parent_id, t1.id AS t1_id, t1.duration AS t1_duration, t1.name AS t1_name, t1.value AS t1_value, t1.rating AS t1_rating, t1.flag AS t1_flag, t1.created_at AS t1_created_at, t1.updated_at AS t1_updated_at, t1.type AS t1_type, t1.data AS t1_data, t1.tags AS t1_tags, t1.parent_id AS t1_parent_id FROM test_entities t0 LEFT JOIN test_entities t1 ON t0.parent_id = t1.id WHERE t0.id = @id&#39;;
+  final result = await database.connection.execute(sql, {&#39;id&#39;: id});
+
+  if (result.isEmpty) return null;
+  final row = result.rows.first;
+  final entity = mapper.mapRow(row, database, relationshipContext);
+  final managed = entity as ManagedTestEntity;
+  if (row[&#39;t1_id&#39;] != null) {
+    managed.parent = Future.value(
+      ManagedTestEntity.fromRow(
+        row,
+        database,
+        relationshipContext,
+        aliasPrefix: &#39;t1_&#39;,
+      ),
+    );
+  }
+  return entity;
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">datapod_test</a></li>
+    <li><a href="../../repositories_test_entity_repository/">test_entity_repository</a></li>
+    <li><a href="../../repositories_test_entity_repository/TestEntityRepositoryImpl-class.html">TestEntityRepositoryImpl</a></li>
+    <li class="self-crumb">findById method</li>
+</ol>
+
+    <h5>TestEntityRepositoryImpl class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    datapod_test
+      0.2.1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

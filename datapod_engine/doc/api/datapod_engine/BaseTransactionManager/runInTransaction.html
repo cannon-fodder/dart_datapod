@@ -56,11 +56,11 @@
       
   <div>
     <ol class="annotation-list">
-        <li>@<a href="https://api.dart.dev/stable/3.10.4/dart-core/override-constant.html">override</a></li>
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
     </ol>
   </div>
-<span class="returntype"><a href="https://api.dart.dev/stable/3.10.4/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
-<span class="name ">runInTransaction</span>&lt;<wbr><span class="type-parameter">T</span>&gt;(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="runInTransaction-param-action"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.10.4/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">action</span>()</span></li>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span>
+<span class="name ">runInTransaction</span>&lt;<wbr><span class="type-parameter">T</span>&gt;(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="runInTransaction-param-action"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">T</span>&gt;</span></span> <span class="parameter-name">action</span>()</span></li>
 </ol>)
 
       <div class="features"><span class="feature">override</span></div>
@@ -74,7 +74,7 @@ successfully, or rolled back if an exception is thrown.</p>
 <p>Datapod supports nested transactions by using database savepoints.
 If <a href="../../datapod_engine/BaseTransactionManager/runInTransaction.html">runInTransaction</a> is called while already in a transaction,
 a savepoint is created, and the inner action is executed relative to it.</p>
-<p>Uses <a href="https://api.dart.dev/stable/3.10.4/dart-async/Zone-class.html">Zone</a>s to propagate the transaction context across asynchronous gaps.</p>
+<p>Uses <a href="https://api.flutter.dev/flutter/dart-async/Zone-class.html">Zone</a>s to propagate the transaction context across asynchronous gaps.</p>
 </section>
 
 
@@ -100,21 +100,16 @@ Future&lt;T&gt; runInTransaction&lt;T&gt;(Future&lt;T&gt; Function() action) asy
   }
 
   final transaction = await beginTransaction();
-  return await runZoned(
-    () async {
-      try {
-        final result = await action();
-        await transaction.commit();
-        return result;
-      } catch (e) {
-        await transaction.rollback();
-        rethrow;
-      }
-    },
-    zoneValues: {
-      _transactionZoneKey: transaction,
-    },
-  );
+  return await runZoned(() async {
+    try {
+      final result = await action();
+      await transaction.commit();
+      return result;
+    } catch (e) {
+      await transaction.rollback();
+      rethrow;
+    }
+  }, zoneValues: {_transactionZoneKey: transaction});
 }</code></pre>
 </section>
 
@@ -143,7 +138,7 @@ Future&lt;T&gt; runInTransaction&lt;T&gt;(Future&lt;T&gt; Function() action) asy
 <footer>
   <span class="no-break">
     datapod_engine
-      0.1.1
+      0.2.2
   </span>
   
 </footer>

@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import
 // GENERATED CODE - DO NOT MODIFY BY HAND
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
@@ -5,7 +6,7 @@
 import 'dart:io';
 import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_engine/datapod_engine.dart';
-import 'package:datapod_postgres/datapod_postgres.dart';
+import 'package:datapod_sqlite/datapod_sqlite.dart';
 import 'package:datapod_flutter_sample/todo_repository.dart';
 import 'package:datapod_flutter_sample/todo.dart';
 
@@ -39,10 +40,11 @@ class DatapodInitializer {
       connConfigs = await ConnectionConfig.load(connectionsPath);
     }
 
+    // Shared context (registry) for cross-database references
     final sharedContext = RelationshipContextImpl();
 
     // Initialize sample_db
-    final pluginSampleDb = PostgresPlugin();
+    final pluginSampleDb = SqlitePlugin();
     final dbConfigSampleDb = dbConfigs.firstWhere((c) => c.name == 'sample_db');
     final connConfigSampleDb = connConfigs.firstWhere((c) => c.name == dbConfigSampleDb.connection);
     ConnectionConfig? migrationConnSampleDb;
@@ -58,8 +60,6 @@ class DatapodInitializer {
     final todoRepositoryOps = TodoRepositoryOperationsImpl(databaseSampleDb, sharedContext);
     final todoRepositoryMapper = TodoMapperImpl();
     final todoRepository = TodoRepositoryImpl(databaseSampleDb, todoRepositoryOps, todoRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<Todo, int>(todoRepositoryOps);
-    sharedContext.registerMapper<Todo>(todoRepositoryMapper);
 
     return DatapodContext(
       sampleDb: databaseSampleDb,

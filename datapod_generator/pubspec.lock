@@ -114,7 +114,7 @@ packages:
     source: hosted
     version: "3.0.7"
   dart_style:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: dart_style
       sha256: "99e066ce75c89d6b29903d788a7bb9369cf754f7b24bf70bf4b6d6d6b26853b9"
@@ -124,19 +124,17 @@ packages:
   datapod_api:
     dependency: "direct main"
     description:
-      name: datapod_api
-      sha256: "354bbb6bb4b0f85596756a96c47057b3477a9e482ab8d30e2b8e60988acb5e1b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+      path: "../datapod_api"
+      relative: true
+    source: path
+    version: "0.2.2"
   datapod_engine:
     dependency: "direct main"
     description:
-      name: datapod_engine
-      sha256: "6a06bdedfd5742fd011bf81f6d3718a9b7256a8860c1e7d3b257ae6b88bbf8dc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+      path: "../datapod_engine"
+      relative: true
+    source: path
+    version: "0.2.2"
   file:
     dependency: transitive
     description:

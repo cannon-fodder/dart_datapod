@@ -67,8 +67,11 @@
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">Builder datapodBuilder(BuilderOptions options) =&gt;
-    PartBuilder([EntityGenerator(), RepositoryGenerator()], &#39;.datapod.dart&#39;);</code></pre>
+  <pre class="language-dart"><code class="language-dart">Builder datapodBuilder(BuilderOptions options) =&gt; PartBuilder([
+  EntityGenerator(),
+  RepositoryGenerator(),
+  DatabaseContextGenerator(),
+], &#39;.datapod.dart&#39;);</code></pre>
 </section>
 
 
@@ -95,7 +98,7 @@
 <footer>
   <span class="no-break">
     datapod_generator
-      0.1.1
+      0.2.2
   </span>
   
 </footer>

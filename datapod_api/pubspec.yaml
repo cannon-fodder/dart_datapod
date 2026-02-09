@@ -1,6 +1,7 @@
 name: datapod_api
 description: Core annotations and base interfaces for the Datapod ORM framework.
-version: 0.2.1
+version: 0.2.2
+
 homepage: https://github.com/cannon-fodder/dart_datapod
 repository: https://github.com/cannon-fodder/dart_datapod
 issue_tracker: https://github.com/cannon-fodder/dart_datapod/issues

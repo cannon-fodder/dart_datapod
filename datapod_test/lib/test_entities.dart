@@ -11,11 +11,7 @@ import 'package:datapod_api/datapod_api.dart';
 
 part 'test_entities.datapod.dart';
 
-enum TestEnum {
-  alpha,
-  beta,
-  gamma,
-}
+enum TestEnum { alpha, beta, gamma }
 
 class DurationConverter extends AttributeConverter<Duration, int> {
   const DurationConverter();

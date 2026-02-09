@@ -16,7 +16,7 @@
 /// *   [Repository]: Annotation for defining data access interfaces.
 /// *   [BaseRepository]: The base class for all repositories.
 /// *   [Pageable], [Page], [Sort]: Classes for pagination and sorting.
-library datapod_api;
+// library datapod_api;
 
 export 'annotations.dart';
 export 'converters.dart';
@@ -32,3 +32,4 @@ export 'pagination.dart';
 export 'query.dart';
 export 'schema.dart';
 export 'transaction.dart';
+export 'src/scoped_relationship_context.dart';

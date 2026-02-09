@@ -12,13 +12,19 @@ import 'relationship_context.dart';
 /// Interface for mapping database rows to entities.
 abstract class EntityMapper<E extends Object> {
   /// Maps a single database row to an entity.
-  E mapRow(Map<String, dynamic> row, DatapodDatabase database,
-      RelationshipContext relationshipContext,
-      {String aliasPrefix = ''});
+  E mapRow(
+    Map<String, dynamic> row,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext, {
+    String aliasPrefix = '',
+  });
 
   /// Maps a list of database rows to a list of entities.
-  List<E> mapRows(Iterable<Map<String, dynamic>> rows, DatapodDatabase database,
-      RelationshipContext relationshipContext) {
+  List<E> mapRows(
+    Iterable<Map<String, dynamic>> rows,
+    DatapodDatabase database,
+    RelationshipContext relationshipContext,
+  ) {
     return rows
         .map((row) => mapRow(row, database, relationshipContext))
         .toList();

@@ -83,8 +83,9 @@ Future&lt;String&gt; generateSchemaScript() async {
     final columnStrings = table.columns.map((c) {
       String type = _mapType(c);
       final pk = table.primaryKey.contains(c.name) ? &#39; PRIMARY KEY&#39; : &#39;&#39;;
-      final autoInc =
-          (c.isAutoIncrement &amp;&amp; pk.isNotEmpty) ? &#39; AUTOINCREMENT&#39; : &#39;&#39;;
+      final autoInc = (c.isAutoIncrement &amp;&amp; pk.isNotEmpty)
+          ? &#39; AUTOINCREMENT&#39;
+          : &#39;&#39;;
       final nullable = c.isNullable ? &#39;&#39; : &#39; NOT NULL&#39;;
       return &#39;${c.name} $type$pk$autoInc$nullable&#39;;
     }).toList();
@@ -99,8 +100,9 @@ Future&lt;String&gt; generateSchemaScript() async {
       final refTable = fk.referencedTable;
       final refCols = fk.referencedColumns.join(&#39;, &#39;);
       final onDel = fk.onDelete != null ? &#39; ON DELETE ${fk.onDelete}&#39; : &#39;&#39;;
-      columnStrings
-          .add(&#39;FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel&#39;);
+      columnStrings.add(
+        &#39;FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel&#39;,
+      );
     }
 
     final columns = columnStrings.join(&#39;, &#39;);
@@ -111,7 +113,8 @@ Future&lt;String&gt; generateSchemaScript() async {
       final cols = index.columns.join(&#39;, &#39;);
       final unique = index.unique ? &#39;UNIQUE &#39; : &#39;&#39;;
       buffer.writeln(
-          &#39;CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);&#39;);
+        &#39;CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);&#39;,
+      );
     }
   }
 
@@ -144,7 +147,7 @@ Future&lt;String&gt; generateSchemaScript() async {
 <footer>
   <span class="no-break">
     datapod_sqlite
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

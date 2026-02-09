@@ -18,8 +18,8 @@ class MySqlDatabase extends DatapodDatabaseBase {
     String name,
     MySqlConnection connection, {
     MySqlConnection? migrationConnection,
-  })  : _migrationConnection = migrationConnection,
-        super(name, connection, MySqlTransactionManager(connection)) {
+  }) : _migrationConnection = migrationConnection,
+       super(name, connection, MySqlTransactionManager(connection)) {
     _schemaManager = MySqlSchemaManager(migrationConnection ?? connection);
   }
 

@@ -76,10 +76,11 @@
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Future&lt;void&gt; close() async {
-  if (_onClose != null) {
-    await _onClose!();
+  final onClose = _onClose;
+  if (onClose != null) {
+    await onClose();
   } else if (_executor is pg.Connection) {
-    await (_executor as pg.Connection).close();
+    await _executor.close();
   }
 }</code></pre>
 </section>
@@ -109,7 +110,7 @@ Future&lt;void&gt; close() async {
 <footer>
   <span class="no-break">
     datapod_postgres
-      0.0.1
+      0.2.2
   </span>
   
 </footer>

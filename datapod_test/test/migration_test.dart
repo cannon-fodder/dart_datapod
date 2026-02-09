@@ -18,12 +18,17 @@ const testSchema = SchemaDefinition(
       name: 'test_table',
       columns: [
         ColumnDefinition(
-            name: 'id', type: 'int', isNullable: false, isAutoIncrement: true),
+          name: 'id',
+          type: 'int',
+          isNullable: false,
+          isAutoIncrement: true,
+        ),
         ColumnDefinition(
-            name: 'name',
-            type: 'String',
-            isNullable: false,
-            isAutoIncrement: false),
+          name: 'name',
+          type: 'String',
+          isNullable: false,
+          isAutoIncrement: false,
+        ),
       ],
       primaryKey: ['id'],
       foreignKeys: [],
@@ -43,18 +48,24 @@ void main() {
     });
 
     test('Should initialize database with migration connection', () async {
-      final dbConfig = (await DatabaseConfig.load('databases.yaml'))
-          .firstWhere((c) => c.name == 'migration_test_db');
+      final dbConfig = (await DatabaseConfig.load(
+        'databases.yaml',
+      )).firstWhere((c) => c.name == 'migration_test_db');
       final connConfigs = await ConnectionConfig.load('connections.yaml');
 
-      final mainConnConfig =
-          connConfigs.firstWhere((c) => c.name == dbConfig.connection);
-      final migrationConnConfig =
-          connConfigs.firstWhere((c) => c.name == dbConfig.migrationConnection);
+      final mainConnConfig = connConfigs.firstWhere(
+        (c) => c.name == dbConfig.connection,
+      );
+      final migrationConnConfig = connConfigs.firstWhere(
+        (c) => c.name == dbConfig.migrationConnection,
+      );
 
       final plugin = PostgresPlugin();
-      final db = await plugin.createDatabase(dbConfig, mainConnConfig,
-          migrationConnConfig: migrationConnConfig);
+      final db = await plugin.createDatabase(
+        dbConfig,
+        mainConnConfig,
+        migrationConnConfig: migrationConnConfig,
+      );
 
       expect(db.migrationConnection, isNotNull);
 
@@ -63,11 +74,13 @@ void main() {
     });
 
     test('Should generate schema script', () async {
-      final dbConfig = (await DatabaseConfig.load('databases.yaml'))
-          .firstWhere((c) => c.name == 'migration_test_db');
+      final dbConfig = (await DatabaseConfig.load(
+        'databases.yaml',
+      )).firstWhere((c) => c.name == 'migration_test_db');
       final connConfigs = await ConnectionConfig.load('connections.yaml');
-      final mainConnConfig =
-          connConfigs.firstWhere((c) => c.name == dbConfig.connection);
+      final mainConnConfig = connConfigs.firstWhere(
+        (c) => c.name == dbConfig.connection,
+      );
 
       // Use Postgres for script gen test
       final plugin = PostgresPlugin();

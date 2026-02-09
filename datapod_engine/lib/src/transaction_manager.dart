@@ -36,21 +36,16 @@ abstract class BaseTransactionManager implements TransactionManager {
     }
 
     final transaction = await beginTransaction();
-    return await runZoned(
-      () async {
-        try {
-          final result = await action();
-          await transaction.commit();
-          return result;
-        } catch (e) {
-          await transaction.rollback();
-          rethrow;
-        }
-      },
-      zoneValues: {
-        _transactionZoneKey: transaction,
-      },
-    );
+    return await runZoned(() async {
+      try {
+        final result = await action();
+        await transaction.commit();
+        return result;
+      } catch (e) {
+        await transaction.rollback();
+        rethrow;
+      }
+    }, zoneValues: {_transactionZoneKey: transaction});
   }
 
   /// Plugins must implement this to start a physical transaction.

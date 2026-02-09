@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Maintenance release.
+- Updated dependencies.
+
 ## 0.2.0
 
 - Fix race condition in integration test setup/tear-down.

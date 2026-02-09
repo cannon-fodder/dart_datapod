@@ -6,6 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
+import 'database.dart';
 import 'mapper.dart';
 import 'operations.dart';
 
@@ -14,22 +15,31 @@ import 'operations.dart';
 /// This is used internally by repositories to find other repositories
 /// they need for cascading and lazy loading.
 abstract interface class RelationshipContext {
+  /// The database associated with this context, if any.
+  DatapodDatabase? get database;
+
   /// Gets the mapper for an entity type.
   EntityMapper<E> getMapper<E extends Object>();
 
   /// Registers a mapper for an entity type.
   void registerMapper<E extends Object>(EntityMapper<E> mapper);
 
-  /// Gets the operations for an entity type.
+  /// Gets the database operations for an entity type.
   DatabaseOperations<E, K> getOperations<E extends Object, K>();
 
-  /// Registers operations for an entity type.
+  /// Registers database operations for an entity type.
   void registerOperations<E extends Object, K>(
-      DatabaseOperations<E, K> operations);
+    DatabaseOperations<E, K> operations,
+  );
 }
 
 /// A simple implementation of [RelationshipContext].
 class RelationshipContextImpl implements RelationshipContext {
+  @override
+  final DatapodDatabase? database;
+
+  RelationshipContextImpl({this.database});
+
   final Map<Type, dynamic> _mappersByEntity = {};
   final Map<Type, dynamic> _operationsByEntity = {};
 
@@ -38,7 +48,8 @@ class RelationshipContextImpl implements RelationshipContext {
     final mapper = _mappersByEntity[E];
     if (mapper == null) {
       throw StateError(
-          'No mapper registered for entity type $E in this context.');
+        'No mapper registered for entity type $E in this context.',
+      );
     }
     return mapper as EntityMapper<E>;
   }
@@ -53,14 +64,16 @@ class RelationshipContextImpl implements RelationshipContext {
     final operations = _operationsByEntity[E];
     if (operations == null) {
       throw StateError(
-          'No operations registered for entity type $E in this context.');
+        'No operations registered for entity type $E in this context.',
+      );
     }
     return operations as DatabaseOperations<E, K>;
   }
 
   @override
   void registerOperations<E extends Object, K>(
-      DatabaseOperations<E, K> operations) {
+    DatabaseOperations<E, K> operations,
+  ) {
     _operationsByEntity[E] = operations;
   }
 }

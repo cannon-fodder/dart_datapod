@@ -19,8 +19,10 @@ abstract interface class DatabaseOperations<E extends Object, K> {
   Future<QueryResult> findAll({List<Sort>? sort, int? limit, int? offset});
 
   /// Saves an entity (insert or update).
-  Future<QueryResult> save(Map<String, dynamic> params,
-      {bool isUpdate = false});
+  Future<QueryResult> save(
+    Map<String, dynamic> params, {
+    bool isUpdate = false,
+  });
 
   /// Saves an entity (insert or update), handling conversion to/from managed state.
   Future<E> saveEntity(E entity);

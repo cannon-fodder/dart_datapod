@@ -106,8 +106,9 @@ class ColumnMetadata {
 
 class SqlGenerator {
   static EntitySqlMetadata parseEntity(ClassElement element) {
-    final entityAnnotation =
-        const TypeChecker.fromRuntime(api.Entity).firstAnnotationOf(element);
+    final entityAnnotation = const TypeChecker.fromRuntime(
+      api.Entity,
+    ).firstAnnotationOf(element);
     final reader = ConstantReader(entityAnnotation);
     final tableName =
         reader.peek('tableName')?.stringValue ?? _camelToSnake(element.name);
@@ -118,9 +119,9 @@ class SqlGenerator {
     final indexes = <IndexMetadata>[];
 
     // Class-level unique constraints
-    final classUniqueAnns = const TypeChecker.fromRuntime(api.Unique)
-        .annotationsOf(element)
-        .map((a) => ConstantReader(a));
+    final classUniqueAnns = const TypeChecker.fromRuntime(
+      api.Unique,
+    ).annotationsOf(element).map((a) => ConstantReader(a));
     for (final ann in classUniqueAnns) {
       final columns = ann
           .peek('columns')
@@ -128,32 +129,42 @@ class SqlGenerator {
           .map((v) => v.toStringValue()!)
           .toList();
       if (columns != null && columns.isNotEmpty) {
-        uniqueConstraints.add(UniqueConstraintMetadata(
-          name: ann.peek('name')?.stringValue,
-          columns: columns,
-        ));
+        uniqueConstraints.add(
+          UniqueConstraintMetadata(
+            name: ann.peek('name')?.stringValue,
+            columns: columns,
+          ),
+        );
       }
     }
 
     for (final field in element.fields) {
       if (field.isStatic || field.isSynthetic) continue;
 
-      final columnAnn =
-          const TypeChecker.fromRuntime(api.Column).firstAnnotationOf(field);
-      final idAnn =
-          const TypeChecker.fromRuntime(api.Id).firstAnnotationOf(field);
-      final manyToOne =
-          const TypeChecker.fromRuntime(api.ManyToOne).firstAnnotationOf(field);
-      final oneToOne =
-          const TypeChecker.fromRuntime(api.OneToOne).firstAnnotationOf(field);
-      final oneToMany =
-          const TypeChecker.fromRuntime(api.OneToMany).firstAnnotationOf(field);
-      final createdAt =
-          const TypeChecker.fromRuntime(api.CreatedAt).firstAnnotationOf(field);
-      final updatedAt =
-          const TypeChecker.fromRuntime(api.UpdatedAt).firstAnnotationOf(field);
-      final convertAnn =
-          const TypeChecker.fromRuntime(api.Convert).firstAnnotationOf(field);
+      final columnAnn = const TypeChecker.fromRuntime(
+        api.Column,
+      ).firstAnnotationOf(field);
+      final idAnn = const TypeChecker.fromRuntime(
+        api.Id,
+      ).firstAnnotationOf(field);
+      final manyToOne = const TypeChecker.fromRuntime(
+        api.ManyToOne,
+      ).firstAnnotationOf(field);
+      final oneToOne = const TypeChecker.fromRuntime(
+        api.OneToOne,
+      ).firstAnnotationOf(field);
+      final oneToMany = const TypeChecker.fromRuntime(
+        api.OneToMany,
+      ).firstAnnotationOf(field);
+      final createdAt = const TypeChecker.fromRuntime(
+        api.CreatedAt,
+      ).firstAnnotationOf(field);
+      final updatedAt = const TypeChecker.fromRuntime(
+        api.UpdatedAt,
+      ).firstAnnotationOf(field);
+      final convertAnn = const TypeChecker.fromRuntime(
+        api.Convert,
+      ).firstAnnotationOf(field);
 
       if (columnAnn == null &&
           idAnn == null &&
@@ -173,8 +184,9 @@ class SqlGenerator {
       final colName =
           colReader.peek('name')?.stringValue ?? _camelToSnake(field.name);
       final isId = idAnn != null;
-      final autoIncrement =
-          isId ? (idReader.peek('autoIncrement')?.boolValue ?? true) : false;
+      final autoIncrement = isId
+          ? (idReader.peek('autoIncrement')?.boolValue ?? true)
+          : false;
 
       String? relationType;
       String? relatedEntityType;
@@ -271,8 +283,9 @@ class SqlGenerator {
 
       ColumnMetadata metadata = ColumnMetadata(
         fieldName: field.name,
-        columnName:
-            isId ? colName : (relationType != null ? '${colName}_id' : colName),
+        columnName: isId
+            ? colName
+            : (relationType != null ? '${colName}_id' : colName),
         fieldType: fieldTypeStr,
         isId: isId,
         autoIncrement: autoIncrement,
@@ -292,21 +305,23 @@ class SqlGenerator {
         isUpdatedAt: updatedAt != null,
         converterType: convertAnn != null
             ? ConstantReader(convertAnn)
-                .peek('converter')
-                ?.typeValue
-                .getDisplayString(withNullability: false)
+                  .peek('converter')
+                  ?.typeValue
+                  .getDisplayString(withNullability: false)
             : null,
       );
 
       if (metadata.converterType != null) {
-        final convertType =
-            ConstantReader(convertAnn).peek('converter')!.typeValue;
+        final convertType = ConstantReader(
+          convertAnn,
+        ).peek('converter')!.typeValue;
         if (convertType is InterfaceType) {
           final converterBase = convertType.allSupertypes.firstWhere(
             (s) => s.element.name == 'AttributeConverter',
           );
-          final dbType = converterBase.typeArguments[1]
-              .getDisplayString(withNullability: false);
+          final dbType = converterBase.typeArguments[1].getDisplayString(
+            withNullability: false,
+          );
 
           // Update metadata with the database type
           final updated = ColumnMetadata(
@@ -337,34 +352,40 @@ class SqlGenerator {
         columns.add(metadata);
       }
 
-      final uniqueAnn =
-          const TypeChecker.fromRuntime(api.Unique).firstAnnotationOf(field);
+      final uniqueAnn = const TypeChecker.fromRuntime(
+        api.Unique,
+      ).firstAnnotationOf(field);
       if (uniqueAnn != null) {
         final reader = ConstantReader(uniqueAnn);
-        uniqueConstraints.add(UniqueConstraintMetadata(
-          name: reader.peek('name')?.stringValue,
-          columns: [_camelToSnake(field.name)],
-        ));
+        uniqueConstraints.add(
+          UniqueConstraintMetadata(
+            name: reader.peek('name')?.stringValue,
+            columns: [_camelToSnake(field.name)],
+          ),
+        );
       }
 
-      final indexAnn =
-          const TypeChecker.fromRuntime(api.Index).firstAnnotationOf(field);
+      final indexAnn = const TypeChecker.fromRuntime(
+        api.Index,
+      ).firstAnnotationOf(field);
       if (indexAnn != null) {
         final reader = ConstantReader(indexAnn);
-        indexes.add(IndexMetadata(
-          name: reader.peek('name')?.stringValue,
-          columns: [_camelToSnake(field.name)],
-          unique: reader.peek('unique')?.boolValue ?? false,
-        ));
+        indexes.add(
+          IndexMetadata(
+            name: reader.peek('name')?.stringValue,
+            columns: [_camelToSnake(field.name)],
+            unique: reader.peek('unique')?.boolValue ?? false,
+          ),
+        );
       }
 
       if (isId) idColumn = columns.last;
     }
 
     // Class-level indexes
-    final classIndexAnns = const TypeChecker.fromRuntime(api.Index)
-        .annotationsOf(element)
-        .map((a) => ConstantReader(a));
+    final classIndexAnns = const TypeChecker.fromRuntime(
+      api.Index,
+    ).annotationsOf(element).map((a) => ConstantReader(a));
     for (final ann in classIndexAnns) {
       final cols = ann
           .peek('columns')
@@ -374,11 +395,13 @@ class SqlGenerator {
           .map((c) => _camelToSnake(c))
           .toList();
       if (cols != null && cols.isNotEmpty) {
-        indexes.add(IndexMetadata(
-          name: ann.peek('name')?.stringValue,
-          columns: cols,
-          unique: ann.peek('unique')?.boolValue ?? false,
-        ));
+        indexes.add(
+          IndexMetadata(
+            name: ann.peek('name')?.stringValue,
+            columns: cols,
+            unique: ann.peek('unique')?.boolValue ?? false,
+          ),
+        );
       }
     }
 
@@ -392,45 +415,50 @@ class SqlGenerator {
   }
 
   static api.TableDefinition generateTableDefinition(
-      EntitySqlMetadata metadata) {
+    EntitySqlMetadata metadata,
+  ) {
     return api.TableDefinition(
       name: metadata.tableName,
       columns: metadata.columns
           .where((c) => c.columnName.isNotEmpty)
-          .map((c) => api.ColumnDefinition(
-                name: c.columnName,
-                type: c.relationType != null ? 'int' : c.fieldType,
-                isNullable: c.isNullable,
-                isAutoIncrement: c.autoIncrement,
-                enumValues: c.enumValues,
-                isJson: c.isJson,
-                isList: c.isList,
-              ))
+          .map(
+            (c) => api.ColumnDefinition(
+              name: c.columnName,
+              type: c.relationType != null ? 'int' : c.fieldType,
+              isNullable: c.isNullable,
+              isAutoIncrement: c.autoIncrement,
+              enumValues: c.enumValues,
+              isJson: c.isJson,
+              isList: c.isList,
+            ),
+          )
           .toList(),
-      primaryKey:
-          metadata.idColumn != null ? [metadata.idColumn!.columnName] : [],
+      primaryKey: metadata.idColumn != null
+          ? [metadata.idColumn!.columnName]
+          : [],
       foreignKeys: metadata.columns
           .where((c) => c.relationType != null && c.columnName.isNotEmpty)
-          .map((c) => api.ForeignKeyDefinition(
-                name: 'fk_${metadata.tableName}_${c.columnName}',
-                columns: [c.columnName],
-                referencedTable: c.relatedTable!,
-                referencedColumns: ['id'],
-                onDelete: c.cascadeRemove ? 'CASCADE' : null,
-              ))
+          .map(
+            (c) => api.ForeignKeyDefinition(
+              name: 'fk_${metadata.tableName}_${c.columnName}',
+              columns: [c.columnName],
+              referencedTable: c.relatedTable!,
+              referencedColumns: ['id'],
+              onDelete: c.cascadeRemove ? 'CASCADE' : null,
+            ),
+          )
           .toList(),
       uniqueConstraints: metadata.uniqueConstraints.map((u) {
         final rawName = 'uidx_${metadata.tableName}_${u.columns.join('_')}';
-        final name = u.name ??
+        final name =
+            u.name ??
             (rawName.length > 63 ? rawName.substring(0, 63) : rawName);
-        return api.UniqueConstraintDefinition(
-          name: name,
-          columns: u.columns,
-        );
+        return api.UniqueConstraintDefinition(name: name, columns: u.columns);
       }).toList(),
       indexes: metadata.indexes.map((idx) {
         final rawName = 'idx_${metadata.tableName}_${idx.columns.join('_')}';
-        final name = idx.name ??
+        final name =
+            idx.name ??
             (rawName.length > 63 ? rawName.substring(0, 63) : rawName);
         return api.IndexDefinition(
           name: name,
@@ -446,12 +474,14 @@ class SqlGenerator {
         .where((c) => !c.autoIncrement && c.columnName.isNotEmpty)
         .toList();
     final names = cols.map((c) => c.columnName).join(', ');
-    final placeholders = cols.map((c) {
-      if (c.relationType != null) {
-        return '@${c.fieldName}Id';
-      }
-      return '@${c.fieldName}';
-    }).join(', ');
+    final placeholders = cols
+        .map((c) {
+          if (c.relationType != null) {
+            return '@${c.fieldName}Id';
+          }
+          return '@${c.fieldName}';
+        })
+        .join(', ');
     var sql =
         'INSERT INTO ${metadata.tableName} ($names) VALUES ($placeholders)';
     if (metadata.idColumn?.autoIncrement ?? false) {
@@ -467,12 +497,14 @@ class SqlGenerator {
     final cols = metadata.columns
         .where((c) => !c.isId && c.columnName.isNotEmpty)
         .toList();
-    final sets = cols.map((c) {
-      if (c.relationType != null) {
-        return '${c.columnName} = @${c.fieldName}Id';
-      }
-      return '${c.columnName} = @${c.fieldName}';
-    }).join(', ');
+    final sets = cols
+        .map((c) {
+          if (c.relationType != null) {
+            return '${c.columnName} = @${c.fieldName}Id';
+          }
+          return '${c.columnName} = @${c.fieldName}';
+        })
+        .join(', ');
     return 'UPDATE ${metadata.tableName} SET $sets WHERE ${metadata.idColumn!.columnName} = @${metadata.idColumn!.fieldName}';
   }
 
@@ -518,7 +550,8 @@ class SqlGenerator {
         for (final col in join.columns) {
           if (col.columnName.isNotEmpty) {
             selectList.add(
-                '${join.alias}.${col.columnName} AS ${join.alias}_${col.columnName}');
+              '${join.alias}.${col.columnName} AS ${join.alias}_${col.columnName}',
+            );
           }
         }
       }
@@ -561,12 +594,16 @@ class SqlGenerator {
         final column = metadata.columns.firstWhere(
           (c) => c.fieldName == comp.field,
           orElse: () => throw Exception(
-              'Field ${comp.field} not found in entity for table ${metadata.tableName}'),
+            'Field ${comp.field} not found in entity for table ${metadata.tableName}',
+          ),
         );
 
         final paramName = parameterNames[i];
         sql += _generateOperatorSql(
-            '$selectAlias${column.columnName}', comp.operator, paramName);
+          '$selectAlias${column.columnName}',
+          comp.operator,
+          paramName,
+        );
       }
     }
 
@@ -580,10 +617,12 @@ class SqlGenerator {
         final column = metadata.columns.firstWhere(
           (c) => c.fieldName == s.field,
           orElse: () => throw Exception(
-              'Field ${s.field} not found in entity for table ${metadata.tableName}'),
+            'Field ${s.field} not found in entity for table ${metadata.tableName}',
+          ),
         );
         orderClauses.add(
-            '$selectAlias${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}');
+          '$selectAlias${column.columnName} ${s.direction == Direction.asc ? 'ASC' : 'DESC'}',
+        );
       }
       sql += ' ORDER BY ${orderClauses.join(', ')}';
     }
@@ -599,7 +638,10 @@ class SqlGenerator {
   }
 
   static String _generateOperatorSql(
-      String column, String operator, String paramName) {
+    String column,
+    String operator,
+    String paramName,
+  ) {
     switch (operator) {
       case 'IsNull':
         return '$column IS NULL';
@@ -649,19 +691,25 @@ class SqlGenerator {
   static String _camelToSnake(String name) {
     return name
         .replaceAllMapped(
-            RegExp(r'([a-z])([A-Z])'), (Match m) => '${m[1]}_${m[2]}')
+          RegExp(r'([a-z])([A-Z])'),
+          (Match m) => '${m[1]}_${m[2]}',
+        )
         .toLowerCase();
   }
 
   static ColumnMetadata parseColumn(FieldElement field) {
-    final columnAnn =
-        const TypeChecker.fromRuntime(api.Column).firstAnnotationOf(field);
-    final idAnn =
-        const TypeChecker.fromRuntime(api.Id).firstAnnotationOf(field);
-    final manyToOne =
-        const TypeChecker.fromRuntime(api.ManyToOne).firstAnnotationOf(field);
-    final oneToOne =
-        const TypeChecker.fromRuntime(api.OneToOne).firstAnnotationOf(field);
+    final columnAnn = const TypeChecker.fromRuntime(
+      api.Column,
+    ).firstAnnotationOf(field);
+    final idAnn = const TypeChecker.fromRuntime(
+      api.Id,
+    ).firstAnnotationOf(field);
+    final manyToOne = const TypeChecker.fromRuntime(
+      api.ManyToOne,
+    ).firstAnnotationOf(field);
+    final oneToOne = const TypeChecker.fromRuntime(
+      api.OneToOne,
+    ).firstAnnotationOf(field);
 
     final colReader = ConstantReader(columnAnn);
     final idReader = ConstantReader(idAnn);
@@ -677,8 +725,9 @@ class SqlGenerator {
 
     return ColumnMetadata(
       fieldName: field.name,
-      columnName:
-          isId ? colName : (relationType != null ? '${colName}_id' : colName),
+      columnName: isId
+          ? colName
+          : (relationType != null ? '${colName}_id' : colName),
       fieldType: field.type.getDisplayString(withNullability: false),
       isId: isId,
       autoIncrement: autoIncrement,

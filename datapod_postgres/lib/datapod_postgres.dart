@@ -6,7 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-library datapod_postgres;
+// library datapod_postgres;
 
 export 'src/postgres_connection.dart';
 export 'src/postgres_database.dart';

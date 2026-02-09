@@ -18,12 +18,8 @@ class PostgresDatabase extends DatapodDatabaseBase {
     String name,
     PostgresConnection connection, {
     PostgresConnection? migrationConnection,
-  })  : _migrationConnection = migrationConnection,
-        super(
-          name,
-          connection,
-          PostgresTransactionManager(connection),
-        ) {
+  }) : _migrationConnection = migrationConnection,
+       super(name, connection, PostgresTransactionManager(connection)) {
     _schemaManager = PostgresSchemaManager(migrationConnection ?? connection);
   }
 

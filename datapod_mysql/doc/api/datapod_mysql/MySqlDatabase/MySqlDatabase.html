@@ -69,8 +69,8 @@
   String name,
   MySqlConnection connection, {
   MySqlConnection? migrationConnection,
-})  : _migrationConnection = migrationConnection,
-      super(name, connection, MySqlTransactionManager(connection)) {
+}) : _migrationConnection = migrationConnection,
+     super(name, connection, MySqlTransactionManager(connection)) {
   _schemaManager = MySqlSchemaManager(migrationConnection ?? connection);
 }</code></pre>
 </section>
@@ -100,7 +100,7 @@
 <footer>
   <span class="no-break">
     datapod_mysql
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

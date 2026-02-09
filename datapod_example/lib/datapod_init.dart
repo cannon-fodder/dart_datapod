@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import
 // GENERATED CODE - DO NOT MODIFY BY HAND
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
@@ -20,6 +21,7 @@ import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/comment.dart';
 import 'package:datapod_example/entities/setting.dart';
+import 'package:datapod_example/database_contexts.dart';
 import 'package:datapod_example/plugins/memory_plugin.dart';
 
 class DatapodInitializer {
@@ -52,6 +54,7 @@ class DatapodInitializer {
       connConfigs = await ConnectionConfig.load(connectionsPath);
     }
 
+    // Shared context (registry) for cross-database references
     final sharedContext = RelationshipContextImpl();
 
     // Initialize identity_db
@@ -73,16 +76,10 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final userRepositoryOps = UserRepositoryOperationsImpl(databaseIdentityDb, sharedContext);
-    final userRepositoryMapper = UserMapperImpl();
-    final userRepository = UserRepositoryImpl(databaseIdentityDb, userRepositoryOps, userRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<User, int>(userRepositoryOps);
-    sharedContext.registerMapper<User>(userRepositoryMapper);
-    final roleRepositoryOps = RoleRepositoryOperationsImpl(databaseIdentityDb, sharedContext);
-    final roleRepositoryMapper = RoleMapperImpl();
-    final roleRepository = RoleRepositoryImpl(databaseIdentityDb, roleRepositoryOps, roleRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<Role, int>(roleRepositoryOps);
-    sharedContext.registerMapper<Role>(roleRepositoryMapper);
+    // Initialize IdentityContext
+    final identityContextScopedContext = ScopedRelationshipContext(sharedContext, databaseIdentityDb);
+    final identityContext = IdentityContextImpl(identityContextScopedContext);
+
 
     // Initialize content_db
     final pluginContentDb = MySqlPlugin();
@@ -103,16 +100,10 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final postRepositoryOps = PostRepositoryOperationsImpl(databaseContentDb, sharedContext);
-    final postRepositoryMapper = PostMapperImpl();
-    final postRepository = PostRepositoryImpl(databaseContentDb, postRepositoryOps, postRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<Post, int>(postRepositoryOps);
-    sharedContext.registerMapper<Post>(postRepositoryMapper);
-    final commentRepositoryOps = CommentRepositoryOperationsImpl(databaseContentDb, sharedContext);
-    final commentRepositoryMapper = CommentMapperImpl();
-    final commentRepository = CommentRepositoryImpl(databaseContentDb, commentRepositoryOps, commentRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<Comment, int>(commentRepositoryOps);
-    sharedContext.registerMapper<Comment>(commentRepositoryMapper);
+    // Initialize ContentContext
+    final contentContextScopedContext = ScopedRelationshipContext(sharedContext, databaseContentDb);
+    final contentContext = ContentContextImpl(contentContextScopedContext);
+
 
     // Initialize config_db
     final pluginConfigDb = SqlitePlugin();
@@ -133,16 +124,10 @@ class DatapodInitializer {
       TableDefinition(name: 'settings', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'key', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'value', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
-    final settingRepositoryOps = SettingRepositoryOperationsImpl(databaseConfigDb, sharedContext);
-    final settingRepositoryMapper = SettingMapperImpl();
-    final settingRepository = SettingRepositoryImpl(databaseConfigDb, settingRepositoryOps, settingRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<Setting, int>(settingRepositoryOps);
-    sharedContext.registerMapper<Setting>(settingRepositoryMapper);
-    final settingAuditRepositoryOps = SettingAuditRepositoryOperationsImpl(databaseConfigDb, sharedContext);
-    final settingAuditRepositoryMapper = SettingAuditMapperImpl();
-    final settingAuditRepository = SettingAuditRepositoryImpl(databaseConfigDb, settingAuditRepositoryOps, settingAuditRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<SettingAudit, int>(settingAuditRepositoryOps);
-    sharedContext.registerMapper<SettingAudit>(settingAuditRepositoryMapper);
+    // Initialize ConfigContext
+    final configContextScopedContext = ScopedRelationshipContext(sharedContext, databaseConfigDb);
+    final configContext = ConfigContextImpl(configContextScopedContext);
+
 
     // Initialize cache_db
     final pluginCacheDb = MemoryPlugin();
@@ -169,12 +154,12 @@ class DatapodInitializer {
       contentDb: databaseContentDb,
       configDb: databaseConfigDb,
       cacheDb: databaseCacheDb,
-      userRepository: userRepository,
-      roleRepository: roleRepository,
-      postRepository: postRepository,
-      commentRepository: commentRepository,
-      settingRepository: settingRepository,
-      settingAuditRepository: settingAuditRepository,
+      userRepository: identityContext.userRepository,
+      roleRepository: identityContext.roleRepository,
+      postRepository: contentContext.postRepository,
+      commentRepository: contentContext.commentRepository,
+      settingRepository: configContext.settingRepository,
+      settingAuditRepository: configContext.settingAuditRepository,
     );
   }
 }

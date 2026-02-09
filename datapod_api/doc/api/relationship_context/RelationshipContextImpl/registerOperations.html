@@ -68,7 +68,7 @@
     </section>
     
 <section class="desc markdown">
-  <p>Registers operations for an entity type.</p>
+  <p>Registers database operations for an entity type.</p>
 </section>
 
 
@@ -77,7 +77,8 @@
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 void registerOperations&lt;E extends Object, K&gt;(
-    DatabaseOperations&lt;E, K&gt; operations) {
+  DatabaseOperations&lt;E, K&gt; operations,
+) {
   _operationsByEntity[E] = operations;
 }</code></pre>
 </section>
@@ -107,7 +108,7 @@ void registerOperations&lt;E extends Object, K&gt;(
 <footer>
   <span class="no-break">
     datapod_api
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

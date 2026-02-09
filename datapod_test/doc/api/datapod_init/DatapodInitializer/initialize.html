@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the initialize method from the DatapodInitializer class, for the Dart programming language.">
+  <title>initialize method - DatapodInitializer class - datapod_init library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">datapod_test</a></li>
+    <li><a href="../../datapod_init/">datapod_init.dart</a></li>
+    <li><a href="../../datapod_init/DatapodInitializer-class.html">DatapodInitializer</a></li>
+    <li class="self-crumb">initialize static method</li>
+  </ol>
+  <div class="self-name">initialize</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="datapod_init&#47;DatapodInitializer-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">initialize</span> static method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../datapod_init/DatapodContext-class.html">DatapodContext</a></span>&gt;</span></span>
+<span class="name ">initialize</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="initialize-param-databasesPath"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">databasesPath</span> = <span class="default-value">&#39;databases.yaml&#39;</span>, </span></li>
+<li><span class="parameter" id="initialize-param-connectionsPath"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">connectionsPath</span> = <span class="default-value">&#39;connections.yaml&#39;</span>, </span></li>
+<li><span class="parameter" id="initialize-param-databasesYamlContent"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">databasesYamlContent</span>, </span></li>
+<li><span class="parameter" id="initialize-param-connectionsYamlContent"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">connectionsYamlContent</span>, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">static Future&lt;DatapodContext&gt; initialize({
+  String databasesPath = &#39;databases.yaml&#39;,
+  String connectionsPath = &#39;connections.yaml&#39;,
+  String? databasesYamlContent,
+  String? connectionsYamlContent,
+}) async {
+  List&lt;DatabaseConfig&gt; dbConfigs = [];
+  List&lt;ConnectionConfig&gt; connConfigs = [];
+
+  if (databasesYamlContent != null) {
+    dbConfigs = DatabaseConfig.parse(databasesYamlContent);
+  } else {
+    final databasesFile = File(databasesPath);
+    if (!await databasesFile.exists()) {
+      throw ConfigurationException(
+        &#39;databases.yaml not found at $databasesPath&#39;,
+      );
+    }
+    dbConfigs = await DatabaseConfig.load(databasesPath);
+  }
+
+  if (connectionsYamlContent != null) {
+    connConfigs = ConnectionConfig.parse(connectionsYamlContent);
+  } else {
+    final connectionsFile = File(connectionsPath);
+    if (!await connectionsFile.exists()) {
+      throw ConfigurationException(
+        &#39;connections.yaml not found at $connectionsPath&#39;,
+      );
+    }
+    connConfigs = await ConnectionConfig.load(connectionsPath);
+  }
+
+  &#47;&#47; Shared context (registry) for cross-database references
+  final sharedContext = RelationshipContextImpl();
+
+  &#47;&#47; Initialize postgres_test
+  final pluginPostgresTest = PostgresPlugin();
+  final dbConfigPostgresTest = dbConfigs.firstWhere(
+    (c) =&gt; c.name == &#39;postgres_test&#39;,
+  );
+  final connConfigPostgresTest = connConfigs.firstWhere(
+    (c) =&gt; c.name == dbConfigPostgresTest.connection,
+  );
+  ConnectionConfig? migrationConnPostgresTest;
+  if (dbConfigPostgresTest.migrationConnection != null) {
+    migrationConnPostgresTest = connConfigs.firstWhere(
+      (c) =&gt; c.name == dbConfigPostgresTest.migrationConnection,
+    );
+  }
+  final databasePostgresTest = await pluginPostgresTest.createDatabase(
+    dbConfigPostgresTest,
+    connConfigPostgresTest,
+    migrationConnConfig: migrationConnPostgresTest,
+  );
+
+  databasePostgresTest.schemaManager.setSchema(
+    const SchemaDefinition(
+      tables: [
+        TableDefinition(
+          name: &#39;test_entities&#39;,
+          columns: [
+            ColumnDefinition(
+              name: &#39;id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: true,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;duration&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;name&#39;,
+              type: &#39;String&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;value&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;rating&#39;,
+              type: &#39;double&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;flag&#39;,
+              type: &#39;bool&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;created_at&#39;,
+              type: &#39;DateTime&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;updated_at&#39;,
+              type: &#39;DateTime&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;type&#39;,
+              type: &#39;TestEnum&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: [&#39;alpha&#39;, &#39;beta&#39;, &#39;gamma&#39;],
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;data&#39;,
+              type: &#39;Map&lt;String, dynamic&gt;&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: true,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;tags&#39;,
+              type: &#39;List&lt;String&gt;&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: true,
+              isList: true,
+            ),
+            ColumnDefinition(
+              name: &#39;parent_id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+          ],
+          primaryKey: [&#39;id&#39;],
+          foreignKeys: [
+            ForeignKeyDefinition(
+              name: &#39;fk_test_entities_parent_id&#39;,
+              columns: [&#39;parent_id&#39;],
+              referencedTable: &#39;test_entitys&#39;,
+              referencedColumns: [&#39;id&#39;],
+            ),
+          ],
+          uniqueConstraints: [],
+          indexes: [
+            IndexDefinition(
+              name: &#39;idx_test_entities_name&#39;,
+              columns: [&#39;name&#39;],
+              unique: false,
+            ),
+            IndexDefinition(
+              name: &#39;idx_name&#39;,
+              columns: [&#39;name&#39;],
+              unique: false,
+            ),
+          ],
+        ),
+        TableDefinition(
+          name: &#39;unique_entities&#39;,
+          columns: [
+            ColumnDefinition(
+              name: &#39;id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: true,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;code&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;folder&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;filename&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+          ],
+          primaryKey: [&#39;id&#39;],
+          foreignKeys: [],
+          uniqueConstraints: [
+            UniqueConstraintDefinition(
+              name: &#39;uidx_composite&#39;,
+              columns: [&#39;folder&#39;, &#39;filename&#39;],
+            ),
+            UniqueConstraintDefinition(
+              name: &#39;uidx_unique_entities_code&#39;,
+              columns: [&#39;code&#39;],
+            ),
+          ],
+          indexes: [
+            IndexDefinition(
+              name: &#39;idx_composite&#39;,
+              columns: [&#39;folder&#39;, &#39;filename&#39;],
+              unique: false,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  final testEntityRepositoryOps = TestEntityRepositoryOperationsImpl(
+    databasePostgresTest,
+    sharedContext,
+  );
+  final testEntityRepositoryMapper = TestEntityMapperImpl();
+  final testEntityRepository = TestEntityRepositoryImpl(
+    databasePostgresTest,
+    testEntityRepositoryOps,
+    testEntityRepositoryMapper,
+    sharedContext,
+  );
+  final uniqueEntityRepositoryOps = UniqueEntityRepositoryOperationsImpl(
+    databasePostgresTest,
+    sharedContext,
+  );
+  final uniqueEntityRepositoryMapper = UniqueEntityMapperImpl();
+  final uniqueEntityRepository = UniqueEntityRepositoryImpl(
+    databasePostgresTest,
+    uniqueEntityRepositoryOps,
+    uniqueEntityRepositoryMapper,
+    sharedContext,
+  );
+
+  &#47;&#47; Initialize mysql_test
+  final pluginMysqlTest = MySqlPlugin();
+  final dbConfigMysqlTest = dbConfigs.firstWhere(
+    (c) =&gt; c.name == &#39;mysql_test&#39;,
+  );
+  final connConfigMysqlTest = connConfigs.firstWhere(
+    (c) =&gt; c.name == dbConfigMysqlTest.connection,
+  );
+  ConnectionConfig? migrationConnMysqlTest;
+  if (dbConfigMysqlTest.migrationConnection != null) {
+    migrationConnMysqlTest = connConfigs.firstWhere(
+      (c) =&gt; c.name == dbConfigMysqlTest.migrationConnection,
+    );
+  }
+  final databaseMysqlTest = await pluginMysqlTest.createDatabase(
+    dbConfigMysqlTest,
+    connConfigMysqlTest,
+    migrationConnConfig: migrationConnMysqlTest,
+  );
+
+  databaseMysqlTest.schemaManager.setSchema(
+    const SchemaDefinition(
+      tables: [
+        TableDefinition(
+          name: &#39;test_entities&#39;,
+          columns: [
+            ColumnDefinition(
+              name: &#39;id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: true,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;duration&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;name&#39;,
+              type: &#39;String&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;value&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;rating&#39;,
+              type: &#39;double&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;flag&#39;,
+              type: &#39;bool&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;created_at&#39;,
+              type: &#39;DateTime&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;updated_at&#39;,
+              type: &#39;DateTime&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;type&#39;,
+              type: &#39;TestEnum&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: [&#39;alpha&#39;, &#39;beta&#39;, &#39;gamma&#39;],
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;data&#39;,
+              type: &#39;Map&lt;String, dynamic&gt;&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: true,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;tags&#39;,
+              type: &#39;List&lt;String&gt;&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: true,
+              isList: true,
+            ),
+            ColumnDefinition(
+              name: &#39;parent_id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+          ],
+          primaryKey: [&#39;id&#39;],
+          foreignKeys: [
+            ForeignKeyDefinition(
+              name: &#39;fk_test_entities_parent_id&#39;,
+              columns: [&#39;parent_id&#39;],
+              referencedTable: &#39;test_entitys&#39;,
+              referencedColumns: [&#39;id&#39;],
+            ),
+          ],
+          uniqueConstraints: [],
+          indexes: [
+            IndexDefinition(
+              name: &#39;idx_test_entities_name&#39;,
+              columns: [&#39;name&#39;],
+              unique: false,
+            ),
+            IndexDefinition(
+              name: &#39;idx_name&#39;,
+              columns: [&#39;name&#39;],
+              unique: false,
+            ),
+          ],
+        ),
+        TableDefinition(
+          name: &#39;unique_entities&#39;,
+          columns: [
+            ColumnDefinition(
+              name: &#39;id&#39;,
+              type: &#39;int&#39;,
+              isNullable: true,
+              isAutoIncrement: true,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;code&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;folder&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+            ColumnDefinition(
+              name: &#39;filename&#39;,
+              type: &#39;String&#39;,
+              isNullable: false,
+              isAutoIncrement: false,
+              enumValues: null,
+              isJson: false,
+              isList: false,
+            ),
+          ],
+          primaryKey: [&#39;id&#39;],
+          foreignKeys: [],
+          uniqueConstraints: [
+            UniqueConstraintDefinition(
+              name: &#39;uidx_composite&#39;,
+              columns: [&#39;folder&#39;, &#39;filename&#39;],
+            ),
+            UniqueConstraintDefinition(
+              name: &#39;uidx_unique_entities_code&#39;,
+              columns: [&#39;code&#39;],
+            ),
+          ],
+          indexes: [
+            IndexDefinition(
+              name: &#39;idx_composite&#39;,
+              columns: [&#39;folder&#39;, &#39;filename&#39;],
+              unique: false,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  return DatapodContext(
+    postgresTest: databasePostgresTest,
+    mysqlTest: databaseMysqlTest,
+    testEntityRepository: testEntityRepository,
+    uniqueEntityRepository: uniqueEntityRepository,
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">datapod_test</a></li>
+    <li><a href="../../datapod_init/">datapod_init</a></li>
+    <li><a href="../../datapod_init/DatapodInitializer-class.html">DatapodInitializer</a></li>
+    <li class="self-crumb">initialize static method</li>
+</ol>
+
+    <h5>DatapodInitializer class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    datapod_test
+      0.2.1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

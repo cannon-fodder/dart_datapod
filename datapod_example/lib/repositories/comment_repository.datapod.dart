@@ -112,7 +112,10 @@ class CommentRepositoryImpl extends CommentRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<Comment, int>(operations);
+    relationshipContext.registerMapper<Comment>(mapper);
+  }
 
   final DatapodDatabase database;
 

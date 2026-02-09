@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import
 // GENERATED CODE - DO NOT MODIFY BY HAND
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
@@ -10,6 +11,7 @@ import 'package:datapod_mysql/datapod_mysql.dart';
 import 'package:datapod_test/repositories/test_entity_repository.dart';
 import 'package:datapod_test/repositories/unique_entity_repository.dart';
 import 'package:datapod_test/test_entities.dart';
+import 'package:datapod_test/test_database_context.dart';
 
 class DatapodInitializer {
   static Future<DatapodContext> initialize({
@@ -41,6 +43,7 @@ class DatapodInitializer {
       connConfigs = await ConnectionConfig.load(connectionsPath);
     }
 
+    // Shared context (registry) for cross-database references
     final sharedContext = RelationshipContextImpl();
 
     // Initialize postgres_test
@@ -61,13 +64,9 @@ class DatapodInitializer {
     final testEntityRepositoryOps = TestEntityRepositoryOperationsImpl(databasePostgresTest, sharedContext);
     final testEntityRepositoryMapper = TestEntityMapperImpl();
     final testEntityRepository = TestEntityRepositoryImpl(databasePostgresTest, testEntityRepositoryOps, testEntityRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<TestEntity, int>(testEntityRepositoryOps);
-    sharedContext.registerMapper<TestEntity>(testEntityRepositoryMapper);
     final uniqueEntityRepositoryOps = UniqueEntityRepositoryOperationsImpl(databasePostgresTest, sharedContext);
     final uniqueEntityRepositoryMapper = UniqueEntityMapperImpl();
     final uniqueEntityRepository = UniqueEntityRepositoryImpl(databasePostgresTest, uniqueEntityRepositoryOps, uniqueEntityRepositoryMapper, sharedContext);
-    sharedContext.registerOperations<UniqueEntity, int>(uniqueEntityRepositoryOps);
-    sharedContext.registerMapper<UniqueEntity>(uniqueEntityRepositoryMapper);
 
     // Initialize mysql_test
     final pluginMysqlTest = MySqlPlugin();

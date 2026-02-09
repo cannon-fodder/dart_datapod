@@ -147,7 +147,10 @@ class UserRepositoryImpl extends UserRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<User, int>(operations);
+    relationshipContext.registerMapper<User>(mapper);
+  }
 
   final DatapodDatabase database;
 

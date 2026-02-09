@@ -23,8 +23,10 @@ class MySqlConnection implements DatabaseConnection {
   }
 
   @override
-  Future<QueryResult> execute(String sql,
-      [Map<String, dynamic>? params]) async {
+  Future<QueryResult> execute(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async {
     try {
       // mysql1 uses ? for params, we might need a converter if we use named params
       String processedSql = sql;
@@ -69,8 +71,10 @@ class MySqlConnection implements DatabaseConnection {
   }
 
   @override
-  Stream<Map<String, dynamic>> stream(String sql,
-      [Map<String, dynamic>? params]) async* {
+  Stream<Map<String, dynamic>> stream(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async* {
     try {
       String processedSql = sql;
       List<dynamic> positionalParams = [];
@@ -108,7 +112,9 @@ class MySqlConnection implements DatabaseConnection {
   }
 
   ({String sql, List<dynamic> params}) _translateSql(
-      String sql, Map<String, dynamic> params) {
+    String sql,
+    Map<String, dynamic> params,
+  ) {
     final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
     final positionalParams = <dynamic>[];
     final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
@@ -121,10 +127,7 @@ class MySqlConnection implements DatabaseConnection {
       return '?';
     });
 
-    return (
-      sql: _stripReturning(translatedSql),
-      params: positionalParams,
-    );
+    return (sql: _stripReturning(translatedSql), params: positionalParams);
   }
 
   String _stripReturning(String sql) {

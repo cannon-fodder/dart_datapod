@@ -29,8 +29,9 @@ class SqliteSchemaManager implements SchemaManager {
       final columnStrings = table.columns.map((c) {
         String type = _mapType(c);
         final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
-        final autoInc =
-            (c.isAutoIncrement && pk.isNotEmpty) ? ' AUTOINCREMENT' : '';
+        final autoInc = (c.isAutoIncrement && pk.isNotEmpty)
+            ? ' AUTOINCREMENT'
+            : '';
         final nullable = c.isNullable ? '' : ' NOT NULL';
         return '${c.name} $type$pk$autoInc$nullable';
       }).toList();
@@ -45,20 +46,23 @@ class SqliteSchemaManager implements SchemaManager {
         final refTable = fk.referencedTable;
         final refCols = fk.referencedColumns.join(', ');
         final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
-        columnStrings
-            .add('FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+        columnStrings.add(
+          'FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel',
+        );
       }
 
       final columns = columnStrings.join(', ');
-      await _connection
-          .execute('CREATE TABLE IF NOT EXISTS ${table.name} ($columns)');
+      await _connection.execute(
+        'CREATE TABLE IF NOT EXISTS ${table.name} ($columns)',
+      );
 
       // Add indexes
       for (final index in table.indexes) {
         final cols = index.columns.join(', ');
         final unique = index.unique ? 'UNIQUE ' : '';
         await _connection.execute(
-            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)');
+          'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)',
+        );
       }
     }
   }
@@ -91,17 +95,20 @@ class SqliteSchemaManager implements SchemaManager {
 
     final existingTables = await getTables();
     for (final table in _schema!.tables) {
-      final existingTable =
-          existingTables.firstWhere((t) => t.name == table.name);
-      final existingColumnNames =
-          existingTable.columns.map((c) => c.name).toSet();
+      final existingTable = existingTables.firstWhere(
+        (t) => t.name == table.name,
+      );
+      final existingColumnNames = existingTable.columns
+          .map((c) => c.name)
+          .toSet();
 
       for (final column in table.columns) {
         if (!existingColumnNames.contains(column.name)) {
           final type = _mapType(column);
           final nullable = column.isNullable ? '' : ' NOT NULL';
           await _connection.execute(
-              'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable');
+            'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable',
+          );
         }
       }
     }
@@ -110,7 +117,8 @@ class SqliteSchemaManager implements SchemaManager {
   @override
   Future<List<TableMetadata>> getTables() async {
     final result = await _connection.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    );
 
     final tables = <TableMetadata>[];
     for (final row in result.rows) {
@@ -142,8 +150,9 @@ class SqliteSchemaManager implements SchemaManager {
       final columnStrings = table.columns.map((c) {
         String type = _mapType(c);
         final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
-        final autoInc =
-            (c.isAutoIncrement && pk.isNotEmpty) ? ' AUTOINCREMENT' : '';
+        final autoInc = (c.isAutoIncrement && pk.isNotEmpty)
+            ? ' AUTOINCREMENT'
+            : '';
         final nullable = c.isNullable ? '' : ' NOT NULL';
         return '${c.name} $type$pk$autoInc$nullable';
       }).toList();
@@ -158,8 +167,9 @@ class SqliteSchemaManager implements SchemaManager {
         final refTable = fk.referencedTable;
         final refCols = fk.referencedColumns.join(', ');
         final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
-        columnStrings
-            .add('FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+        columnStrings.add(
+          'FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel',
+        );
       }
 
       final columns = columnStrings.join(', ');
@@ -170,7 +180,8 @@ class SqliteSchemaManager implements SchemaManager {
         final cols = index.columns.join(', ');
         final unique = index.unique ? 'UNIQUE ' : '';
         buffer.writeln(
-            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);');
+          'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);',
+        );
       }
     }
 

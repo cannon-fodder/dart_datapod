@@ -167,7 +167,10 @@ class TestEntityRepositoryImpl extends TestEntityRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<TestEntity, int>(operations);
+    relationshipContext.registerMapper<TestEntity>(mapper);
+  }
 
   final DatapodDatabase database;
 

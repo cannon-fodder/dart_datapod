@@ -59,8 +59,10 @@ abstract interface class DatabaseConnection {
   /// Executes a raw SQL query and returns a stream of rows.
   ///
   /// This is suitable for large result sets to avoid loading everything into memory.
-  Stream<Map<String, dynamic>> stream(String sql,
-      [Map<String, dynamic>? params]);
+  Stream<Map<String, dynamic>> stream(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]);
 
   /// Starts a new transaction manually.
   ///

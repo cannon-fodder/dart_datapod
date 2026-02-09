@@ -20,7 +20,8 @@ class RepositoryRegistry {
 
   /// Registers a repository as the default for entity type [E].
   static void registerForEntity<E extends Object>(
-      BaseRepository<E, dynamic> repository) {
+    BaseRepository<E, dynamic> repository,
+  ) {
     _repositoriesByEntity[E] = repository;
   }
 

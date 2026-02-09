@@ -6,7 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-library datapod_sqlite;
+// library datapod_sqlite;
 
 export 'src/sqlite_connection.dart';
 export 'src/sqlite_database.dart';

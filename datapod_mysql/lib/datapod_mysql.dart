@@ -6,7 +6,7 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-library datapod_mysql;
+// library datapod_mysql;
 
 export 'src/mysql_connection.dart';
 export 'src/mysql_database.dart';

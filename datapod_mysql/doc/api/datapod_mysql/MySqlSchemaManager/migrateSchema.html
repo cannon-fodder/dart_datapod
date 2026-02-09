@@ -83,17 +83,20 @@ Future&lt;void&gt; migrateSchema() async {
 
   final existingTables = await getTables();
   for (final table in _schema!.tables) {
-    final existingTable =
-        existingTables.firstWhere((t) =&gt; t.name == table.name);
-    final existingColumnNames =
-        existingTable.columns.map((c) =&gt; c.name).toSet();
+    final existingTable = existingTables.firstWhere(
+      (t) =&gt; t.name == table.name,
+    );
+    final existingColumnNames = existingTable.columns
+        .map((c) =&gt; c.name)
+        .toSet();
 
     for (final column in table.columns) {
       if (!existingColumnNames.contains(column.name)) {
         final type = _mapType(column);
         final nullable = column.isNullable ? &#39;&#39; : &#39; NOT NULL&#39;;
         await _connection.execute(
-            &#39;ALTER TABLE `${table.name}` ADD COLUMN `${column.name}` $type$nullable&#39;);
+          &#39;ALTER TABLE `${table.name}` ADD COLUMN `${column.name}` $type$nullable&#39;,
+        );
       }
     }
   }
@@ -125,7 +128,7 @@ Future&lt;void&gt; migrateSchema() async {
 <footer>
   <span class="no-break">
     datapod_mysql
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

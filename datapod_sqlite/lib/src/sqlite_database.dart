@@ -18,8 +18,8 @@ class SqliteDatabase extends DatapodDatabaseBase {
     String name,
     SqliteConnection connection, {
     SqliteConnection? migrationConnection,
-  })  : _migrationConnection = migrationConnection,
-        super(name, connection, SqliteTransactionManager(connection)) {
+  }) : _migrationConnection = migrationConnection,
+       super(name, connection, SqliteTransactionManager(connection)) {
     _schemaManager = SqliteSchemaManager(migrationConnection ?? connection);
   }
 

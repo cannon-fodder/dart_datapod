@@ -100,7 +100,10 @@ class TodoRepositoryImpl extends TodoRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<Todo, int>(operations);
+    relationshipContext.registerMapper<Todo>(mapper);
+  }
 
   final DatapodDatabase database;
 

@@ -163,7 +163,10 @@ class PostRepositoryImpl extends PostRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<Post, int>(operations);
+    relationshipContext.registerMapper<Post>(mapper);
+  }
 
   final DatapodDatabase database;
 

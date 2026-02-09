@@ -43,7 +43,9 @@ class MySqlPool implements MySqlExecutor {
   }
 
   static Future<MySqlPool> connect(
-      mysql.ConnectionSettings settings, int maxSize) async {
+    mysql.ConnectionSettings settings,
+    int maxSize,
+  ) async {
     final pool = MySqlPool(settings, maxSize);
     await pool._initialize();
     return pool;

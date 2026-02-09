@@ -59,7 +59,7 @@
         <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
     </ol>
   </div>
-<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">QueryResult</span>&gt;</span></span>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/datapod_api/0.2.1/datapod_api/QueryResult-class.html">QueryResult</a></span>&gt;</span></span>
 <span class="name ">execute</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="execute-param-sql"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">sql</span>, [</span></li>
 <li><span class="parameter" id="execute-param-params"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>, <span class="type-parameter">dynamic</span>&gt;</span>?</span> <span class="parameter-name">params</span></span></li>
 </ol>])
@@ -69,7 +69,7 @@
     </section>
     
 <section class="desc markdown">
-  <p>Executes a raw SQL query and returns the results as a <code>QueryResult</code>.</p>
+  <p>Executes a raw SQL query and returns the results as a <a href="https://pub.dev/documentation/datapod_api/0.2.1/datapod_api/QueryResult-class.html">QueryResult</a>.</p>
 <p><code>sql</code> can contain named parameters like <code>@id</code>.
 <code>params</code> is an optional map of parameter names to values.</p>
 </section>
@@ -79,8 +79,10 @@
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
-Future&lt;QueryResult&gt; execute(String sql,
-    [Map&lt;String, dynamic&gt;? params]) async {
+Future&lt;QueryResult&gt; execute(
+  String sql, [
+  Map&lt;String, dynamic&gt;? params,
+]) async {
   try {
     String processedSql = sql;
     List&lt;dynamic&gt; positionalParams = [];
@@ -96,7 +98,7 @@ Future&lt;QueryResult&gt; execute(String sql,
 
     final isQuery =
         processedSql.trimLeft().toLowerCase().startsWith(&#39;select&#39;) ||
-            processedSql.trimLeft().toLowerCase().startsWith(&#39;pragma&#39;);
+        processedSql.trimLeft().toLowerCase().startsWith(&#39;pragma&#39;);
 
     if (_log.isLoggable(Level.FINE)) {
       _log.fine(&#39;Executing SQL: $processedSql&#39;);
@@ -113,7 +115,8 @@ Future&lt;QueryResult&gt; execute(String sql,
           return QueryResult(
             rows: result
                 .map&lt;Map&lt;String, dynamic&gt;&gt;(
-                    (row) =&gt; Map&lt;String, dynamic&gt;.from(row))
+                  (row) =&gt; Map&lt;String, dynamic&gt;.from(row),
+                )
                 .toList(),
             affectedRows: _db.updatedRows,
             lastInsertId: _db.lastInsertRowId,
@@ -134,7 +137,8 @@ Future&lt;QueryResult&gt; execute(String sql,
         return QueryResult(
           rows: result
               .map&lt;Map&lt;String, dynamic&gt;&gt;(
-                  (row) =&gt; Map&lt;String, dynamic&gt;.from(row))
+                (row) =&gt; Map&lt;String, dynamic&gt;.from(row),
+              )
               .toList(),
           affectedRows: _db.updatedRows,
           lastInsertId: _db.lastInsertRowId,
@@ -178,7 +182,7 @@ Future&lt;QueryResult&gt; execute(String sql,
 <footer>
   <span class="no-break">
     datapod_sqlite
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

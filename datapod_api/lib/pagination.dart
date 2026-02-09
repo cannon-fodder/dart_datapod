@@ -47,11 +47,7 @@ class Pageable {
   /// Optional sorting.
   final List<Sort>? sort;
 
-  const Pageable({
-    this.page = 0,
-    this.size = 20,
-    this.sort,
-  });
+  const Pageable({this.page = 0, this.size = 20, this.sort});
 
   /// The offset for the database query.
   int get offset => page * size;
@@ -101,10 +97,12 @@ String applyPagination(
 }) {
   var result = sql;
   if (sort != null && sort.isNotEmpty) {
-    final orderClauses = sort.map((s) {
-      final column = fieldToColumn?[s.field] ?? s.field;
-      return '$column ${s.direction == Direction.asc ? 'ASC' : 'DESC'}';
-    }).join(', ');
+    final orderClauses = sort
+        .map((s) {
+          final column = fieldToColumn?[s.field] ?? s.field;
+          return '$column ${s.direction == Direction.asc ? 'ASC' : 'DESC'}';
+        })
+        .join(', ');
     result += ' ORDER BY $orderClauses';
   }
   if (limit != null) {

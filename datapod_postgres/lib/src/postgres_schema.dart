@@ -26,25 +26,29 @@ class PostgresSchemaManager implements SchemaManager {
     if (_schema == null) return;
 
     for (final table in _schema!.tables) {
-      final columns = table.columns.map((c) {
-        String type = _mapType(c);
-        if (c.isAutoIncrement) {
-          type = 'SERIAL';
-        }
-        final nullable = c.isNullable ? '' : ' NOT NULL';
-        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
-        return '${c.name} $type$nullable$pk';
-      }).join(', ');
+      final columns = table.columns
+          .map((c) {
+            String type = _mapType(c);
+            if (c.isAutoIncrement) {
+              type = 'SERIAL';
+            }
+            final nullable = c.isNullable ? '' : ' NOT NULL';
+            final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+            return '${c.name} $type$nullable$pk';
+          })
+          .join(', ');
 
-      await _connection
-          .execute('CREATE TABLE IF NOT EXISTS ${table.name} ($columns)');
+      await _connection.execute(
+        'CREATE TABLE IF NOT EXISTS ${table.name} ($columns)',
+      );
 
       // Add unique constraints
       for (final unique in table.uniqueConstraints) {
         final cols = unique.columns.join(', ');
         try {
           await _connection.execute(
-              'ALTER TABLE ${table.name} ADD CONSTRAINT ${unique.name} UNIQUE ($cols)');
+            'ALTER TABLE ${table.name} ADD CONSTRAINT ${unique.name} UNIQUE ($cols)',
+          );
         } catch (_) {
           // Ignore if constraint already exists
         }
@@ -59,7 +63,8 @@ class PostgresSchemaManager implements SchemaManager {
 
         try {
           await _connection.execute(
-              'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel');
+            'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel',
+          );
         } catch (_) {
           // Ignore if constraint already exists
         }
@@ -71,7 +76,8 @@ class PostgresSchemaManager implements SchemaManager {
         final unique = index.unique ? 'UNIQUE ' : '';
         try {
           await _connection.execute(
-              'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)');
+            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols)',
+          );
         } catch (_) {
           // Ignore if index already exists
         }
@@ -88,17 +94,20 @@ class PostgresSchemaManager implements SchemaManager {
 
     final existingTables = await getTables();
     for (final table in _schema!.tables) {
-      final existingTable =
-          existingTables.firstWhere((t) => t.name == table.name);
-      final existingColumnNames =
-          existingTable.columns.map((c) => c.name).toSet();
+      final existingTable = existingTables.firstWhere(
+        (t) => t.name == table.name,
+      );
+      final existingColumnNames = existingTable.columns
+          .map((c) => c.name)
+          .toSet();
 
       for (final column in table.columns) {
         if (!existingColumnNames.contains(column.name)) {
           final type = _mapType(column);
           final nullable = column.isNullable ? '' : ' NOT NULL';
           await _connection.execute(
-              'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable');
+            'ALTER TABLE ${table.name} ADD COLUMN ${column.name} $type$nullable',
+          );
         }
       }
     }
@@ -126,7 +135,8 @@ class PostgresSchemaManager implements SchemaManager {
   @override
   Future<List<TableMetadata>> getTables() async {
     final result = await _connection.execute(
-        "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+    );
 
     final tables = <TableMetadata>[];
     for (final row in result.rows) {
@@ -150,8 +160,9 @@ class PostgresSchemaManager implements SchemaManager {
       {'table': tableName},
     );
 
-    final pkColumns =
-        pkResult.rows.map((r) => r['column_name'] as String).toSet();
+    final pkColumns = pkResult.rows
+        .map((r) => r['column_name'] as String)
+        .toSet();
 
     return columnsResult.rows.map((row) {
       final name = row['column_name'] as String;
@@ -170,15 +181,17 @@ class PostgresSchemaManager implements SchemaManager {
     final buffer = StringBuffer();
 
     for (final table in _schema!.tables) {
-      final columns = table.columns.map((c) {
-        String type = _mapType(c);
-        if (c.isAutoIncrement) {
-          type = 'SERIAL';
-        }
-        final nullable = c.isNullable ? '' : ' NOT NULL';
-        final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
-        return '${c.name} $type$nullable$pk';
-      }).join(', ');
+      final columns = table.columns
+          .map((c) {
+            String type = _mapType(c);
+            if (c.isAutoIncrement) {
+              type = 'SERIAL';
+            }
+            final nullable = c.isNullable ? '' : ' NOT NULL';
+            final pk = table.primaryKey.contains(c.name) ? ' PRIMARY KEY' : '';
+            return '${c.name} $type$nullable$pk';
+          })
+          .join(', ');
 
       buffer.writeln('CREATE TABLE IF NOT EXISTS ${table.name} ($columns);');
 
@@ -186,7 +199,8 @@ class PostgresSchemaManager implements SchemaManager {
       for (final unique in table.uniqueConstraints) {
         final cols = unique.columns.join(', ');
         buffer.writeln(
-            'ALTER TABLE ${table.name} ADD CONSTRAINT ${unique.name} UNIQUE ($cols);');
+          'ALTER TABLE ${table.name} ADD CONSTRAINT ${unique.name} UNIQUE ($cols);',
+        );
       }
 
       for (final fk in table.foreignKeys) {
@@ -197,7 +211,8 @@ class PostgresSchemaManager implements SchemaManager {
         final onDel = fk.onDelete != null ? ' ON DELETE ${fk.onDelete}' : '';
 
         buffer.writeln(
-            'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel;');
+          'ALTER TABLE ${table.name} ADD CONSTRAINT $fkName FOREIGN KEY ($cols) REFERENCES $refTable ($refCols)$onDel;',
+        );
       }
 
       // Add indexes
@@ -205,7 +220,8 @@ class PostgresSchemaManager implements SchemaManager {
         final cols = index.columns.join(', ');
         final unique = index.unique ? 'UNIQUE ' : '';
         buffer.writeln(
-            'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);');
+          'CREATE ${unique}INDEX IF NOT EXISTS ${index.name} ON ${table.name} ($cols);',
+        );
       }
     }
     return buffer.toString();

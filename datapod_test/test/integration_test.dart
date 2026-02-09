@@ -30,17 +30,21 @@ void main() {
 
     // Initialize schemas
     print('Initializing Postgres schema...');
-    await context.postgresTest.connection
-        .execute('DROP TABLE IF EXISTS unique_entities CASCADE');
-    await context.postgresTest.connection
-        .execute('DROP TABLE IF EXISTS test_entities CASCADE');
+    await context.postgresTest.connection.execute(
+      'DROP TABLE IF EXISTS unique_entities CASCADE',
+    );
+    await context.postgresTest.connection.execute(
+      'DROP TABLE IF EXISTS test_entities CASCADE',
+    );
     await context.postgresTest.schemaManager.initializeSchema();
 
     print('Initializing MySQL schema...');
-    await context.mysqlTest.connection
-        .execute('DROP TABLE IF EXISTS unique_entities');
-    await context.mysqlTest.connection
-        .execute('DROP TABLE IF EXISTS test_entities');
+    await context.mysqlTest.connection.execute(
+      'DROP TABLE IF EXISTS unique_entities',
+    );
+    await context.mysqlTest.connection.execute(
+      'DROP TABLE IF EXISTS test_entities',
+    );
     await context.mysqlTest.schemaManager.initializeSchema();
   });
 
@@ -50,8 +54,9 @@ void main() {
 
   group('PostgreSQL Integration', () {
     setUp(() async {
-      await context.postgresTest.connection
-          .execute('DELETE FROM test_entities');
+      await context.postgresTest.connection.execute(
+        'DELETE FROM test_entities',
+      );
     });
 
     test('CRUD for TestEntity', () async {
@@ -67,7 +72,7 @@ void main() {
         ..type = TestEnum.beta
         ..data = {
           'key': 'value',
-          'nested': {'foo': 'bar'}
+          'nested': {'foo': 'bar'},
         }
         ..tags = ['a', 'b', 'c'];
 
@@ -111,12 +116,13 @@ void main() {
         final repo = context.testEntityRepository;
         final name = 'Trans Success ${DateTime.now().millisecondsSinceEpoch}';
 
-        await context.postgresTest.transactionManager
-            .runInTransaction(() async {
-          await repo.save(TestEntity()..name = name);
-          final inside = await repo.findByName(name);
-          expect(inside, isNotNull);
-        });
+        await context.postgresTest.transactionManager.runInTransaction(
+          () async {
+            await repo.save(TestEntity()..name = name);
+            final inside = await repo.findByName(name);
+            expect(inside, isNotNull);
+          },
+        );
 
         final outside = await repo.findByName(name);
         expect(outside, isNotNull);
@@ -127,11 +133,12 @@ void main() {
         final name = 'Trans Rollback ${DateTime.now().millisecondsSinceEpoch}';
 
         try {
-          await context.postgresTest.transactionManager
-              .runInTransaction(() async {
-            await repo.save(TestEntity()..name = name);
-            throw Exception('Rollback please');
-          });
+          await context.postgresTest.transactionManager.runInTransaction(
+            () async {
+              await repo.save(TestEntity()..name = name);
+              throw Exception('Rollback please');
+            },
+          );
         } catch (_) {}
 
         final outside = await repo.findByName(name);
@@ -143,24 +150,26 @@ void main() {
         final outerName = 'Outer ${DateTime.now().millisecondsSinceEpoch}';
         final innerName = 'Inner ${DateTime.now().millisecondsSinceEpoch}';
 
-        await context.postgresTest.transactionManager
-            .runInTransaction(() async {
-          await repo.save(TestEntity()..name = outerName);
+        await context.postgresTest.transactionManager.runInTransaction(
+          () async {
+            await repo.save(TestEntity()..name = outerName);
 
-          try {
-            await context.postgresTest.transactionManager
-                .runInTransaction(() async {
-              await repo.save(TestEntity()..name = innerName);
-              throw Exception('Inner rollback');
-            });
-          } catch (_) {}
+            try {
+              await context.postgresTest.transactionManager.runInTransaction(
+                () async {
+                  await repo.save(TestEntity()..name = innerName);
+                  throw Exception('Inner rollback');
+                },
+              );
+            } catch (_) {}
 
-          final innerInOuter = await repo.findByName(innerName);
-          expect(innerInOuter, isNull, reason: 'Inner should be rolled back');
+            final innerInOuter = await repo.findByName(innerName);
+            expect(innerInOuter, isNull, reason: 'Inner should be rolled back');
 
-          final outerInOuter = await repo.findByName(outerName);
-          expect(outerInOuter, isNotNull);
-        });
+            final outerInOuter = await repo.findByName(outerName);
+            expect(outerInOuter, isNotNull);
+          },
+        );
 
         final outerOutside = await repo.findByName(outerName);
         expect(outerOutside, isNotNull, reason: 'Outer should be committed');
@@ -169,8 +178,8 @@ void main() {
       test('Manual transaction control', () async {
         final name = 'Manual Trans ${DateTime.now().millisecondsSinceEpoch}';
 
-        final trans =
-            await context.postgresTest.transactionManager.beginTransaction();
+        final trans = await context.postgresTest.transactionManager
+            .beginTransaction();
         // Since we are not in a Zone with this transaction, we'd need to pass it to the repo
         // But our repo uses the global context. For manual control to work with repositories,
         // we might need to expose a way to use a specific connection/transaction.
@@ -178,69 +187,86 @@ void main() {
         // Let's test if we can use it via runZoned if we wanted to, or just test the raw connection.
 
         await context.postgresTest.connection.execute(
-            'INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 0, NOW())',
-            {'name': name});
+          'INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 0, NOW())',
+          {'name': name},
+        );
         await trans.rollback();
 
         final result = await context.postgresTest.connection.execute(
-            'SELECT * FROM test_entities WHERE name = @name', {'name': name});
+          'SELECT * FROM test_entities WHERE name = @name',
+          {'name': name},
+        );
         expect(result, isEmpty);
 
-        final trans2 =
-            await context.postgresTest.transactionManager.beginTransaction();
+        final trans2 = await context.postgresTest.transactionManager
+            .beginTransaction();
         await context.postgresTest.connection.execute(
-            'INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 0, NOW())',
-            {'name': name});
+          'INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 0, NOW())',
+          {'name': name},
+        );
         await trans2.commit();
 
         final result2 = await context.postgresTest.connection.execute(
-            'SELECT * FROM test_entities WHERE name = @name', {'name': name});
+          'SELECT * FROM test_entities WHERE name = @name',
+          {'name': name},
+        );
         expect(result2.rows, isNotEmpty);
       });
     });
 
     group('Unique Constraints', () {
       setUp(() async {
-        await context.postgresTest.connection
-            .execute('DELETE FROM unique_entities');
+        await context.postgresTest.connection.execute(
+          'DELETE FROM unique_entities',
+        );
       });
 
       test('Field-level unique constraint', () async {
         final repo = context.uniqueEntityRepository;
-        await repo.save(UniqueEntity()
-          ..code = 'U1'
-          ..folder = 'f1'
-          ..filename = 'file1');
+        await repo.save(
+          UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'f1'
+            ..filename = 'file1',
+        );
 
         // Second insert with same code should fail
         expect(
-          () => repo.save(UniqueEntity()
-            ..code = 'U1'
-            ..folder = 'f2'
-            ..filename = 'file2'),
+          () => repo.save(
+            UniqueEntity()
+              ..code = 'U1'
+              ..folder = 'f2'
+              ..filename = 'file2',
+          ),
           throwsA(isA<QueryException>()),
         );
       });
 
       test('Composite unique constraint', () async {
         final repo = context.uniqueEntityRepository;
-        await repo.save(UniqueEntity()
-          ..code = 'U1'
-          ..folder = 'same'
-          ..filename = 'same');
+        await repo.save(
+          UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'same'
+            ..filename = 'same',
+        );
 
         // Different folder/same name is OK
-        await repo.save(UniqueEntity()
-          ..code = 'U2'
-          ..folder = 'other'
-          ..filename = 'same');
+        await repo.save(
+          UniqueEntity()
+            ..code = 'U2'
+            ..folder = 'other'
+            ..filename = 'same',
+        );
 
         // Same folder/same name should fail
         expect(
-          () => repo.save(UniqueEntity()
-            ..code = 'U3'
-            ..folder = 'same'
-            ..filename = 'same'),
+          () => repo.save(
+            UniqueEntity()
+              ..code = 'U3'
+              ..folder = 'same'
+              ..filename = 'same',
+          ),
           throwsA(isA<QueryException>()),
         );
       });
@@ -259,10 +285,11 @@ void main() {
       // For now, let's manually create it.
       final relCtx = RelationshipContextImpl();
       final mysqlRepo = TestEntityRepositoryImpl(
-          context.mysqlTest,
-          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
-          TestEntityMapperImpl(),
-          relCtx);
+        context.mysqlTest,
+        TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+        TestEntityMapperImpl(),
+        relCtx,
+      );
 
       // CREATE
       var entity = TestEntity()
@@ -305,10 +332,11 @@ void main() {
         await context.mysqlTest.connection.execute('DELETE FROM test_entities');
         final relCtx = RelationshipContextImpl();
         mysqlRepo = TestEntityRepositoryImpl(
-            context.mysqlTest,
-            TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
-            TestEntityMapperImpl(),
-            relCtx);
+          context.mysqlTest,
+          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+          TestEntityMapperImpl(),
+          relCtx,
+        );
       });
 
       test('runInTransaction commits on success', () async {
@@ -348,11 +376,12 @@ void main() {
           await mysqlRepo.save(TestEntity()..name = outerName);
 
           try {
-            await context.mysqlTest.transactionManager
-                .runInTransaction(() async {
-              await mysqlRepo.save(TestEntity()..name = innerName);
-              throw Exception('Inner rollback');
-            });
+            await context.mysqlTest.transactionManager.runInTransaction(
+              () async {
+                await mysqlRepo.save(TestEntity()..name = innerName);
+                throw Exception('Inner rollback');
+              },
+            );
           } catch (_) {}
 
           final innerInOuter = await mysqlRepo.findByName(innerName);
@@ -370,26 +399,32 @@ void main() {
         final name =
             'Manual MySQL Trans ${DateTime.now().millisecondsSinceEpoch}';
 
-        final trans =
-            await context.mysqlTest.transactionManager.beginTransaction();
+        final trans = await context.mysqlTest.transactionManager
+            .beginTransaction();
         await context.mysqlTest.connection.execute(
-            "INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 'alpha', NOW())",
-            {'name': name});
+          "INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 'alpha', NOW())",
+          {'name': name},
+        );
         await trans.rollback();
 
         final result = await context.mysqlTest.connection.execute(
-            'SELECT * FROM test_entities WHERE name = @name', {'name': name});
+          'SELECT * FROM test_entities WHERE name = @name',
+          {'name': name},
+        );
         expect(result, isEmpty);
 
-        final trans2 =
-            await context.mysqlTest.transactionManager.beginTransaction();
+        final trans2 = await context.mysqlTest.transactionManager
+            .beginTransaction();
         await context.mysqlTest.connection.execute(
-            "INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 'alpha', NOW())",
-            {'name': name});
+          "INSERT INTO test_entities (name, value, rating, flag, type, created_at) VALUES (@name, 0, 0, false, 'alpha', NOW())",
+          {'name': name},
+        );
         await trans2.commit();
 
         final result2 = await context.mysqlTest.connection.execute(
-            'SELECT * FROM test_entities WHERE name = @name', {'name': name});
+          'SELECT * FROM test_entities WHERE name = @name',
+          {'name': name},
+        );
         expect(result2.rows, isNotEmpty);
       });
     });
@@ -397,50 +432,62 @@ void main() {
     group('Unique Constraints', () {
       late UniqueEntityRepository mysqlUniqueRepo;
       setUp(() async {
-        await context.mysqlTest.connection
-            .execute('DELETE FROM unique_entities');
+        await context.mysqlTest.connection.execute(
+          'DELETE FROM unique_entities',
+        );
         final relCtx = RelationshipContextImpl();
         mysqlUniqueRepo = UniqueEntityRepositoryImpl(
-            context.mysqlTest,
-            UniqueEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
-            UniqueEntityMapperImpl(),
-            relCtx);
+          context.mysqlTest,
+          UniqueEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+          UniqueEntityMapperImpl(),
+          relCtx,
+        );
       });
 
       test('Field-level unique constraint', () async {
-        await mysqlUniqueRepo.save(UniqueEntity()
-          ..code = 'U1'
-          ..folder = 'f1'
-          ..filename = 'file1');
+        await mysqlUniqueRepo.save(
+          UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'f1'
+            ..filename = 'file1',
+        );
 
         // Second insert with same code should fail
         expect(
-          () => mysqlUniqueRepo.save(UniqueEntity()
-            ..code = 'U1'
-            ..folder = 'f2'
-            ..filename = 'file2'),
+          () => mysqlUniqueRepo.save(
+            UniqueEntity()
+              ..code = 'U1'
+              ..folder = 'f2'
+              ..filename = 'file2',
+          ),
           throwsA(isA<QueryException>()),
         );
       });
 
       test('Composite unique constraint', () async {
-        await mysqlUniqueRepo.save(UniqueEntity()
-          ..code = 'U1'
-          ..folder = 'same'
-          ..filename = 'same');
+        await mysqlUniqueRepo.save(
+          UniqueEntity()
+            ..code = 'U1'
+            ..folder = 'same'
+            ..filename = 'same',
+        );
 
         // Different folder/same name is OK
-        await mysqlUniqueRepo.save(UniqueEntity()
-          ..code = 'U2'
-          ..folder = 'other'
-          ..filename = 'same');
+        await mysqlUniqueRepo.save(
+          UniqueEntity()
+            ..code = 'U2'
+            ..folder = 'other'
+            ..filename = 'same',
+        );
 
         // Same folder/same name should fail
         expect(
-          () => mysqlUniqueRepo.save(UniqueEntity()
-            ..code = 'U3'
-            ..folder = 'same'
-            ..filename = 'same'),
+          () => mysqlUniqueRepo.save(
+            UniqueEntity()
+              ..code = 'U3'
+              ..folder = 'same'
+              ..filename = 'same',
+          ),
           throwsA(isA<QueryException>()),
         );
       });

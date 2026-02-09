@@ -67,7 +67,7 @@
     </section>
     
 <section class="desc markdown">
-  <p>Gets the operations for an entity type.</p>
+  <p>Gets the database operations for an entity type.</p>
 </section>
 
 
@@ -79,7 +79,8 @@ DatabaseOperations&lt;E, K&gt; getOperations&lt;E extends Object, K&gt;() {
   final operations = _operationsByEntity[E];
   if (operations == null) {
     throw StateError(
-        &#39;No operations registered for entity type $E in this context.&#39;);
+      &#39;No operations registered for entity type $E in this context.&#39;,
+    );
   }
   return operations as DatabaseOperations&lt;E, K&gt;;
 }</code></pre>
@@ -110,7 +111,7 @@ DatabaseOperations&lt;E, K&gt; getOperations&lt;E extends Object, K&gt;() {
 <footer>
   <span class="no-break">
     datapod_api
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

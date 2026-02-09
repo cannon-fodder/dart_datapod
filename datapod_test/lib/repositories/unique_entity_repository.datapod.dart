@@ -104,7 +104,10 @@ class UniqueEntityRepositoryImpl extends UniqueEntityRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<UniqueEntity, int>(operations);
+    relationshipContext.registerMapper<UniqueEntity>(mapper);
+  }
 
   final DatapodDatabase database;
 

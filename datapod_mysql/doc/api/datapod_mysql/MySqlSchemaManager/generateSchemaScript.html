@@ -80,13 +80,15 @@ Future&lt;String&gt; generateSchemaScript() async {
   final buffer = StringBuffer();
 
   for (final table in _schema!.tables) {
-    final columns = table.columns.map((c) {
-      String type = _mapType(c);
-      final autoInc = c.isAutoIncrement ? &#39; AUTO_INCREMENT&#39; : &#39;&#39;;
-      final nullable = c.isNullable ? &#39;&#39; : &#39; NOT NULL&#39;;
-      final pk = table.primaryKey.contains(c.name) ? &#39; PRIMARY KEY&#39; : &#39;&#39;;
-      return &#39;`${c.name}` $type$nullable$autoInc$pk&#39;;
-    }).join(&#39;, &#39;);
+    final columns = table.columns
+        .map((c) {
+          String type = _mapType(c);
+          final autoInc = c.isAutoIncrement ? &#39; AUTO_INCREMENT&#39; : &#39;&#39;;
+          final nullable = c.isNullable ? &#39;&#39; : &#39; NOT NULL&#39;;
+          final pk = table.primaryKey.contains(c.name) ? &#39; PRIMARY KEY&#39; : &#39;&#39;;
+          return &#39;`${c.name}` $type$nullable$autoInc$pk&#39;;
+        })
+        .join(&#39;, &#39;);
 
     buffer.writeln(&#39;CREATE TABLE IF NOT EXISTS `${table.name}` ($columns);&#39;);
 
@@ -94,7 +96,8 @@ Future&lt;String&gt; generateSchemaScript() async {
     for (final unique in table.uniqueConstraints) {
       final cols = unique.columns.map((c) =&gt; &#39;`$c`&#39;).join(&#39;, &#39;);
       buffer.writeln(
-          &#39;ALTER TABLE `${table.name}` ADD CONSTRAINT `${unique.name}` UNIQUE ($cols);&#39;);
+        &#39;ALTER TABLE `${table.name}` ADD CONSTRAINT `${unique.name}` UNIQUE ($cols);&#39;,
+      );
     }
 
     for (final fk in table.foreignKeys) {
@@ -105,7 +108,8 @@ Future&lt;String&gt; generateSchemaScript() async {
       final onDel = fk.onDelete != null ? &#39; ON DELETE ${fk.onDelete}&#39; : &#39;&#39;;
 
       buffer.writeln(
-          &#39;ALTER TABLE `${table.name}` ADD CONSTRAINT `$fkName` FOREIGN KEY ($cols) REFERENCES `$refTable` ($refCols)$onDel;&#39;);
+        &#39;ALTER TABLE `${table.name}` ADD CONSTRAINT `$fkName` FOREIGN KEY ($cols) REFERENCES `$refTable` ($refCols)$onDel;&#39;,
+      );
     }
 
     &#47;&#47; Add indexes
@@ -113,7 +117,8 @@ Future&lt;String&gt; generateSchemaScript() async {
       final cols = index.columns.map((c) =&gt; &#39;`$c`&#39;).join(&#39;, &#39;);
       final unique = index.unique ? &#39;UNIQUE &#39; : &#39;&#39;;
       buffer.writeln(
-          &#39;CREATE ${unique}INDEX `${index.name}` ON `${table.name}` ($cols);&#39;);
+        &#39;CREATE ${unique}INDEX `${index.name}` ON `${table.name}` ($cols);&#39;,
+      );
     }
   }
   return buffer.toString();
@@ -145,7 +150,7 @@ Future&lt;String&gt; generateSchemaScript() async {
 <footer>
   <span class="no-break">
     datapod_mysql
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

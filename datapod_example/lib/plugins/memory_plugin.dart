@@ -29,7 +29,7 @@ class MemoryDatabase extends DatapodDatabaseBase {
   MemoryDatabase(String name) : this._init(name, MemoryConnection());
 
   MemoryDatabase._init(String name, DatabaseConnection conn)
-      : super(name, conn, TransactionManagerImpl(conn));
+    : super(name, conn, TransactionManagerImpl(conn));
 }
 
 class MemoryConnection implements DatabaseConnection {
@@ -37,8 +37,10 @@ class MemoryConnection implements DatabaseConnection {
   int _lastInsertId = 0;
 
   @override
-  Future<QueryResult> execute(String sql,
-      [Map<String, dynamic>? params]) async {
+  Future<QueryResult> execute(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async {
     // Very naive SQL parsing for demo purposes
     final cleanSql = sql.trim().toUpperCase();
     if (cleanSql.startsWith('INSERT INTO')) {
@@ -52,10 +54,7 @@ class MemoryConnection implements DatabaseConnection {
       }
       _storage[tableName]!.add(row);
 
-      return QueryResult(
-        rows: [row],
-        lastInsertId: row['id'],
-      );
+      return QueryResult(rows: [row], lastInsertId: row['id']);
     } else if (cleanSql.startsWith('SELECT * FROM')) {
       final parts = sql.split(' ');
       final tableName = parts[3].toLowerCase();
@@ -89,8 +88,10 @@ class MemoryConnection implements DatabaseConnection {
   }
 
   @override
-  Stream<Map<String, dynamic>> stream(String sql,
-      [Map<String, dynamic>? params]) async* {
+  Stream<Map<String, dynamic>> stream(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async* {
     final cleanSql = sql.trim().toUpperCase();
     if (cleanSql.startsWith('SELECT * FROM')) {
       final parts = sql.split(' ');

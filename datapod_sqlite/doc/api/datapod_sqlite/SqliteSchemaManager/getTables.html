@@ -59,7 +59,7 @@
         <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
     </ol>
   </div>
-<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">TableMetadata</span>&gt;</span></span>&gt;</span></span>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/datapod_api/0.2.1/datapod_api/TableMetadata-class.html">TableMetadata</a></span>&gt;</span></span>&gt;</span></span>
 <span class="name ">getTables</span>(<wbr>)
 
       <div class="features"><span class="feature">override</span></div>
@@ -77,7 +77,8 @@
   <pre class="language-dart"><code class="language-dart">@override
 Future&lt;List&lt;TableMetadata&gt;&gt; getTables() async {
   final result = await _connection.execute(
-      &quot;SELECT name FROM sqlite_master WHERE type=&#39;table&#39; AND name NOT LIKE &#39;sqlite_%&#39;&quot;);
+    &quot;SELECT name FROM sqlite_master WHERE type=&#39;table&#39; AND name NOT LIKE &#39;sqlite_%&#39;&quot;,
+  );
 
   final tables = &lt;TableMetadata&gt;[];
   for (final row in result.rows) {
@@ -114,7 +115,7 @@ Future&lt;List&lt;TableMetadata&gt;&gt; getTables() async {
 <footer>
   <span class="no-break">
     datapod_sqlite
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

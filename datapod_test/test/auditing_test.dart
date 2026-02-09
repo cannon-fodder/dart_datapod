@@ -20,10 +20,12 @@ void main() {
     );
 
     // Initialize schemas (will also create columns for auditing)
-    await context.postgresTest.connection
-        .execute('DROP TABLE IF EXISTS unique_entities CASCADE');
-    await context.postgresTest.connection
-        .execute('DROP TABLE IF EXISTS test_entities CASCADE');
+    await context.postgresTest.connection.execute(
+      'DROP TABLE IF EXISTS unique_entities CASCADE',
+    );
+    await context.postgresTest.connection.execute(
+      'DROP TABLE IF EXISTS test_entities CASCADE',
+    );
     await context.postgresTest.schemaManager.initializeSchema();
   });
 
@@ -46,12 +48,15 @@ void main() {
 
       // Should be within the time range of the test
       expect(
-          saved.createdAt!
-              .isAfter(beforeSave.subtract(const Duration(seconds: 1))),
-          isTrue);
+        saved.createdAt!.isAfter(
+          beforeSave.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
       expect(
-          saved.createdAt!.isBefore(afterSave.add(const Duration(seconds: 1))),
-          isTrue);
+        saved.createdAt!.isBefore(afterSave.add(const Duration(seconds: 1))),
+        isTrue,
+      );
 
       expect(saved.updatedAt, equals(saved.createdAt));
 
@@ -65,13 +70,17 @@ void main() {
 
       expect(updated.createdAt, equals(saved.createdAt));
       expect(
-          updated.updatedAt!
-              .isAfter(beforeUpdate.subtract(const Duration(seconds: 1))),
-          isTrue);
+        updated.updatedAt!.isAfter(
+          beforeUpdate.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
       expect(
-          updated.updatedAt!
-              .isBefore(afterUpdate.add(const Duration(seconds: 1))),
-          isTrue);
+        updated.updatedAt!.isBefore(
+          afterUpdate.add(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
       expect(updated.updatedAt!.isAfter(updated.createdAt!), isTrue);
     });
   });

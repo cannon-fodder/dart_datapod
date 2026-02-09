@@ -27,9 +27,16 @@ void main() {
 
     final simpleColumns = [
       ColumnMetadata(
-          fieldName: 'id', columnName: 'id', fieldType: 'int', isId: true),
+        fieldName: 'id',
+        columnName: 'id',
+        fieldType: 'int',
+        isId: true,
+      ),
       ColumnMetadata(
-          fieldName: 'name', columnName: 'name', fieldType: 'String'),
+        fieldName: 'name',
+        columnName: 'name',
+        fieldType: 'String',
+      ),
       ColumnMetadata(fieldName: 'age', columnName: 'age', fieldType: 'int'),
     ];
 
@@ -49,16 +56,23 @@ void main() {
     test('generateInsert with autoIncrement ID', () {
       final aiColumns = [
         ColumnMetadata(
-            fieldName: 'id',
-            columnName: 'id',
-            fieldType: 'int',
-            isId: true,
-            autoIncrement: true),
+          fieldName: 'id',
+          columnName: 'id',
+          fieldType: 'int',
+          isId: true,
+          autoIncrement: true,
+        ),
         ColumnMetadata(
-            fieldName: 'name', columnName: 'name', fieldType: 'String'),
+          fieldName: 'name',
+          columnName: 'name',
+          fieldType: 'String',
+        ),
       ];
       final meta = createMeta(
-          tableName: 'users', columns: aiColumns, idColumn: aiColumns[0]);
+        tableName: 'users',
+        columns: aiColumns,
+        idColumn: aiColumns[0],
+      );
 
       final sql = SqlGenerator.generateInsert(meta);
       expect(sql, startsWith('INSERT INTO users'));
@@ -88,47 +102,67 @@ void main() {
     group('generateDslQuery', () {
       test('Find by simple field', () {
         final dslComponents = [
-          QueryComponent(field: 'name', operator: 'Equal', isOr: false)
+          QueryComponent(field: 'name', operator: 'Equal', isOr: false),
         ];
         final sql = SqlGenerator.generateDslQuery(
-            simpleMeta, dslComponents, 'find', ['name']);
+          simpleMeta,
+          dslComponents,
+          'find',
+          ['name'],
+        );
         expect(sql, 'SELECT * FROM users WHERE name = @name');
       });
 
       test('Find by multiple fields (AND)', () {
         final dslComponents = [
           QueryComponent(field: 'name', operator: 'Equal', isOr: false),
-          QueryComponent(field: 'age', operator: 'GreaterThan', isOr: false)
+          QueryComponent(field: 'age', operator: 'GreaterThan', isOr: false),
         ];
         final sql = SqlGenerator.generateDslQuery(
-            simpleMeta, dslComponents, 'find', ['name', 'age']);
+          simpleMeta,
+          dslComponents,
+          'find',
+          ['name', 'age'],
+        );
         expect(sql, 'SELECT * FROM users WHERE name = @name AND age > @age');
       });
 
       test('Count query', () {
         final dslComponents = [
-          QueryComponent(field: 'age', operator: 'GreaterThan', isOr: false)
+          QueryComponent(field: 'age', operator: 'GreaterThan', isOr: false),
         ];
         final sql = SqlGenerator.generateDslQuery(
-            simpleMeta, dslComponents, 'count', ['age']);
+          simpleMeta,
+          dslComponents,
+          'count',
+          ['age'],
+        );
         expect(sql, 'SELECT COUNT(*) FROM users WHERE age > @age');
       });
 
       test('Delete query', () {
         final dslComponents = [
-          QueryComponent(field: 'name', operator: 'Equal', isOr: false)
+          QueryComponent(field: 'name', operator: 'Equal', isOr: false),
         ];
         final sql = SqlGenerator.generateDslQuery(
-            simpleMeta, dslComponents, 'delete', ['name']);
+          simpleMeta,
+          dslComponents,
+          'delete',
+          ['name'],
+        );
         expect(sql, 'DELETE FROM users WHERE name = @name');
       });
 
       test('Exists query', () {
         final dslComponents = [
-          QueryComponent(field: 'name', operator: 'Equal', isOr: false)
+          QueryComponent(field: 'name', operator: 'Equal', isOr: false),
         ];
         final sql = SqlGenerator.generateDslQuery(
-            simpleMeta, dslComponents, 'exists', ['name']);
+          simpleMeta,
+          dslComponents,
+          'exists',
+          ['name'],
+        );
         expect(sql, 'SELECT EXISTS(SELECT 1 FROM users WHERE name = @name)');
       });
     });

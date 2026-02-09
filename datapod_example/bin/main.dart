@@ -20,7 +20,8 @@ void main(List<String> args) async {
   Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((record) {
     print(
-        '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}');
+      '${record.time} [${record.level.name}] ${record.loggerName}: ${record.message}',
+    );
   });
 
   print('--- Datapod ORM Enterprise Demo ---');
@@ -54,8 +55,9 @@ void main(List<String> args) async {
     // In a real cross-database scenario, physical FKs across DB servers don't exist.
     // We'll drop the physical FK in MySQL that points to a table in Postgres.
     try {
-      await contentDb.connection
-          .execute('ALTER TABLE posts DROP FOREIGN KEY fk_posts_author_id');
+      await contentDb.connection.execute(
+        'ALTER TABLE posts DROP FOREIGN KEY fk_posts_author_id',
+      );
     } catch (_) {
       // Ignore if it fails (e.g. if it wasn't created)
     }
@@ -74,7 +76,8 @@ void main(List<String> args) async {
 
     // 4. Exercise Content (MySQL -> Content DB)
     print(
-        '\n[CONTENT] Creating Post with Comments in Content DB (related to Identity User)...');
+      '\n[CONTENT] Creating Post with Comments in Content DB (related to Identity User)...',
+    );
     var post1 = Post()
       ..title = 'Enterprise Architecture'
       ..readingTime = const Duration(minutes: 15)
@@ -90,7 +93,8 @@ void main(List<String> args) async {
 
     post1 = await postRepo.save(post1);
     print(
-        'Saved post: ${post1.title} with status ${post1.status}, metadata ${post1.metadata}, and tags ${post1.tags}');
+      'Saved post: ${post1.title} with status ${post1.status}, metadata ${post1.metadata}, and tags ${post1.tags}',
+    );
     print('  - Reading time: ${post1.readingTime}');
     print('  - Created at: ${post1.createdAt}');
     print('  - Updated at: ${post1.updatedAt}');
@@ -116,18 +120,22 @@ void main(List<String> args) async {
 
     // 6. Verify cross-database lazy loading
     print(
-        '\n[VERIFICATION] Testing Lazy Loading (Content DB Post -> Identity DB Author)...');
+      '\n[VERIFICATION] Testing Lazy Loading (Content DB Post -> Identity DB Author)...',
+    );
     final fetchedPost = await postRepo.findById(post1.id!);
     if (fetchedPost != null) {
       final author = await fetchedPost.author;
       print(
-          'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}');
+        'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}',
+      );
       print(
-          '  - Status: ${fetchedPost.status}, Metadata: ${fetchedPost.metadata}, Tags: ${fetchedPost.tags}');
+        '  - Status: ${fetchedPost.status}, Metadata: ${fetchedPost.metadata}, Tags: ${fetchedPost.tags}',
+      );
 
       // 7. Verify Eager Loading (Same DB: Comment -> Post)
       print(
-          '\n[VERIFICATION] Testing Eager Loading (Fetch Join: Content DB Comment -> Content DB Post)...');
+        '\n[VERIFICATION] Testing Eager Loading (Fetch Join: Content DB Comment -> Content DB Post)...',
+      );
       final comments = await fetchedPost.comments;
       if (comments != null && comments.isNotEmpty) {
         final firstCommentId = comments.first.id!;
@@ -160,10 +168,13 @@ void main(List<String> args) async {
     final cacheDb = context.cacheDb;
     // We can use the connection directly for raw operations on the custom plugin
     await cacheDb.connection.execute(
-        'INSERT INTO test (id, info) VALUES (@id, @info)',
-        {'id': 1, 'info': 'Found in memory!'});
-    final memResult = await cacheDb.connection
-        .execute('SELECT * FROM test WHERE id = @id', {'id': 1});
+      'INSERT INTO test (id, info) VALUES (@id, @info)',
+      {'id': 1, 'info': 'Found in memory!'},
+    );
+    final memResult = await cacheDb.connection.execute(
+      'SELECT * FROM test WHERE id = @id',
+      {'id': 1},
+    );
     if (memResult.isNotEmpty) {
       print('Retrieved from Cache DB: ${memResult.rows.first['info']}');
     }

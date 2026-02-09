@@ -48,7 +48,8 @@ void main() {
         {'name': 'Alice'},
       );
       print(
-          'Insert result: affectedRows=${result.affectedRows}, lastInsertId=${result.lastInsertId}');
+        'Insert result: affectedRows=${result.affectedRows}, lastInsertId=${result.lastInsertId}',
+      );
       expect(result.affectedRows, 1);
       expect(result.lastInsertId, 1);
 

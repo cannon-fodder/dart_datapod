@@ -69,12 +69,8 @@
   String name,
   PostgresConnection connection, {
   PostgresConnection? migrationConnection,
-})  : _migrationConnection = migrationConnection,
-      super(
-        name,
-        connection,
-        PostgresTransactionManager(connection),
-      ) {
+}) : _migrationConnection = migrationConnection,
+     super(name, connection, PostgresTransactionManager(connection)) {
   _schemaManager = PostgresSchemaManager(migrationConnection ?? connection);
 }</code></pre>
 </section>
@@ -104,7 +100,7 @@
 <footer>
   <span class="no-break">
     datapod_postgres
-      0.0.1
+      0.2.2
   </span>
   
 </footer>

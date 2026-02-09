@@ -122,7 +122,10 @@ class SettingRepositoryImpl extends SettingRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<Setting, int>(operations);
+    relationshipContext.registerMapper<Setting>(mapper);
+  }
 
   final DatapodDatabase database;
 

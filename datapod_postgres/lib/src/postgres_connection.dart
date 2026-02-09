@@ -19,20 +19,25 @@ class PostgresConnection implements DatabaseConnection {
   final _log = Logger('Datapod.Postgres');
 
   PostgresConnection(this._executor, {Future<void> Function()? onClose})
-      : _onClose = onClose {
+    : _onClose = onClose {
     _schemaManager = PostgresSchemaManager(this);
   }
 
   @override
-  Future<QueryResult> execute(String sql,
-      [Map<String, dynamic>? params]) async {
+  Future<QueryResult> execute(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async {
     try {
       final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
-      final usedParams =
-          paramRegex.allMatches(sql).map((m) => m.group(1)).toSet();
+      final usedParams = paramRegex
+          .allMatches(sql)
+          .map((m) => m.group(1))
+          .toSet();
       final filteredParams = params != null
           ? Map.fromEntries(
-              params.entries.where((e) => usedParams.contains(e.key)))
+              params.entries.where((e) => usedParams.contains(e.key)),
+            )
           : null;
 
       if (_log.isLoggable(Level.FINE)) {
@@ -43,8 +48,10 @@ class PostgresConnection implements DatabaseConnection {
       }
 
       final result = filteredParams != null && filteredParams.isNotEmpty
-          ? await _executor.execute(pg.Sql.named(sql),
-              parameters: filteredParams)
+          ? await _executor.execute(
+              pg.Sql.named(sql),
+              parameters: filteredParams,
+            )
           : await _executor.execute(pg.Sql.named(sql));
 
       dynamic lastId;
@@ -65,15 +72,20 @@ class PostgresConnection implements DatabaseConnection {
   }
 
   @override
-  Stream<Map<String, dynamic>> stream(String sql,
-      [Map<String, dynamic>? params]) async* {
+  Stream<Map<String, dynamic>> stream(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async* {
     try {
       final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
-      final usedParams =
-          paramRegex.allMatches(sql).map((m) => m.group(1)).toSet();
+      final usedParams = paramRegex
+          .allMatches(sql)
+          .map((m) => m.group(1))
+          .toSet();
       final filteredParams = params != null
           ? Map.fromEntries(
-              params.entries.where((e) => usedParams.contains(e.key)))
+              params.entries.where((e) => usedParams.contains(e.key)),
+            )
           : null;
 
       if (_log.isLoggable(Level.FINE)) {
@@ -84,8 +96,10 @@ class PostgresConnection implements DatabaseConnection {
       }
 
       final rows = filteredParams != null && filteredParams.isNotEmpty
-          ? await _executor.execute(pg.Sql.named(sql),
-              parameters: filteredParams)
+          ? await _executor.execute(
+              pg.Sql.named(sql),
+              parameters: filteredParams,
+            )
           : await _executor.execute(pg.Sql.named(sql));
 
       for (final pg.ResultRow row in rows) {
@@ -110,10 +124,11 @@ class PostgresConnection implements DatabaseConnection {
 
   @override
   Future<void> close() async {
-    if (_onClose != null) {
-      await _onClose!();
+    final onClose = _onClose;
+    if (onClose != null) {
+      await onClose();
     } else if (_executor is pg.Connection) {
-      await (_executor as pg.Connection).close();
+      await _executor.close();
     }
   }
 

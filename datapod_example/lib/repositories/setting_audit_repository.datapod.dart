@@ -114,7 +114,10 @@ class SettingAuditRepositoryImpl extends SettingAuditRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<SettingAudit, int>(operations);
+    relationshipContext.registerMapper<SettingAudit>(mapper);
+  }
 
   final DatapodDatabase database;
 

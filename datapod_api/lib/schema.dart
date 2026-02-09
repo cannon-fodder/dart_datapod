@@ -55,10 +55,7 @@ class UniqueConstraintDefinition {
   final String name;
   final List<String> columns;
 
-  const UniqueConstraintDefinition({
-    required this.name,
-    required this.columns,
-  });
+  const UniqueConstraintDefinition({required this.name, required this.columns});
 }
 
 /// Represents an index definition.

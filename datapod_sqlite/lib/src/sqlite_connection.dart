@@ -22,8 +22,10 @@ class SqliteConnection implements DatabaseConnection {
   }
 
   @override
-  Future<QueryResult> execute(String sql,
-      [Map<String, dynamic>? params]) async {
+  Future<QueryResult> execute(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async {
     try {
       String processedSql = sql;
       List<dynamic> positionalParams = [];
@@ -39,7 +41,7 @@ class SqliteConnection implements DatabaseConnection {
 
       final isQuery =
           processedSql.trimLeft().toLowerCase().startsWith('select') ||
-              processedSql.trimLeft().toLowerCase().startsWith('pragma');
+          processedSql.trimLeft().toLowerCase().startsWith('pragma');
 
       if (_log.isLoggable(Level.FINE)) {
         _log.fine('Executing SQL: $processedSql');
@@ -56,7 +58,8 @@ class SqliteConnection implements DatabaseConnection {
             return QueryResult(
               rows: result
                   .map<Map<String, dynamic>>(
-                      (row) => Map<String, dynamic>.from(row))
+                    (row) => Map<String, dynamic>.from(row),
+                  )
                   .toList(),
               affectedRows: _db.updatedRows,
               lastInsertId: _db.lastInsertRowId,
@@ -77,7 +80,8 @@ class SqliteConnection implements DatabaseConnection {
           return QueryResult(
             rows: result
                 .map<Map<String, dynamic>>(
-                    (row) => Map<String, dynamic>.from(row))
+                  (row) => Map<String, dynamic>.from(row),
+                )
                 .toList(),
             affectedRows: _db.updatedRows,
             lastInsertId: _db.lastInsertRowId,
@@ -96,8 +100,10 @@ class SqliteConnection implements DatabaseConnection {
   }
 
   @override
-  Stream<Map<String, dynamic>> stream(String sql,
-      [Map<String, dynamic>? params]) async* {
+  Stream<Map<String, dynamic>> stream(
+    String sql, [
+    Map<String, dynamic>? params,
+  ]) async* {
     try {
       String processedSql = sql;
       List<dynamic> positionalParams = [];
@@ -139,7 +145,9 @@ class SqliteConnection implements DatabaseConnection {
   }
 
   ({String sql, List<dynamic> params}) _translateSql(
-      String sql, Map<String, dynamic> params) {
+    String sql,
+    Map<String, dynamic> params,
+  ) {
     final paramRegex = RegExp(r'@([a-zA-Z0-9_]+)');
     final positionalParams = <dynamic>[];
     final translatedSql = sql.replaceAllMapped(paramRegex, (match) {
@@ -152,10 +160,7 @@ class SqliteConnection implements DatabaseConnection {
       return '?';
     });
 
-    return (
-      sql: _stripReturning(translatedSql),
-      params: positionalParams,
-    );
+    return (sql: _stripReturning(translatedSql), params: positionalParams);
   }
 
   String _stripReturning(String sql) {

@@ -83,10 +83,12 @@
 }) {
   var result = sql;
   if (sort != null &amp;&amp; sort.isNotEmpty) {
-    final orderClauses = sort.map((s) {
-      final column = fieldToColumn?[s.field] ?? s.field;
-      return &#39;$column ${s.direction == Direction.asc ? &#39;ASC&#39; : &#39;DESC&#39;}&#39;;
-    }).join(&#39;, &#39;);
+    final orderClauses = sort
+        .map((s) {
+          final column = fieldToColumn?[s.field] ?? s.field;
+          return &#39;$column ${s.direction == Direction.asc ? &#39;ASC&#39; : &#39;DESC&#39;}&#39;;
+        })
+        .join(&#39;, &#39;);
     result += &#39; ORDER BY $orderClauses&#39;;
   }
   if (limit != null) {
@@ -123,7 +125,7 @@
 <footer>
   <span class="no-break">
     datapod_api
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

@@ -107,7 +107,10 @@ class RoleRepositoryImpl extends RoleRepository {
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
-  ) : super(relationshipContext);
+  ) : super(relationshipContext) {
+    relationshipContext.registerOperations<Role, int>(operations);
+    relationshipContext.registerMapper<Role>(mapper);
+  }
 
   final DatapodDatabase database;
 

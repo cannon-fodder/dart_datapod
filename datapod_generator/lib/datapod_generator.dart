@@ -11,9 +11,13 @@ import 'package:source_gen/source_gen.dart';
 import 'src/repository_generator.dart';
 import 'src/entity_generator.dart';
 import 'src/initializer_generator.dart';
+import 'src/database_context_generator.dart';
 
-Builder datapodBuilder(BuilderOptions options) =>
-    PartBuilder([EntityGenerator(), RepositoryGenerator()], '.datapod.dart');
+Builder datapodBuilder(BuilderOptions options) => PartBuilder([
+  EntityGenerator(),
+  RepositoryGenerator(),
+  DatabaseContextGenerator(),
+], '.datapod.dart');
 
 Builder datapodInitializerBuilder(BuilderOptions options) =>
     InitializerGenerator();

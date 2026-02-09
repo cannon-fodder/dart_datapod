@@ -79,7 +79,8 @@ EntityMapper&lt;E&gt; getMapper&lt;E extends Object&gt;() {
   final mapper = _mappersByEntity[E];
   if (mapper == null) {
     throw StateError(
-        &#39;No mapper registered for entity type $E in this context.&#39;);
+      &#39;No mapper registered for entity type $E in this context.&#39;,
+    );
   }
   return mapper as EntityMapper&lt;E&gt;;
 }</code></pre>
@@ -110,7 +111,7 @@ EntityMapper&lt;E&gt; getMapper&lt;E extends Object&gt;() {
 <footer>
   <span class="no-break">
     datapod_api
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

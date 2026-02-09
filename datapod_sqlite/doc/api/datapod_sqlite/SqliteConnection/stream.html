@@ -78,8 +78,10 @@
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
-Stream&lt;Map&lt;String, dynamic&gt;&gt; stream(String sql,
-    [Map&lt;String, dynamic&gt;? params]) async* {
+Stream&lt;Map&lt;String, dynamic&gt;&gt; stream(
+  String sql, [
+  Map&lt;String, dynamic&gt;? params,
+]) async* {
   try {
     String processedSql = sql;
     List&lt;dynamic&gt; positionalParams = [];
@@ -146,7 +148,7 @@ Stream&lt;Map&lt;String, dynamic&gt;&gt; stream(String sql,
 <footer>
   <span class="no-break">
     datapod_sqlite
-      0.1.0
+      0.2.2
   </span>
   
 </footer>

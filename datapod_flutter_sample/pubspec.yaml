@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.0
+version: 0.2.2
 
 environment:
   sdk: ^3.10.0
@@ -30,12 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  datapod_api:
-    path: ../datapod_api
-  datapod_engine:
-    path: ../datapod_engine
-  datapod_postgres:
-    path: ../datapod_postgres
+  datapod_api: ^0.2.2
+  datapod_engine: ^0.2.2
+  datapod_sqlite: ^0.2.2
   logging: ^1.3.0
 
   cupertino_icons: ^1.0.8
@@ -60,7 +57,7 @@ dependency_overrides:
     path: ../datapod_api
   datapod_engine:
     path: ../datapod_engine
-  datapod_postgres:
-    path: ../datapod_postgres
+  datapod_sqlite:
+    path: ../datapod_sqlite
   datapod_generator:
     path: ../datapod_generator

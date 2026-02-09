@@ -58,9 +58,12 @@ class MockTransactionManager extends BaseTransactionManager {
 void main() {
   group('QueryResult', () {
     test('should store rows correctly', () {
-      final results = QueryResult(rows: [
-        {'id': 1, 'name': 'Test'}
-      ], affectedRows: 0);
+      final results = QueryResult(
+        rows: [
+          {'id': 1, 'name': 'Test'},
+        ],
+        affectedRows: 0,
+      );
       expect(results.rows.length, 1);
       expect(results.rows.first['name'], 'Test');
     });
@@ -72,14 +75,18 @@ void main() {
 
       await manager.runInTransaction(() async {
         expect(BaseTransactionManager.currentTransaction, isNotNull);
-        expect(BaseTransactionManager.currentTransaction,
-            same(manager.lastTransaction));
+        expect(
+          BaseTransactionManager.currentTransaction,
+          same(manager.lastTransaction),
+        );
 
         // Nested call
         await manager.runInTransaction(() async {
           expect(BaseTransactionManager.currentTransaction, isNotNull);
-          expect(manager.startCount,
-              1); // Should not start a new physical transaction
+          expect(
+            manager.startCount,
+            1,
+          ); // Should not start a new physical transaction
         });
       });
 

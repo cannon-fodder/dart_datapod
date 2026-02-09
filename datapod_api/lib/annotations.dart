@@ -73,8 +73,12 @@ class Column {
   /// Whether the column is nullable.
   final bool nullable;
 
-  const Column(
-      {this.name, this.type, this.unique = false, this.nullable = true});
+  const Column({
+    this.name,
+    this.type,
+    this.unique = false,
+    this.nullable = true,
+  });
 }
 
 /// Indicates the primary key field.
@@ -374,4 +378,19 @@ class Convert {
 class FetchJoin {
   final String property;
   const FetchJoin(this.property);
+}
+
+/// Annotation to define a database context and its associated entities and repositories.
+@Target({TargetKind.classType})
+class DatapodDatabaseContext {
+  /// The list of entity types managed by this database context.
+  final List<Type> entities;
+
+  /// The list of repository types managed by this database context.
+  final List<Type> repositories;
+
+  const DatapodDatabaseContext({
+    required this.entities,
+    required this.repositories,
+  });
 }

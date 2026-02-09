@@ -124,11 +124,10 @@ packages:
   datapod_api:
     dependency: "direct main"
     description:
-      name: datapod_api
-      sha256: "354bbb6bb4b0f85596756a96c47057b3477a9e482ab8d30e2b8e60988acb5e1b"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+      path: "../datapod_api"
+      relative: true
+    source: path
+    version: "0.2.2"
   file:
     dependency: transitive
     description:

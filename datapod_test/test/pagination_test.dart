@@ -31,20 +31,25 @@ void main() {
   group('Pagination & Sorting', () {
     test('PostgreSQL Pagination', () async {
       final repo = context.testEntityRepository;
-      await context.postgresTest.connection
-          .execute('DELETE FROM test_entities');
+      await context.postgresTest.connection.execute(
+        'DELETE FROM test_entities',
+      );
 
       // Create 50 entities
       for (var i = 1; i <= 50; i++) {
-        await repo.save(TestEntity()
-          ..name = 'Entity ${i.toString().padLeft(2, "0")}'
-          ..value = i
-          ..flag = true);
+        await repo.save(
+          TestEntity()
+            ..name = 'Entity ${i.toString().padLeft(2, "0")}'
+            ..value = i
+            ..flag = true,
+        );
       }
 
       // Test Page 0
       var page0 = await repo.findByNameContaining(
-          'Entity', Pageable(page: 0, size: 10, sort: [Sort.asc('name')]));
+        'Entity',
+        Pageable(page: 0, size: 10, sort: [Sort.asc('name')]),
+      );
       expect(page0.items.length, equals(10));
       expect(page0.totalElements, equals(50));
       expect(page0.items.first.name, equals('Entity 01'));
@@ -52,7 +57,9 @@ void main() {
 
       // Test Page 2 (20-29)
       var page2 = await repo.findByNameContaining(
-          'Entity', Pageable(page: 2, size: 10, sort: [Sort.asc('name')]));
+        'Entity',
+        Pageable(page: 2, size: 10, sort: [Sort.asc('name')]),
+      );
       expect(page2.items.length, equals(10));
       expect(page2.items.first.name, equals('Entity 21'));
       expect(page2.items.last.name, equals('Entity 30'));
@@ -67,24 +74,29 @@ void main() {
       // Manually create MySQL repo
       final relCtx = RelationshipContextImpl();
       final mysqlRepo = TestEntityRepositoryImpl(
-          context.mysqlTest,
-          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
-          TestEntityMapperImpl(),
-          relCtx);
+        context.mysqlTest,
+        TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+        TestEntityMapperImpl(),
+        relCtx,
+      );
 
       await context.mysqlTest.connection.execute('DELETE FROM test_entities');
 
       // Create 25 entities
       for (var i = 1; i <= 25; i++) {
-        await mysqlRepo.save(TestEntity()
-          ..name = 'MySQL ${i.toString().padLeft(2, "0")}'
-          ..value = i
-          ..flag = true);
+        await mysqlRepo.save(
+          TestEntity()
+            ..name = 'MySQL ${i.toString().padLeft(2, "0")}'
+            ..value = i
+            ..flag = true,
+        );
       }
 
       // Test Page 1 (size 10 -> items 11-20)
       var page1 = await mysqlRepo.findByNameContaining(
-          'MySQL', Pageable(page: 1, size: 10, sort: [Sort.asc('name')]));
+        'MySQL',
+        Pageable(page: 1, size: 10, sort: [Sort.asc('name')]),
+      );
       expect(page1.items.length, equals(10));
       expect(page1.totalElements, equals(25));
       expect(page1.items.first.name, equals('MySQL 11'));
