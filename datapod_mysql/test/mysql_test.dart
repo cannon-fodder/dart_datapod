@@ -35,19 +35,22 @@ void main() {
       expect(db.name, 'test_db');
 
       // Create table
+      await db.connection.execute('DROP TABLE IF EXISTS test_plugin_users');
       await db.connection.execute(
-        'CREATE TEMPORARY TABLE users (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))',
+        'CREATE TEMPORARY TABLE test_plugin_users (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), UNIQUE INDEX (name))',
       );
 
       // Insert
       final result = await db.connection.execute(
-        'INSERT INTO users (name) VALUES (@name)',
+        'INSERT INTO test_plugin_users (name) VALUES (@name)',
         {'name': 'Alice'},
       );
       expect(result.affectedRows, 1);
 
       // Query
-      final query = await db.connection.execute('SELECT * FROM users');
+      final query = await db.connection.execute(
+        'SELECT * FROM test_plugin_users',
+      );
       expect(query.rows.length, 1);
       expect(query.rows.first['name'], 'Alice');
 

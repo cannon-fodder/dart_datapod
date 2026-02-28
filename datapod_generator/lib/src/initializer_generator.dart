@@ -68,7 +68,7 @@ class InitializerGenerator extends Builder {
           String? dbName;
           if (dbChecker.hasAnnotationOf(element)) {
             final dbAnnot = dbChecker.firstAnnotationOf(element);
-            dbName = dbAnnot?.getField('name')?.toStringValue();
+            dbName = dbAnnot?.getField('name')?.toStringValue() ?? '';
           }
           repos.add({
             'name': element.name,

@@ -17,17 +17,17 @@ class BootstrapGenerator extends Generator {
     final entities = <ClassElement>[];
     final repositories = <ClassElement>[];
 
-    final typeCheckerEntity = TypeChecker.fromRuntime(api.Entity);
-    final typeCheckerRepo = TypeChecker.fromRuntime(api.Repository);
+    final entityChecks = const TypeChecker.fromRuntime(api.Entity);
+    final repoChecks = const TypeChecker.fromRuntime(api.Repository);
 
     for (var lib in await buildStep.resolver.libraries.toList()) {
       final reader = LibraryReader(lib);
-      for (var annotated in reader.annotatedWith(typeCheckerEntity)) {
+      for (var annotated in reader.annotatedWith(entityChecks)) {
         if (annotated.element is ClassElement) {
           entities.add(annotated.element as ClassElement);
         }
       }
-      for (var annotated in reader.annotatedWith(typeCheckerRepo)) {
+      for (var annotated in reader.annotatedWith(repoChecks)) {
         if (annotated.element is ClassElement) {
           repositories.add(annotated.element as ClassElement);
         }

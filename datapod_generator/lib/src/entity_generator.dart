@@ -374,9 +374,9 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     for (final field in entityClass.fields) {
       if (field.isStatic || field.isSynthetic) continue;
 
-      final manyToOne = const TypeChecker.fromRuntime(
+      final isManyToOne = const TypeChecker.fromRuntime(
         api.ManyToOne,
-      ).firstAnnotationOf(field);
+      ).hasAnnotationOfExact(field);
       final oneToMany = const TypeChecker.fromRuntime(
         api.OneToMany,
       ).firstAnnotationOf(field);
@@ -384,11 +384,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
         api.OneToOne,
       ).firstAnnotationOf(field);
 
-      if (manyToOne != null || oneToMany != null || oneToOne != null) {
+      if (isManyToOne || oneToMany != null || oneToOne != null) {
         final isLazy = _isFuture(field.type);
         final relatedType = _getRelatedType(field.type);
 
-        if (manyToOne != null) {
+        if (isManyToOne) {
           methods.addAll(
             _generateManyToOneMethods(field, relatedType, isLazy, entityClass),
           );
@@ -439,7 +439,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     final methods = <Method>[];
     final foreignKeyField = '${field.name}Id';
     final loadedField =
-        '_loaded${field.name[0].toUpperCase()}${field.name.substring(1)}';
+        '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
 
     methods.add(
       Method(
@@ -451,18 +451,18 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..modifier = MethodModifier.async
           ..body = Block.of([
             Code(
-              'if ($loadedField == null && $foreignKeyField != null && \$relationshipContext != null) {',
+              'if ($loadedField == null  && \$relationshipContext != null) {',
             ),
             Code(
-              '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}, dynamic>();',
+              '  final ops = \$relationshipContext.getOperations<${relatedType.element?.name}, dynamic>();',
             ),
             Code(
-              '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();',
+              '  final mapper = \$relationshipContext.getMapper<${relatedType.element?.name}>();',
             ),
             Code('  final result = await ops.findById($foreignKeyField);'),
             Code('  if (result.isNotEmpty) {'),
             Code(
-              '    $loadedField = Future.value(mapper.mapRow(result.rows.first, \$database!, \$relationshipContext!));',
+              '    $loadedField = Future.value(mapper.mapRow(result.rows.first, \$database, \$relationshipContext));',
             ),
             Code('  }'),
             Code('}'),
@@ -511,13 +511,13 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
   ) {
     final methods = <Method>[];
     final loadedField =
-        '_loaded${field.name[0].toUpperCase()}${field.name.substring(1)}';
+        '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
 
     final oneToManyAnn = const TypeChecker.fromRuntime(
       api.OneToMany,
     ).firstAnnotationOf(field);
     final mappedBy = oneToManyAnn?.getField('mappedBy')?.toStringValue();
-    final lookupField = mappedBy ?? owningEntity.name.toLowerCase();
+    final lookupField = mappedBy ?? (owningEntity.name).toLowerCase();
     final methodName =
         'findBy${lookupField[0].toUpperCase()}${lookupField.substring(1)}Id';
 
@@ -531,17 +531,17 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..modifier = MethodModifier.async
           ..body = Block.of([
             Code(
-              'if ($loadedField == null && id != null && \$relationshipContext != null) {',
+              'if ($loadedField == null  && \$relationshipContext != null) {',
             ),
             Code(
-              '  final ops = \$relationshipContext!.getOperations<${relatedType.element?.name}, dynamic>();',
+              '  final ops = \$relationshipContext.getOperations<${relatedType.element?.name}, dynamic>();',
             ),
             Code(
-              '  final mapper = \$relationshipContext!.getMapper<${relatedType.element?.name}>();',
+              '  final mapper = \$relationshipContext.getMapper<${relatedType.element?.name}>();',
             ),
             Code('  final result = await (ops as dynamic).$methodName(id!);'),
             Code(
-              '  $loadedField = Future.value(mapper.mapRows(result.rows, \$database!, \$relationshipContext!));',
+              '  $loadedField = Future.value(mapper.mapRows(result.rows, \$database, \$relationshipContext));',
             ),
             Code('}'),
             Code(
@@ -593,7 +593,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
 
       final loadedField =
-          '_loaded${field.name[0].toUpperCase()}${field.name.substring(1)}';
+          '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
       fields.add(
         Field(
           (f) => f

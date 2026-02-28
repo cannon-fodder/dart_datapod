@@ -111,7 +111,8 @@ class SqlGenerator {
     ).firstAnnotationOf(element);
     final reader = ConstantReader(entityAnnotation);
     final tableName =
-        reader.peek('tableName')?.stringValue ?? _camelToSnake(element.name);
+        reader.peek('tableName')?.stringValue ??
+        _camelToSnake(element.name);
 
     final columns = <ColumnMetadata>[];
     ColumnMetadata? idColumn;
@@ -182,7 +183,8 @@ class SqlGenerator {
       final idReader = ConstantReader(idAnn);
 
       final colName =
-          colReader.peek('name')?.stringValue ?? _camelToSnake(field.name);
+          colReader.peek('name')?.stringValue ??
+          _camelToSnake(field.name);
       final isId = idAnn != null;
       final autoIncrement = isId
           ? (idReader.peek('autoIncrement')?.boolValue ?? true)
@@ -244,7 +246,7 @@ class SqlGenerator {
         final metadata = ColumnMetadata(
           fieldName: field.name,
           columnName: '', // No column
-          fieldType: field.type.getDisplayString(withNullability: false),
+          fieldType: field.type.getDisplayString(withNullability: true),
           relationType: relationType,
           relatedEntityType: relatedEntityType,
           mappedBy: mappedBy,
@@ -261,7 +263,7 @@ class SqlGenerator {
       bool isList = false;
       bool isJson = false;
       List<String>? enumValues;
-      String fieldTypeStr = type.getDisplayString(withNullability: false);
+      String fieldTypeStr = type.getDisplayString(withNullability: true);
 
       if (type is InterfaceType) {
         if (type.element is EnumElement) {
@@ -307,7 +309,7 @@ class SqlGenerator {
             ? ConstantReader(convertAnn)
                   .peek('converter')
                   ?.typeValue
-                  .getDisplayString(withNullability: false)
+                  .getDisplayString(withNullability: true)
             : null,
       );
 
@@ -320,7 +322,7 @@ class SqlGenerator {
             (s) => s.element.name == 'AttributeConverter',
           );
           final dbType = converterBase.typeArguments[1].getDisplayString(
-            withNullability: false,
+            withNullability: true,
           );
 
           // Update metadata with the database type
@@ -728,7 +730,7 @@ class SqlGenerator {
       columnName: isId
           ? colName
           : (relationType != null ? '${colName}_id' : colName),
-      fieldType: field.type.getDisplayString(withNullability: false),
+      fieldType: field.type.getDisplayString(withNullability: true),
       isId: isId,
       autoIncrement: autoIncrement,
       relationType: relationType,
@@ -740,6 +742,6 @@ class SqlGenerator {
         type.isDartCoreDouble ||
         type.isDartCoreString ||
         type.isDartCoreBool ||
-        type.getDisplayString(withNullability: false) == 'DateTime';
+        type.getDisplayString(withNullability: true) == 'DateTime';
   }
 }

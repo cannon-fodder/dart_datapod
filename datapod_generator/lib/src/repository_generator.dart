@@ -646,14 +646,14 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     ];
 
     for (final method in allMethods) {
-      if (seen.contains(method.name)) continue;
+      if (seen.contains((method.name))) continue;
       if (recomputeMethod(method)) continue;
 
-      if (method.name.startsWith('findBy') ||
-          method.name.startsWith('countBy') ||
-          method.name.startsWith('existsBy') ||
-          method.name.startsWith('deleteBy')) {
-        seen.add(method.name);
+      if ((method.name).startsWith('findBy') ||
+          (method.name).startsWith('countBy') ||
+          (method.name).startsWith('existsBy') ||
+          (method.name).startsWith('deleteBy')) {
+        seen.add((method.name));
         methods.add(_generateOperationsDslMethod(method, metadata));
       }
     }
@@ -699,12 +699,12 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     MethodElement method,
     EntitySqlMetadata metadata,
   ) {
-    final components = DSLParser.parse(method.name);
-    final type = method.name.startsWith('count')
+    final components = DSLParser.parse((method.name));
+    final type = (method.name).startsWith('count')
         ? 'count'
-        : method.name.startsWith('exists')
+        : (method.name).startsWith('exists')
         ? 'exists'
-        : method.name.startsWith('delete')
+        : (method.name).startsWith('delete')
         ? 'delete'
         : 'find';
 
@@ -773,7 +773,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         final field = metadata.columns.firstWhere(
           (c) => c.fieldName == property,
           orElse: () => throw Exception(
-            'Property $property not found for @FetchJoin on ${method.name}',
+            'Property $property not found for @FetchJoin on ${(method.name)}',
           ),
         );
 
@@ -815,7 +815,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
     return Method(
       (m) => m
-        ..name = method.name
+        ..name = (method.name)
         ..returns = isStream
             ? refer('Stream<Map<String, dynamic>>')
             : refer(
@@ -1020,14 +1020,14 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     ];
 
     for (final method in allMethods) {
-      if (seen.contains(method.name)) continue;
+      if (seen.contains((method.name))) continue;
       if (recomputeMethod(method)) continue;
 
-      if (method.name.startsWith('findBy') ||
-          method.name.startsWith('countBy') ||
-          method.name.startsWith('existsBy') ||
-          method.name.startsWith('deleteBy')) {
-        seen.add(method.name);
+      if ((method.name).startsWith('findBy') ||
+          (method.name).startsWith('countBy') ||
+          (method.name).startsWith('existsBy') ||
+          (method.name).startsWith('deleteBy')) {
+        seen.add((method.name));
         methods.add(
           _generateRepoDslMethod(repoInterface, method, entityClass, metadata),
         );
@@ -1069,18 +1069,19 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     ClassElement entityClass,
     EntitySqlMetadata metadata,
   ) {
-    final type = method.name.startsWith('count')
+    final type = (method.name).startsWith('count')
         ? 'count'
-        : method.name.startsWith('exists')
+        : (method.name).startsWith('exists')
         ? 'exists'
-        : method.name.startsWith('delete')
+        : (method.name).startsWith('delete')
         ? 'delete'
         : 'find';
 
-    final isCore = method.name == 'findAll' || method.name == 'findAllPaged';
+    final isCore =
+        (method.name) == 'findAll' || (method.name) == 'findAllPaged';
     final components = isCore
         ? <QueryComponent>[]
-        : DSLParser.parse(method.name);
+        : DSLParser.parse((method.name));
 
     final pageableChecker = TypeChecker.fromUrl(
       'package:datapod_api/pagination.dart#Pageable',
@@ -1146,7 +1147,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
     return Method(
       (m) => m
-        ..name = method.name
+        ..name = (method.name)
         ..annotations.add(refer('override'))
         ..returns = refer(returnTypeStr)
         ..modifier = isStream ? null : MethodModifier.async
@@ -1179,13 +1180,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         )
         ..body = Block.of([
           if (isPage) ...[
-            if (method.name == 'findAllPaged')
+            if ((method.name) == 'findAllPaged')
               Code(
                 'final result = await operations.findAll(limit: $pageableVar.size, offset: $pageableVar.offset, sort: $pageableVar.sort);',
               )
             else
               Code(
-                'final result = ${isStream ? '' : 'await '}operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
+                'final result = ${isStream ? '' : 'await '}operations.${(method.name)}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
               ),
             Code(
               "final totalElements = await operations.database.connection.execute(",
@@ -1208,10 +1209,10 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           ] else ...[
             isStream
                 ? Code(
-                    'final result = operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
+                    'final stream = operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
                   )
                 : Code(
-                    'final result = await operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
+                    'final result = await operations.${(method.name)}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
                   ),
             _generateRepoDslReturn(
               type,
@@ -1227,7 +1228,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
   String _generateDslParamMap(
     List<QueryComponent> components,
-    List<ParameterElement> otherParams,
+    List<dynamic> otherParams,
   ) {
     if (components.isEmpty && otherParams.isEmpty) return '<String, dynamic>{}';
     final entries = <String>[];
@@ -1464,12 +1465,12 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
   }
 
   bool recomputeMethod(MethodElement method) {
-    return method.name == 'save' ||
-        method.name == 'saveAll' ||
-        method.name == 'saveEntity' ||
-        method.name == 'delete' ||
-        method.name == 'findAll' ||
-        method.name == 'findAllPaged' ||
-        method.name == 'findById';
+    return (method.name) == 'save' ||
+        (method.name) == 'saveAll' ||
+        (method.name) == 'saveEntity' ||
+        (method.name) == 'delete' ||
+        (method.name) == 'findAll' ||
+        (method.name) == 'findAllPaged' ||
+        (method.name) == 'findById';
   }
 }

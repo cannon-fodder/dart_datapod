@@ -45,7 +45,7 @@ class DatabaseContextGenerator
             return Field(
               (f) => f
                 ..name = name
-                ..type = refer(type.getDisplayString(withNullability: false))
+                ..type = refer(type.getDisplayString(withNullability: true))
                 ..modifier = FieldModifier.final$,
             );
           }),
@@ -74,7 +74,7 @@ class DatabaseContextGenerator
                   final entityName = entityType.element!.name!;
 
                   return Code(
-                    '$fieldName = ${repoName}Impl(relationshipContext.database!, ${repoName}OperationsImpl(relationshipContext.database!, relationshipContext), ${entityName}MapperImpl(), relationshipContext)',
+                    '$fieldName = ${repoName}Impl(relationshipContext.database, ${repoName}OperationsImpl(relationshipContext.database, relationshipContext), ${entityName}MapperImpl(), relationshipContext)',
                   );
                 }),
               ),

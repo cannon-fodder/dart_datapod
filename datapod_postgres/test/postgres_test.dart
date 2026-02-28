@@ -37,18 +37,23 @@ void main() {
 
       // Create table
       await db.connection.execute(
-        'CREATE TEMPORARY TABLE users (id SERIAL PRIMARY KEY, name TEXT)',
+        'DROP TABLE IF EXISTS test_plugin_users CASCADE',
+      );
+      await db.connection.execute(
+        'CREATE TEMPORARY TABLE test_plugin_users (id SERIAL PRIMARY KEY, name TEXT)',
       );
 
       // Insert
       final result = await db.connection.execute(
-        'INSERT INTO users (name) VALUES (@name)',
+        'INSERT INTO test_plugin_users (name) VALUES (@name)',
         {'name': 'Alice'},
       );
       expect(result.affectedRows, 1);
 
       // Query
-      final query = await db.connection.execute('SELECT * FROM users');
+      final query = await db.connection.execute(
+        'SELECT * FROM test_plugin_users',
+      );
       expect(query.rows.length, 1);
       expect(query.rows.first['name'], 'Alice');
 

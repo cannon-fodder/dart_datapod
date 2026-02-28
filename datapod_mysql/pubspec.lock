@@ -84,16 +84,18 @@ packages:
   datapod_api:
     dependency: "direct main"
     description:
-      path: "../datapod_api"
-      relative: true
-    source: path
+      name: datapod_api
+      sha256: d27e17e42eb0091b00ee3b6da96ff460aac2d627ccb0e0e80f3a7c836a85a3c4
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.2"
   datapod_engine:
     dependency: "direct main"
     description:
-      path: "../datapod_engine"
-      relative: true
-    source: path
+      name: datapod_engine
+      sha256: d53d224eb3a3ccde4b860d06734a5c085b3bfd01137f5558d44355ad029f82f3
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.2"
   file:
     dependency: transitive
