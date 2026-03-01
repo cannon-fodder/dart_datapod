@@ -24,11 +24,11 @@ void main() {
         const ConnectionConfig(
           name: 'test_conn',
           attributes: {
-            'host': 'localhost',
-            'port': 5432,
+            'host': '127.0.0.1',
+            'port': 5434,
             'username': 'datapod',
-            'password': 'datapod_dba',
-            'database': 'datapod',
+            'password': 'datapod',
+            'database': 'datapod_test',
           },
         ),
       );

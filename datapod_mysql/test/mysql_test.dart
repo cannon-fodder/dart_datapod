@@ -23,8 +23,8 @@ void main() {
         const ConnectionConfig(
           name: 'test_conn',
           attributes: {
-            'host': 'localhost',
-            'port': 3306,
+            'host': '127.0.0.1',
+            'port': 3308,
             'username': 'datapod',
             'password': 'datapod_dba',
             'database': 'datapod',
@@ -37,7 +37,7 @@ void main() {
       // Create table
       await db.connection.execute('DROP TABLE IF EXISTS test_plugin_users');
       await db.connection.execute(
-        'CREATE TEMPORARY TABLE test_plugin_users (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), UNIQUE INDEX (name))',
+        'CREATE TABLE test_plugin_users (id INTEGER AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), UNIQUE INDEX (name))',
       );
 
       // Insert

@@ -66,6 +66,7 @@ void main() {
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(MyApp(context: context));
+    await tester.pumpAndSettle();
 
     // Verify that the empty state is shown.
     expect(find.text('No todos yet. Add one!'), findsOneWidget);
