@@ -7,17 +7,22 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'package:datapod_api/datapod_api.dart';
-import '../entities/user.dart';
-import '../entities/post.dart';
-import '../entities/role.dart';
-import '../entities/user_profile.dart';
+import 'user.dart';
 
-part 'user_repository.datapod.dart';
+part 'user_profile.datapod.dart';
 
-@Repository()
-@Database('identity_db')
-abstract class UserRepository extends BaseRepository<User, int> {
-  UserRepository(super.relationshipContext);
-  Future<User?> findByName(String name);
-  Stream<User> findByNameContaining(String name);
+@Entity(tableName: 'user_profiles')
+class UserProfile {
+  @Id()
+  int? id;
+
+  @Column()
+  String? bio;
+
+  @Column()
+  String? website;
+
+  @OneToOne()
+  @Column()
+  Future<User?>? user;
 }

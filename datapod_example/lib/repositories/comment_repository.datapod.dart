@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'comment_repository.dart';
 
@@ -12,10 +13,7 @@ part of 'comment_repository.dart';
 
 class CommentRepositoryOperationsImpl
     implements DatabaseOperations<Comment, int> {
-  CommentRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  CommentRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -34,7 +32,7 @@ class CommentRepositoryOperationsImpl
   static const _fieldToColumn = {
     'id': 'id',
     'content': 'content',
-    'post': 'post_id'
+    'post': 'post_id',
   };
 
   @override
@@ -42,8 +40,10 @@ class CommentRepositoryOperationsImpl
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -82,11 +82,13 @@ class CommentRepositoryOperationsImpl
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM comments''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM comments''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -153,9 +155,14 @@ class CommentRepositoryImpl extends CommentRepository {
     final entity = mapper.mapRow(row, database, relationshipContext);
     final managed = entity as ManagedComment;
     if (row['t1_id'] != null) {
-      managed.post = Future.value(ManagedPost.fromRow(
-          row, database, relationshipContext,
-          aliasPrefix: 't1_'));
+      managed.post = Future.value(
+        ManagedPost.fromRow(
+          row,
+          database,
+          relationshipContext,
+          aliasPrefix: 't1_',
+        ),
+      );
     }
     return entity;
   }
@@ -169,11 +176,17 @@ class CommentRepositoryImpl extends CommentRepository {
   @override
   Future<Page<Comment>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM comments''',
-            fieldToColumn: CommentRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM comments''',
+        fieldToColumn: CommentRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,

@@ -42,11 +42,11 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
 
   String _generateManagedEntity(ClassElement entityClass) {
     final metadata = SqlGenerator.parseEntity(entityClass);
-    final className = 'Managed${entityClass.name}';
+    final className = 'Managed${entityClass.name!}';
     final managedClass = Class(
       (b) => b
         ..name = className
-        ..extend = refer(entityClass.name)
+        ..extend = refer(entityClass.name!)
         ..implements.add(
           refer('ManagedEntity', 'package:datapod_api/datapod_api.dart'),
         )
@@ -169,7 +169,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                       }
                       if (c.enumValues != null) {
                         return Code(
-                          'super.$fieldName = row[aliasPrefix + "$colName"] != null ? ${c.fieldType}.values.firstWhere((e) => e.name == row[aliasPrefix + "$colName"]) : super.$fieldName;',
+                          'super.$fieldName = row[aliasPrefix + "$colName"] != null ? ${c.fieldType.replaceAll('?', '')}.values.firstWhere((e) => e.name == row[aliasPrefix + "$colName"]) : super.$fieldName;',
                         );
                       }
                       return Code(
@@ -189,7 +189,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                 Parameter(
                   (p) => p
                     ..name = 'entity'
-                    ..type = refer(entityClass.name),
+                    ..type = refer(entityClass.name!),
                 ),
               )
               ..requiredParameters.add(
@@ -348,9 +348,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                       Parameter(
                         (p) => p
                           ..name = 'value'
-                          ..type = refer(
-                            f.type.getDisplayString(withNullability: true),
-                          ),
+                          ..type = refer(f.type.getDisplayString()),
                       ),
                     )
                     ..body = Block.of([
@@ -374,14 +372,14 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     for (final field in entityClass.fields) {
       if (field.isStatic || field.isSynthetic) continue;
 
-      final isManyToOne = const TypeChecker.fromRuntime(
-        api.ManyToOne,
+      final isManyToOne = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#ManyToOne',
       ).hasAnnotationOfExact(field);
-      final oneToMany = const TypeChecker.fromRuntime(
-        api.OneToMany,
+      final oneToMany = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#OneToMany',
       ).firstAnnotationOf(field);
-      final oneToOne = const TypeChecker.fromRuntime(
-        api.OneToOne,
+      final oneToOne = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#OneToOne',
       ).firstAnnotationOf(field);
 
       if (isManyToOne || oneToMany != null || oneToOne != null) {
@@ -439,7 +437,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     final methods = <Method>[];
     final foreignKeyField = '${field.name}Id';
     final loadedField =
-        '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
+        '_loaded${(field.name!)[0].toUpperCase()}${(field.name!).substring(1)}';
 
     methods.add(
       Method(
@@ -447,26 +445,37 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..name = field.name
           ..type = MethodType.getter
           ..annotations.add(refer('override'))
-          ..returns = refer(field.type.getDisplayString(withNullability: true))
-          ..modifier = MethodModifier.async
+          ..returns = refer(field.type.getDisplayString())
           ..body = Block.of([
+            Code('final context = \$relationshipContext;'),
+            Code('final db = \$database;'),
             Code(
-              'if ($loadedField == null  && \$relationshipContext != null) {',
+              'if ($loadedField == null  && context != null && db != null) {',
             ),
             Code(
-              '  final ops = \$relationshipContext.getOperations<${relatedType.element?.name}, dynamic>();',
+              '  final ops = context.getOperations<${relatedType.element?.name}, dynamic>();',
             ),
             Code(
-              '  final mapper = \$relationshipContext.getMapper<${relatedType.element?.name}>();',
+              '  final mapper = context.getMapper<${relatedType.element?.name}>();',
             ),
-            Code('  final result = await ops.findById($foreignKeyField);'),
-            Code('  if (result.isNotEmpty) {'),
+            Code('  if ($foreignKeyField == null) {'),
             Code(
-              '    $loadedField = Future.value(mapper.mapRow(result.rows.first, \$database, \$relationshipContext));',
+              '    $loadedField = Future<${relatedType.getDisplayString()}>.value(null);',
             ),
+            Code('  } else {'),
+            Code(
+              '    $loadedField = ops.findById($foreignKeyField).then<${relatedType.getDisplayString()}>((result) {',
+            ),
+            Code('      if (result.isNotEmpty) {'),
+            Code(
+              '        return mapper.mapRow(result.rows.first, db, context);',
+            ),
+            Code('      }'),
+            Code('      return null;'),
+            Code('    });'),
             Code('  }'),
             Code('}'),
-            Code('return await $loadedField;'),
+            Code('return $loadedField;'),
           ]),
       ),
     );
@@ -481,9 +490,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             Parameter(
               (p) => p
                 ..name = 'value'
-                ..type = refer(
-                  field.type.getDisplayString(withNullability: true),
-                ),
+                ..type = refer(field.type.getDisplayString()),
             ),
           )
           ..body = Block.of([
@@ -511,13 +518,13 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
   ) {
     final methods = <Method>[];
     final loadedField =
-        '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
+        '_loaded${(field.name!)[0].toUpperCase()}${(field.name!).substring(1)}';
 
-    final oneToManyAnn = const TypeChecker.fromRuntime(
-      api.OneToMany,
+    final oneToManyAnn = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#OneToMany',
     ).firstAnnotationOf(field);
     final mappedBy = oneToManyAnn?.getField('mappedBy')?.toStringValue();
-    final lookupField = mappedBy ?? (owningEntity.name).toLowerCase();
+    final lookupField = mappedBy ?? (owningEntity.name!).toLowerCase();
     final methodName =
         'findBy${lookupField[0].toUpperCase()}${lookupField.substring(1)}Id';
 
@@ -527,26 +534,32 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
           ..name = field.name
           ..type = MethodType.getter
           ..annotations.add(refer('override'))
-          ..returns = refer(field.type.getDisplayString(withNullability: true))
-          ..modifier = MethodModifier.async
+          ..returns = refer(field.type.getDisplayString())
           ..body = Block.of([
+            Code('final context = \$relationshipContext;'),
+            Code('final db = \$database;'),
             Code(
-              'if ($loadedField == null  && \$relationshipContext != null) {',
+              'if ($loadedField == null  && context != null && db != null) {',
             ),
             Code(
-              '  final ops = \$relationshipContext.getOperations<${relatedType.element?.name}, dynamic>();',
+              '  final ops = context.getOperations<${relatedType.element?.name}, dynamic>();',
             ),
             Code(
-              '  final mapper = \$relationshipContext.getMapper<${relatedType.element?.name}>();',
+              '  final mapper = context.getMapper<${relatedType.element?.name}>();',
             ),
-            Code('  final result = await (ops as dynamic).$methodName(id!);'),
+            Code('  if (id == null) {'),
             Code(
-              '  $loadedField = Future.value(mapper.mapRows(result.rows, \$database, \$relationshipContext));',
+              '    $loadedField = Future<List<${relatedType.getDisplayString()}>>.value([]);',
             ),
+            Code('  } else {'),
+            Code(
+              '    $loadedField = (ops as dynamic).$methodName(id!).then<List<${relatedType.getDisplayString()}>>((result) {',
+            ),
+            Code('      return mapper.mapRows(result.rows, db, context);'),
+            Code('    });'),
+            Code('  }'),
             Code('}'),
-            Code(
-              'return await $loadedField ?? <${relatedType.element?.name}>[];',
-            ),
+            Code('return $loadedField;'),
           ]),
       ),
     );
@@ -580,11 +593,15 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
   }
 
   bool _isRelation(FieldElement field) {
-    return const TypeChecker.fromRuntime(
-          api.ManyToOne,
+    return TypeChecker.fromUrl(
+          'package:datapod_api/annotations.dart#ManyToOne',
         ).hasAnnotationOf(field) ||
-        const TypeChecker.fromRuntime(api.OneToMany).hasAnnotationOf(field) ||
-        const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field);
+        TypeChecker.fromUrl(
+          'package:datapod_api/annotations.dart#OneToMany',
+        ).hasAnnotationOf(field) ||
+        TypeChecker.fromUrl(
+          'package:datapod_api/annotations.dart#OneToOne',
+        ).hasAnnotationOf(field);
   }
 
   Iterable<Field> _generateRelationFields(ClassElement entityClass) {
@@ -593,17 +610,21 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
       if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
 
       final loadedField =
-          '_loaded${(field.name)[0].toUpperCase()}${(field.name).substring(1)}';
+          '_loaded${(field.name!)[0].toUpperCase()}${(field.name!).substring(1)}';
       fields.add(
         Field(
           (f) => f
             ..name = loadedField
-            ..type = refer(field.type.getDisplayString(withNullability: true)),
+            ..type = refer(field.type.getDisplayString()),
         ),
       );
 
-      if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
-          const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
+      if (TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#ManyToOne',
+          ).hasAnnotationOf(field) ||
+          TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#OneToOne',
+          ).hasAnnotationOf(field)) {
         final foreignKeyField = '${field.name}Id';
         fields.add(
           Field(
@@ -625,8 +646,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
     for (final field in entityClass.fields) {
       if (field.isStatic || field.isSynthetic || !_isRelation(field)) continue;
 
-      if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
-          const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
+      if (TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#ManyToOne',
+          ).hasAnnotationOf(field) ||
+          TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#OneToOne',
+          ).hasAnnotationOf(field)) {
         final colName = SqlGenerator.parseColumn(field).columnName;
         codes.add(
           Code(
@@ -647,8 +672,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
 
       codes.add(Code('${field.name} = entity.${field.name};'));
 
-      if (const TypeChecker.fromRuntime(api.ManyToOne).hasAnnotationOf(field) ||
-          const TypeChecker.fromRuntime(api.OneToOne).hasAnnotationOf(field)) {
+      if (TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#ManyToOne',
+          ).hasAnnotationOf(field) ||
+          TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#OneToOne',
+          ).hasAnnotationOf(field)) {
         codes.add(
           Code(
             'if (entity is ManagedEntity) { ${field.name}Id = (entity as dynamic).${field.name}Id; }',
@@ -660,12 +689,12 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
   }
 
   String _generateMapper(ClassElement entityClass) {
-    final className = '${entityClass.name}MapperImpl';
+    final className = '${entityClass.name!}MapperImpl';
     final mapperClass = Class(
       (b) => b
         ..name = className
         ..extend = refer(
-          'EntityMapper<${entityClass.name}>',
+          'EntityMapper<${entityClass.name!}>',
           'package:datapod_api/datapod_api.dart',
         )
         ..methods.add(
@@ -673,7 +702,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
             (m) => m
               ..name = 'mapRow'
               ..annotations.add(refer('override'))
-              ..returns = refer(entityClass.name)
+              ..returns = refer(entityClass.name!)
               ..requiredParameters.addAll([
                 Parameter(
                   (p) => p
@@ -707,7 +736,7 @@ class EntityGenerator extends GeneratorForAnnotation<api.Entity> {
                 ),
               )
               ..body = Code(
-                'return Managed${entityClass.name}.fromRow(row, database, relationshipContext, aliasPrefix: aliasPrefix);',
+                'return Managed${entityClass.name!}.fromRow(row, database, relationshipContext, aliasPrefix: aliasPrefix);',
               ),
           ),
         ),

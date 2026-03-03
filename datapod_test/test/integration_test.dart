@@ -214,6 +214,93 @@ void main() {
       });
     });
 
+    group('Bulk Operations', () {
+      test('saveAll with new entities', () async {
+        final repo = context.testEntityRepository;
+        final entities = [
+          TestEntity()
+            ..name = 'Bulk 1'
+            ..value = 1,
+          TestEntity()
+            ..name = 'Bulk 2'
+            ..value = 2,
+          TestEntity()
+            ..name = 'Bulk 3'
+            ..value = 3,
+        ];
+
+        final saved = await repo.saveAll(entities);
+        expect(saved.length, equals(3));
+        for (var e in saved) {
+          expect(e.id, isNotNull);
+        }
+
+        final found = await repo.findAll(sort: [Sort('value')]);
+        expect(found.length, equals(3));
+        expect(found[0].name, equals('Bulk 1'));
+        expect(found[2].name, equals('Bulk 3'));
+      });
+
+      test('saveAll with mix of new and existing entities', () async {
+        final repo = context.testEntityRepository;
+        final initial = await repo.save(
+          TestEntity()
+            ..name = 'Existing'
+            ..value = 10,
+        );
+
+        initial.name = 'Updated Existing';
+        final entities = [
+          initial,
+          TestEntity()
+            ..name = 'New Bulk'
+            ..value = 20,
+        ];
+
+        final saved = await repo.saveAll(entities);
+        expect(saved.length, equals(2));
+        expect(saved[0].id, equals(initial.id));
+        expect(saved[0].name, equals('Updated Existing'));
+        expect(saved[1].id, isNotNull);
+
+        final found = await repo.findByName('Updated Existing');
+        expect(found, isNotNull);
+      });
+    });
+
+    group('Streaming Results', () {
+      test('streamByNameContaining returns all matches', () async {
+        final repo = context.testEntityRepository;
+        await repo.saveAll([
+          TestEntity()
+            ..name = 'Apple'
+            ..value = 1,
+          TestEntity()
+            ..name = 'Banana'
+            ..value = 2,
+          TestEntity()
+            ..name = 'Application'
+            ..value = 3,
+        ]);
+
+        final stream = repo.streamByNameContaining('App');
+        final results = await stream.toList();
+
+        expect(results.length, equals(2));
+        expect(
+          results.map((e) => e.name),
+          containsAll(['Apple', 'Application']),
+        );
+      });
+
+      test('stream handles empty results', () async {
+        final repo = context.testEntityRepository;
+        final stream = repo.streamByNameContaining('NonExistent');
+        final results = await stream.toList();
+        expect(results, isEmpty);
+      });
+    });
+
     group('Unique Constraints', () {
       setUp(() async {
         await context.postgresTest.connection.execute(
@@ -426,6 +513,68 @@ void main() {
           {'name': name},
         );
         expect(result2.rows, isNotEmpty);
+      });
+    });
+
+    group('Bulk Operations', () {
+      late TestEntityRepository mysqlRepo;
+      setUp(() async {
+        await context.mysqlTest.connection.execute('DELETE FROM test_entities');
+        final relCtx = RelationshipContextImpl();
+        mysqlRepo = TestEntityRepositoryImpl(
+          context.mysqlTest,
+          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+          TestEntityMapperImpl(),
+          relCtx,
+        );
+      });
+
+      test('saveAll with new entities', () async {
+        final entities = [
+          TestEntity()
+            ..name = 'MySQL Bulk 1'
+            ..value = 1,
+          TestEntity()
+            ..name = 'MySQL Bulk 2'
+            ..value = 2,
+        ];
+
+        final saved = await mysqlRepo.saveAll(entities);
+        expect(saved.length, equals(2));
+        for (var e in saved) {
+          expect(e.id, isNotNull);
+        }
+      });
+    });
+
+    group('Streaming Results', () {
+      late TestEntityRepository mysqlRepo;
+      setUp(() async {
+        await context.mysqlTest.connection.execute('DELETE FROM test_entities');
+        final relCtx = RelationshipContextImpl();
+        mysqlRepo = TestEntityRepositoryImpl(
+          context.mysqlTest,
+          TestEntityRepositoryOperationsImpl(context.mysqlTest, relCtx),
+          TestEntityMapperImpl(),
+          relCtx,
+        );
+      });
+
+      test('streamByNameContaining returns all matches', () async {
+        await mysqlRepo.saveAll([
+          TestEntity()
+            ..name = 'MySQL Apple'
+            ..value = 1,
+          TestEntity()
+            ..name = 'MySQL Banana'
+            ..value = 2,
+        ]);
+
+        final stream = mysqlRepo.streamByNameContaining('Apple');
+        final results = await stream.toList();
+
+        expect(results.length, equals(1));
+        expect(results.first.name, equals('MySQL Apple'));
       });
     });
 

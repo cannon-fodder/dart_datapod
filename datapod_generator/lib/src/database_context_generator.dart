@@ -8,6 +8,7 @@
 
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:build/build.dart';
 import 'package:datapod_api/annotations.dart' as api;
 import 'package:source_gen/source_gen.dart';
@@ -29,15 +30,13 @@ class DatabaseContextGenerator
       );
     }
 
-    final className = element.name;
+    final className = element.name!;
     final repositories = annotation.read('repositories').listValue;
 
     final generatedClassName = '${className}Impl';
-
     final classBuilder = Class(
       (c) => c
         ..name = generatedClassName
-        ..implements.add(refer(className))
         ..fields.addAll(
           repositories.map((repo) {
             final type = repo.toTypeValue()!;
@@ -45,7 +44,7 @@ class DatabaseContextGenerator
             return Field(
               (f) => f
                 ..name = name
-                ..type = refer(type.getDisplayString(withNullability: true))
+                ..type = refer(type.getDisplayString())
                 ..modifier = FieldModifier.final$,
             );
           }),
@@ -74,7 +73,7 @@ class DatabaseContextGenerator
                   final entityName = entityType.element!.name!;
 
                   return Code(
-                    '$fieldName = ${repoName}Impl(relationshipContext.database, ${repoName}OperationsImpl(relationshipContext.database, relationshipContext), ${entityName}MapperImpl(), relationshipContext)',
+                    '$fieldName = ${repoName}Impl(relationshipContext.database!, ${repoName}OperationsImpl(relationshipContext.database!, relationshipContext), ${entityName}MapperImpl(), relationshipContext)',
                   );
                 }),
               ),
@@ -83,7 +82,9 @@ class DatabaseContextGenerator
     );
 
     final emitter = DartEmitter(allocator: Allocator.none);
-    return DartFormatter().format('${classBuilder.accept(emitter)}');
+    return DartFormatter(
+      languageVersion: Version(3, 0, 0),
+    ).format('${classBuilder.accept(emitter)}');
   }
 
   String _toCamelCase(String s) {

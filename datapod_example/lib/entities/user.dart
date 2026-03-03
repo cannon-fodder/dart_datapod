@@ -9,6 +9,7 @@
 import 'package:datapod_api/datapod_api.dart';
 import 'post.dart';
 import 'role.dart';
+import 'user_profile.dart';
 
 part 'user.datapod.dart';
 
@@ -29,6 +30,9 @@ class User {
   @UpdatedAt()
   @Column()
   DateTime? updatedAt;
+
+  @OneToOne(mappedBy: 'user', cascade: [CascadeType.all])
+  Future<UserProfile?>? profile;
 
   @OneToMany(mappedBy: 'author', cascade: [CascadeType.all])
   Future<List<Post>>? posts;

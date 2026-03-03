@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'role_repository.dart';
 
@@ -11,10 +12,7 @@ part of 'role_repository.dart';
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 class RoleRepositoryOperationsImpl implements DatabaseOperations<Role, int> {
-  RoleRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  RoleRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -37,8 +35,10 @@ class RoleRepositoryOperationsImpl implements DatabaseOperations<Role, int> {
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -77,11 +77,13 @@ class RoleRepositoryOperationsImpl implements DatabaseOperations<Role, int> {
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM roles''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM roles''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -153,11 +155,17 @@ class RoleRepositoryImpl extends RoleRepository {
   @override
   Future<Page<Role>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM roles''',
-            fieldToColumn: RoleRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM roles''',
+        fieldToColumn: RoleRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,

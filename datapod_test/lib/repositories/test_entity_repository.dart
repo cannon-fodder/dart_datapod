@@ -1,4 +1,3 @@
-import 'dart:convert';
 // Copyright (c) 2025 Aaron Cosand <aaroncosand@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
@@ -17,6 +16,7 @@ abstract class TestEntityRepository extends BaseRepository<TestEntity, int> {
   TestEntityRepository(super.relationshipContext);
   Future<TestEntity?> findByName(String name);
   Future<Page<TestEntity>> findByNameContaining(String part, Pageable pageable);
+  Stream<TestEntity> streamByNameContaining(String part);
   Future<List<TestEntity>> findByFlagTrue(List<Sort> sort);
 
   @FetchJoin('parent')

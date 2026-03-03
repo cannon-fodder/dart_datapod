@@ -6,7 +6,6 @@
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-import 'dart:convert';
 import 'package:datapod_api/datapod_api.dart';
 import '../entities/post.dart';
 import '../entities/comment.dart';
@@ -17,6 +16,13 @@ part 'post_repository.datapod.dart';
 @Database('content_db')
 abstract class PostRepository extends BaseRepository<Post, int> {
   PostRepository(super.relationshipContext);
+  Future<Post?> findById(int id);
+
+  Future<int> countByAuthor(int authorId);
+
+  Future<bool> existsByTitle(String title);
+
+  Future<List<Post>> findByReadingTimeGreaterThan(Duration duration);
   Future<List<Post>> findByTitleContains(String title);
   Future<int> countByTitle(String title);
 }

@@ -48,11 +48,15 @@ class DSLParser {
   ];
 
   static List<QueryComponent> parse(String methodName) {
-    // Remove prefixes like countBy, findBy, deleteBy, existsBy
+    // Remove prefixes like countBy, findBy, deleteBy, existsBy, or findAll, etc.
     final raw = methodName.replaceFirst(
-      RegExp(r'^(count|find|delete|exists)By'),
+      RegExp(r'^(count|find|delete|exists|stream)(By|All)'),
       '',
     );
+
+    if (raw.isEmpty || raw == 'Paged') {
+      return [];
+    }
 
     // Split by And/Or
     final parts = raw.split(RegExp(r'(?<=.)(?=And|Or)'));

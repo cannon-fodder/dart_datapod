@@ -71,10 +71,10 @@ class InitializerGenerator extends Builder {
             dbName = dbAnnot?.getField('name')?.toStringValue() ?? '';
           }
           repos.add({
-            'name': element.name,
+            'name': element.name!,
             'import': asset.uri.toString(),
-            'entity': entityType.getDisplayString(withNullability: true),
-            'key': keyType.getDisplayString(withNullability: true),
+            'entity': entityType.getDisplayString(),
+            'key': keyType.getDisplayString(),
             if (dbName != null) 'database': dbName,
           });
         }
@@ -86,7 +86,7 @@ class InitializerGenerator extends Builder {
           final metadata = SqlGenerator.parseEntity(element);
           final tableDef = SqlGenerator.generateTableDefinition(metadata);
           entities.add({
-            'name': element.name,
+            'name': element.name!,
             'import': asset.uri.toString(),
             'tableDef': _generateTableDefCode(tableDef),
           });
@@ -98,7 +98,7 @@ class InitializerGenerator extends Builder {
           final element = annotated.element as ClassElement;
           final pluginName = annotated.annotation.read('name').stringValue;
           discoveredPlugins[pluginName] = {
-            'class': element.name,
+            'class': element.name!,
             'import': asset.uri.toString(),
           };
         }
@@ -123,7 +123,7 @@ class InitializerGenerator extends Builder {
           // The Annotation doesn't have a db name.
           // Let's use a convention: ContextName (minus Context) + _db, converted to snake case.
           // e.g. IdentityContext -> Identity -> identity_db
-          var dbName = _toCamelCase(element.name);
+          var dbName = _toCamelCase(element.name!);
           if (dbName.endsWith('Context')) {
             dbName = dbName.substring(0, dbName.length - 7);
           }
@@ -136,7 +136,7 @@ class InitializerGenerator extends Builder {
           }
 
           contexts.add({
-            'name': element.name,
+            'name': element.name!,
             'import': asset.uri.toString(),
             'part': asset.uri.toString().replaceAll('.dart', '.datapod.dart'),
             'repositories': repositories,

@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'role.dart';
 
@@ -19,8 +20,8 @@ class ManagedRole extends Role implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.name = row[aliasPrefix + "name"];
@@ -31,8 +32,8 @@ class ManagedRole extends Role implements ManagedEntity {
     Role entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -118,17 +119,24 @@ class ManagedRole extends Role implements ManagedEntity {
   }
 
   @override
-  Future<User?>? get user async {
-    if (_loadedUser == null && userId != null && $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<User, dynamic>();
-      final mapper = $relationshipContext!.getMapper<User>();
-      final result = await ops.findById(userId);
-      if (result.isNotEmpty) {
-        _loadedUser = Future.value(mapper.mapRow(
-            result.rows.first, $database!, $relationshipContext!));
+  Future<User?>? get user {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedUser == null && context != null && db != null) {
+      final ops = context.getOperations<User, dynamic>();
+      final mapper = context.getMapper<User>();
+      if (userId == null) {
+        _loadedUser = Future<User?>.value(null);
+      } else {
+        _loadedUser = ops.findById(userId).then<User?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
       }
     }
-    return await _loadedUser;
+    return _loadedUser;
   }
 
   @override
@@ -148,7 +156,11 @@ class RoleMapperImpl extends EntityMapper<Role> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedRole.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedRole.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'user.dart';
 
@@ -19,8 +20,8 @@ class ManagedUser extends User implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.name = row[aliasPrefix + "name"];
@@ -30,14 +31,15 @@ class ManagedUser extends User implements ManagedEntity {
     super.updatedAt = row[aliasPrefix + "updated_at"] is String
         ? DateTime.parse(row[aliasPrefix + "updated_at"])
         : row[aliasPrefix + "updated_at"];
+    profileId = row[aliasPrefix + "profile_id"] ?? row["profileId"];
   }
 
   ManagedUser.fromEntity(
     User entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -45,6 +47,10 @@ class ManagedUser extends User implements ManagedEntity {
     super.name = entity.name;
     super.createdAt = entity.createdAt;
     super.updatedAt = entity.updatedAt;
+    profile = entity.profile;
+    if (entity is ManagedEntity) {
+      profileId = (entity as dynamic).profileId;
+    }
     posts = entity.posts;
     roles = entity.roles;
   }
@@ -58,6 +64,10 @@ class ManagedUser extends User implements ManagedEntity {
   DatapodDatabase? _database;
 
   RelationshipContext? _relationshipContext;
+
+  Future<UserProfile?>? _loadedProfile;
+
+  dynamic profileId;
 
   Future<List<Post>>? _loadedPosts;
 
@@ -139,15 +149,52 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
-  Future<List<Post>>? get posts async {
-    if (_loadedPosts == null && id != null && $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<Post, dynamic>();
-      final mapper = $relationshipContext!.getMapper<Post>();
-      final result = await (ops as dynamic).findByAuthorId(id!);
-      _loadedPosts = Future.value(
-          mapper.mapRows(result.rows, $database!, $relationshipContext!));
+  Future<UserProfile?>? get profile {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedProfile == null && context != null && db != null) {
+      final ops = context.getOperations<UserProfile, dynamic>();
+      final mapper = context.getMapper<UserProfile>();
+      if (profileId == null) {
+        _loadedProfile = Future<UserProfile?>.value(null);
+      } else {
+        _loadedProfile = ops.findById(profileId).then<UserProfile?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
+      }
     }
-    return await _loadedPosts ?? <Post>[];
+    return _loadedProfile;
+  }
+
+  @override
+  set profile(Future<UserProfile?>? value) {
+    if (value != _loadedProfile) {
+      _loadedProfile = value;
+      _isDirty = true;
+    }
+  }
+
+  @override
+  Future<List<Post>>? get posts {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedPosts == null && context != null && db != null) {
+      final ops = context.getOperations<Post, dynamic>();
+      final mapper = context.getMapper<Post>();
+      if (id == null) {
+        _loadedPosts = Future<List<Post>>.value([]);
+      } else {
+        _loadedPosts = (ops as dynamic).findByAuthorId(id!).then<List<Post>>((
+          result,
+        ) {
+          return mapper.mapRows(result.rows, db, context);
+        });
+      }
+    }
+    return _loadedPosts;
   }
 
   @override
@@ -159,15 +206,23 @@ class ManagedUser extends User implements ManagedEntity {
   }
 
   @override
-  Future<List<Role>>? get roles async {
-    if (_loadedRoles == null && id != null && $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<Role, dynamic>();
-      final mapper = $relationshipContext!.getMapper<Role>();
-      final result = await (ops as dynamic).findByUserId(id!);
-      _loadedRoles = Future.value(
-          mapper.mapRows(result.rows, $database!, $relationshipContext!));
+  Future<List<Role>>? get roles {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedRoles == null && context != null && db != null) {
+      final ops = context.getOperations<Role, dynamic>();
+      final mapper = context.getMapper<Role>();
+      if (id == null) {
+        _loadedRoles = Future<List<Role>>.value([]);
+      } else {
+        _loadedRoles = (ops as dynamic).findByUserId(id!).then<List<Role>>((
+          result,
+        ) {
+          return mapper.mapRows(result.rows, db, context);
+        });
+      }
     }
-    return await _loadedRoles ?? <Role>[];
+    return _loadedRoles;
   }
 
   @override
@@ -187,7 +242,11 @@ class UserMapperImpl extends EntityMapper<User> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedUser.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedUser.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

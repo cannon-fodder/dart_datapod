@@ -7,12 +7,14 @@
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 import 'package:logging/logging.dart';
+import 'package:datapod_api/datapod_api.dart';
 import 'package:datapod_example/entities/user.dart';
 import 'package:datapod_example/entities/post.dart';
 import 'package:datapod_example/entities/setting.dart';
 import 'package:datapod_example/entities/role.dart';
 import 'package:datapod_example/entities/comment.dart';
 import 'package:datapod_example/entities/setting_audit.dart';
+import 'package:datapod_example/entities/user_profile.dart';
 import 'package:datapod_example/datapod_init.dart';
 
 void main(List<String> args) async {
@@ -41,6 +43,9 @@ void main(List<String> args) async {
     final configDb = context.configDb;
 
     await identityDb.connection.execute('DROP TABLE IF EXISTS roles CASCADE');
+    await identityDb.connection.execute(
+      'DROP TABLE IF EXISTS user_profiles CASCADE',
+    );
     await identityDb.connection.execute('DROP TABLE IF EXISTS users CASCADE');
     await contentDb.connection.execute('DROP TABLE IF EXISTS comments');
     await contentDb.connection.execute('DROP TABLE IF EXISTS posts');
@@ -62,19 +67,37 @@ void main(List<String> args) async {
       // Ignore if it fails (e.g. if it wasn't created)
     }
 
-    // 3. Exercise Identity (Postgres -> Identity DB)
-    print('\n[IDENTITY] Creating User with Roles in Identity DB...');
+    // 4. Exercise Identity (Postgres -> Identity DB)
+    print(
+      '\n[IDENTITY] Creating User with Roles & Profile in Identity DB (Transaction)...',
+    );
     var alice = User()..name = 'Alice';
+    final aliceProfile = UserProfile()
+      ..bio = 'ORM enthusiast'
+      ..website = 'https://example.com/alice';
+
+    // Demonstrate Transaction
+    alice = await identityDb.transactionManager.runInTransaction(() async {
+      final savedUser = await userRepo.save(alice);
+      aliceProfile.user = Future.value(savedUser);
+      final savedProfile = await context.userProfileRepository.save(
+        aliceProfile,
+      );
+      savedUser.profile = Future.value(savedProfile);
+      return await userRepo.save(savedUser);
+    });
+
     final adminRole = Role()..name = 'ADMIN';
     final userRole = Role()..name = 'USER';
     alice.roles = Future.value([adminRole, userRole]);
-
     alice = await userRepo.save(alice);
-    print('Saved User: ${alice.name} with roles');
-    print('  - Created at: ${alice.createdAt}');
-    print('  - Updated at: ${alice.updatedAt}');
 
-    // 4. Exercise Content (MySQL -> Content DB)
+    print('Saved User: ${alice.name} with profile and roles');
+    final profile = await alice.profile;
+    print('  - Bio: ${profile?.bio}');
+    print('  - Website: ${profile?.website}');
+
+    // 5. Exercise Content (MySQL -> Content DB)
     print(
       '\n[CONTENT] Creating Post with Comments in Content DB (related to Identity User)...',
     );
@@ -92,14 +115,29 @@ void main(List<String> args) async {
     post1.comments = Future.value([comment1, comment2]);
 
     post1 = await postRepo.save(post1);
-    print(
-      'Saved post: ${post1.title} with status ${post1.status}, metadata ${post1.metadata}, and tags ${post1.tags}',
-    );
-    print('  - Reading time: ${post1.readingTime}');
-    print('  - Created at: ${post1.createdAt}');
-    print('  - Updated at: ${post1.updatedAt}');
+    print('Saved post: ${post1.title} with status ${post1.status}');
 
-    // 5. Exercise Config (SQLite -> Config DB)
+    // Demonstrate Update
+    print('\n[CONTENT] Demonstrating Entity Update...');
+    post1.status = PostStatus.archived;
+    post1 = await postRepo.save(post1);
+    print('Updated post "${post1.title}" status to: ${post1.status}');
+
+    // Demonstrate Bulk Insert
+    print('\n[CONTENT] Demonstrating Bulk Insert (saveAll)...');
+    final posts = await postRepo.saveAll([
+      Post()
+        ..title = 'Scaling Dart'
+        ..author = Future.value(alice)
+        ..status = PostStatus.published,
+      Post()
+        ..title = 'Microservices vs Monolith'
+        ..author = Future.value(alice)
+        ..status = PostStatus.draft,
+    ]);
+    print('Bulk saved ${posts.length} additional posts.');
+
+    // 6. Exercise Config (SQLite -> Config DB)
     print('\n[CONFIG] Creating Settings with Audits in Config DB...');
     var themeSetting = Setting()
       ..key = 'ui.theme'
@@ -111,14 +149,9 @@ void main(List<String> args) async {
     themeSetting.auditTrail = Future.value([audit1]);
 
     themeSetting = await settingRepo.save(themeSetting);
-
-    var langSetting = Setting()
-      ..key = 'app.language'
-      ..value = 'en_US';
-    langSetting = await settingRepo.save(langSetting);
     print('Saved settings with audit trail to Config DB.');
 
-    // 6. Verify cross-database lazy loading
+    // 7. Verify cross-database lazy loading
     print(
       '\n[VERIFICATION] Testing Lazy Loading (Content DB Post -> Identity DB Author)...',
     );
@@ -128,45 +161,55 @@ void main(List<String> args) async {
       print(
         'Post "${fetchedPost.title}" author from Identity DB: ${author?.name}',
       );
-      print(
-        '  - Status: ${fetchedPost.status}, Metadata: ${fetchedPost.metadata}, Tags: ${fetchedPost.tags}',
-      );
 
-      // 7. Verify Eager Loading (Same DB: Comment -> Post)
-      print(
-        '\n[VERIFICATION] Testing Eager Loading (Fetch Join: Content DB Comment -> Content DB Post)...',
-      );
-      final comments = await fetchedPost.comments;
-      if (comments != null && comments.isNotEmpty) {
-        final firstCommentId = comments.first.id!;
-        final commentRepo = context.commentRepository;
-        final fetchedComment = await commentRepo.findById(firstCommentId);
-        if (fetchedComment != null) {
-          print(' fetchedComment: ${fetchedComment.content}');
-          // Accessing .post should return the eagerly loaded entity (future completes immediately with value)
-          // To prove it, we can print it.
-          final post = await fetchedComment.post;
-          print(' Comment Post Title (Eager): ${post?.title}');
-        }
-      }
+      // Verify One-to-One reverse lookup
+      final authorProfile = await author?.profile;
+      print('  - Author Bio: ${authorProfile?.bio}');
     }
 
-    // 8. Verify Config DB
-    print('\n[VERIFICATION] Verifying Settings and Audits in Config DB...');
-    final dbTheme = await settingRepo.findByKey('ui.theme');
-    print('Found setting in Config DB: ${dbTheme?.key} = ${dbTheme?.value}');
-    final audits = await dbTheme?.auditTrail;
-    if (audits != null) {
-      print('Audit trail count: ${audits.length}');
-      for (var a in audits) {
-        print('  - ${a.action} at ${a.timestamp}');
-      }
+    // 8. Advanced Queries & Pagination
+    print('\n[QUERIES] Demonstrating Advanced DSL & Pagination...');
+    final postCount = await postRepo.countByAuthor(alice.id!);
+    print('Total posts by Alice: $postCount');
+
+    final exists = await postRepo.existsByTitle('Scaling Dart');
+    print('Does "Scaling Dart" exist? $exists');
+
+    final longPosts = await postRepo.findByReadingTimeGreaterThan(
+      const Duration(minutes: 10),
+    );
+    print('Posts longer than 10 mins: ${longPosts.length}');
+
+    print(
+      '\n[PAGINATION] Requesting first page of posts (size 2, sort by title DESC)...',
+    );
+    final page = await postRepo.findAllPaged(
+      Pageable(page: 0, size: 2, sort: [Sort('title', Direction.desc)]),
+    );
+    print('Page 1 of ${page.totalPages}:');
+    for (var p in page.items) {
+      print('  - ${p.title}');
     }
 
-    // 8. Exercise Memory DB (Custom Plugin)
+    // 9. Deletion & Cascade
+    print('\n[CASCADE] Deleting User and verifying cascades...');
+    final userId = alice.id!;
+    await userRepo.delete(userId);
+    final deletedUser = await userRepo.findById(userId);
+    print('User deleted: ${deletedUser == null}');
+
+    // Verify profile is also deleted (CascadeType.all)
+    final profileId = profile?.id;
+    if (profileId != null) {
+      final deletedProfile = await context.userProfileRepository.findById(
+        profileId,
+      );
+      print('Profile deleted via cascade: ${deletedProfile == null}');
+    }
+
+    // 10. Exercise Memory DB (Custom Plugin)
     print('\n[MEMORY] Using custom MemoryPlugin (Cache DB)...');
     final cacheDb = context.cacheDb;
-    // We can use the connection directly for raw operations on the custom plugin
     await cacheDb.connection.execute(
       'INSERT INTO test (id, info) VALUES (@id, @info)',
       {'id': 1, 'info': 'Found in memory!'},
@@ -179,19 +222,17 @@ void main(List<String> args) async {
       print('Retrieved from Cache DB: ${memResult.rows.first['info']}');
     }
 
-    // 9. Exercise Streams (Identity DB)
+    // 11. Exercise Streams (Identity DB)
     print('\n[STREAM] Using Stream-based queries...');
     await userRepo.save(User()..name = 'Bob');
     await userRepo.save(User()..name = 'Charlie');
-    await userRepo.save(User()..name = 'Alice in Wonderland');
 
-    print('Streaming users with "Ali" in their name:');
-    final userStream = userRepo.findByNameContaining('Ali');
+    print('Streaming users with "a" in their name:');
+    final userStream = userRepo.findByNameContaining('a');
     await for (final user in userStream) {
       print('  - Emitted user: ${user.name}');
     }
 
-    // 10. Performance check (just log)
     print('\nDone with functional operations.');
   } catch (e, s) {
     print('Error: $e');

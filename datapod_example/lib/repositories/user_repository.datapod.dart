@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'user_repository.dart';
 
@@ -11,20 +12,17 @@ part of 'user_repository.dart';
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
-  UserRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  UserRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
   final RelationshipContext relationshipContext;
 
   static const _insertSql =
-      '''INSERT INTO users (name, created_at, updated_at) VALUES (@name, @createdAt, @updatedAt) RETURNING id''';
+      '''INSERT INTO users (name, created_at, updated_at, profile_id) VALUES (@name, @createdAt, @updatedAt, @profileId) RETURNING id''';
 
   static const _updateSql =
-      '''UPDATE users SET name = @name, created_at = @createdAt, updated_at = @updatedAt WHERE id = @id''';
+      '''UPDATE users SET name = @name, created_at = @createdAt, updated_at = @updatedAt, profile_id = @profileId WHERE id = @id''';
 
   static const _deleteSql = '''DELETE FROM users WHERE id = @id''';
 
@@ -35,8 +33,9 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
     'name': 'name',
     'createdAt': 'created_at',
     'updatedAt': 'updated_at',
+    'profile': 'profile_id',
     'posts': '',
-    'roles': ''
+    'roles': '',
   };
 
   @override
@@ -44,8 +43,10 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -53,6 +54,13 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
     final ManagedUser managed = entity is ManagedEntity
         ? (entity as ManagedUser)
         : ManagedUser.fromEntity(entity, database, relationshipContext);
+    final profile = await managed.profile;
+    if (profile != null) {
+      final related = await relationshipContext
+          .getOperations<UserProfile, dynamic>()
+          .saveEntity(profile);
+      managed.profileId = (related as dynamic).id;
+    }
     final now = DateTime.now();
     if (!managed.isPersistent && managed.createdAt == null) {
       managed.createdAt = now;
@@ -63,6 +71,7 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
       r'name': managed.name,
       r'createdAt': managed.createdAt,
       r'updatedAt': managed.updatedAt,
+      'profileId': managed.profileId,
     };
     if (managed.isPersistent) {
       if (managed.isDirty) {
@@ -82,9 +91,9 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
           child = ManagedPost.fromEntity(child, database, relationshipContext);
         }
         (child as dynamic).authorId = managed.id;
-        await relationshipContext
-            .getOperations<Post, dynamic>()
-            .saveEntity(child);
+        await relationshipContext.getOperations<Post, dynamic>().saveEntity(
+          child,
+        );
       }
     }
     var roles = await managed.roles;
@@ -94,9 +103,9 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
           child = ManagedRole.fromEntity(child, database, relationshipContext);
         }
         (child as dynamic).userId = managed.id;
-        await relationshipContext
-            .getOperations<Role, dynamic>()
-            .saveEntity(child);
+        await relationshipContext.getOperations<Role, dynamic>().saveEntity(
+          child,
+        );
       }
     }
     return managed;
@@ -108,11 +117,13 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM users''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM users''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -128,16 +139,31 @@ class UserRepositoryOperationsImpl implements DatabaseOperations<User, int> {
 
   Future<QueryResult> findByName(String name) async {
     final params = <String, dynamic>{'name': name};
-    final sql = applyPagination('''SELECT * FROM users WHERE name = @name''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM users WHERE name = @name''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 
   Stream<Map<String, dynamic>> findByNameContaining(String name) {
     final params = <String, dynamic>{'name': '%$name%'};
-    final sql = applyPagination('''SELECT * FROM users WHERE name LIKE @name''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM users WHERE name LIKE @name''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.stream(sql, params);
+  }
+
+  Future<QueryResult> findByProfileId(dynamic id) {
+    final sql = 'SELECT * FROM users WHERE profile_id = @id';
+    return database.connection.execute(sql, {'id': id});
   }
 }
 
@@ -176,20 +202,26 @@ class UserRepositoryImpl extends UserRepository {
   Future<void> delete(id) async {
     final entity = await findById(id);
     if (entity != null) {
+      final profile = await entity.profile;
+      if (profile != null) {
+        await relationshipContext.getOperations<UserProfile, dynamic>().delete(
+          (profile as dynamic).id,
+        );
+      }
       final posts = await entity.posts;
       if (posts != null) {
         for (final child in posts) {
-          await relationshipContext
-              .getOperations<Post, dynamic>()
-              .delete((child as dynamic).id);
+          await relationshipContext.getOperations<Post, dynamic>().delete(
+            (child as dynamic).id,
+          );
         }
       }
       final roles = await entity.roles;
       if (roles != null) {
         for (final child in roles) {
-          await relationshipContext
-              .getOperations<Role, dynamic>()
-              .delete((child as dynamic).id);
+          await relationshipContext.getOperations<Role, dynamic>().delete(
+            (child as dynamic).id,
+          );
         }
       }
     }
@@ -212,11 +244,17 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Future<Page<User>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM users''',
-            fieldToColumn: UserRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM users''',
+        fieldToColumn: UserRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,
@@ -235,7 +273,13 @@ class UserRepositoryImpl extends UserRepository {
   @override
   Stream<User> findByNameContaining(String name) {
     final result = operations.findByNameContaining(name);
-    return result
-        .map((row) => mapper.mapRow(row, database, relationshipContext));
+    return result.map(
+      (row) => mapper.mapRow(row, database, relationshipContext),
+    );
+  }
+
+  Future<List<User>> findByProfileId(id) async {
+    final result = await operations.findByProfileId(id);
+    return mapper.mapRows(result.rows, database, relationshipContext);
   }
 }

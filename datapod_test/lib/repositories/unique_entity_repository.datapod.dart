@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'unique_entity_repository.dart';
 
@@ -12,10 +13,7 @@ part of 'unique_entity_repository.dart';
 
 class UniqueEntityRepositoryOperationsImpl
     implements DatabaseOperations<UniqueEntity, int> {
-  UniqueEntityRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  UniqueEntityRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -36,7 +34,7 @@ class UniqueEntityRepositoryOperationsImpl
     'id': 'id',
     'code': 'code',
     'folder': 'folder',
-    'filename': 'filename'
+    'filename': 'filename',
   };
 
   @override
@@ -44,8 +42,10 @@ class UniqueEntityRepositoryOperationsImpl
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -79,11 +79,13 @@ class UniqueEntityRepositoryOperationsImpl
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM unique_entities''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM unique_entities''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -150,11 +152,17 @@ class UniqueEntityRepositoryImpl extends UniqueEntityRepository {
   @override
   Future<Page<UniqueEntity>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM unique_entities''',
-            fieldToColumn: UniqueEntityRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM unique_entities''',
+        fieldToColumn: UniqueEntityRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,

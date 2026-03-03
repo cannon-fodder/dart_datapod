@@ -14,7 +14,7 @@
 /// *   **Configuration**: Classes for parsing and validating database configurations (`datapod.yaml`).
 /// *   **Environment Resolution**: Utilities for resolving environment variables in configurations.
 /// *   **Transaction Management**: Core logic for handling transactions across unified or disparate databases.
-// library datapod_engine;
+library;
 
 export 'database_base.dart';
 export 'plugin.dart';

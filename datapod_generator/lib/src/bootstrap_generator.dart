@@ -9,7 +9,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:datapod_api/datapod_api.dart' as api;
 
 class BootstrapGenerator extends Generator {
   @override
@@ -17,8 +16,12 @@ class BootstrapGenerator extends Generator {
     final entities = <ClassElement>[];
     final repositories = <ClassElement>[];
 
-    final entityChecks = const TypeChecker.fromRuntime(api.Entity);
-    final repoChecks = const TypeChecker.fromRuntime(api.Repository);
+    final entityChecks = TypeChecker.fromUrl(
+      'package:datapod_api/api.dart#Entity',
+    );
+    final repoChecks = TypeChecker.fromUrl(
+      'package:datapod_api/api.dart#Repository',
+    );
 
     for (var lib in await buildStep.resolver.libraries.toList()) {
       final reader = LibraryReader(lib);
@@ -48,7 +51,7 @@ class BootstrapGenerator extends Generator {
 
     result.writeln('\nvoid initializeDatapod() {');
     for (final repo in repositories) {
-      result.writeln('  // Registration logic for ${repo.name}');
+      result.writeln('  // Registration logic for ${repo.name!}');
       // In a real implementation, we would register the generated RepositoryImpl
     }
     result.writeln('}');

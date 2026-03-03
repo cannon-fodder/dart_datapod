@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'setting.dart';
 
@@ -19,8 +20,8 @@ class ManagedSetting extends Setting implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.key = row[aliasPrefix + "key"];
@@ -31,8 +32,8 @@ class ManagedSetting extends Setting implements ManagedEntity {
     Setting entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -122,17 +123,23 @@ class ManagedSetting extends Setting implements ManagedEntity {
   }
 
   @override
-  Future<List<SettingAudit>>? get auditTrail async {
-    if (_loadedAuditTrail == null &&
-        id != null &&
-        $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<SettingAudit, dynamic>();
-      final mapper = $relationshipContext!.getMapper<SettingAudit>();
-      final result = await (ops as dynamic).findBySettingId(id!);
-      _loadedAuditTrail = Future.value(
-          mapper.mapRows(result.rows, $database!, $relationshipContext!));
+  Future<List<SettingAudit>>? get auditTrail {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedAuditTrail == null && context != null && db != null) {
+      final ops = context.getOperations<SettingAudit, dynamic>();
+      final mapper = context.getMapper<SettingAudit>();
+      if (id == null) {
+        _loadedAuditTrail = Future<List<SettingAudit>>.value([]);
+      } else {
+        _loadedAuditTrail = (ops as dynamic)
+            .findBySettingId(id!)
+            .then<List<SettingAudit>>((result) {
+              return mapper.mapRows(result.rows, db, context);
+            });
+      }
     }
-    return await _loadedAuditTrail ?? <SettingAudit>[];
+    return _loadedAuditTrail;
   }
 
   @override
@@ -152,7 +159,11 @@ class SettingMapperImpl extends EntityMapper<Setting> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedSetting.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedSetting.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

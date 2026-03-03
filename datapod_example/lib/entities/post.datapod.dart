@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'post.dart';
 
@@ -19,14 +20,15 @@ class ManagedPost extends Post implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.title = row[aliasPrefix + "title"];
     super.readingTime = row[aliasPrefix + "reading_time"] != null
-        ? const DurationConverter()
-            .convertToEntityAttribute(row[aliasPrefix + "reading_time"])
+        ? const DurationConverter().convertToEntityAttribute(
+            row[aliasPrefix + "reading_time"],
+          )
         : null;
     super.createdAt = row[aliasPrefix + "created_at"] is String
         ? DateTime.parse(row[aliasPrefix + "created_at"])
@@ -36,20 +38,21 @@ class ManagedPost extends Post implements ManagedEntity {
         : row[aliasPrefix + "updated_at"];
     super.content = row[aliasPrefix + "content"];
     super.status = row[aliasPrefix + "status"] != null
-        ? PostStatus.values
-            .firstWhere((e) => e.name == row[aliasPrefix + "status"])
+        ? PostStatus.values.firstWhere(
+            (e) => e.name == row[aliasPrefix + "status"],
+          )
         : super.status;
     super.metadata = row[aliasPrefix + "metadata"] is String
         ? (jsonDecode(row[aliasPrefix + "metadata"]) as Map?)
-            ?.cast<String, dynamic>()
+              ?.cast<String, dynamic>()
         : (row[aliasPrefix + "metadata"] != null
-            ? Map<String, dynamic>.from(row[aliasPrefix + "metadata"])
-            : null);
+              ? Map<String, dynamic>.from(row[aliasPrefix + "metadata"])
+              : null);
     super.tags = row[aliasPrefix + "tags"] is String
         ? (jsonDecode(row[aliasPrefix + "tags"]) as List?)?.cast<String>()
         : (row[aliasPrefix + "tags"] != null
-            ? List<String>.from(row[aliasPrefix + "tags"])
-            : null);
+              ? List<String>.from(row[aliasPrefix + "tags"])
+              : null);
     authorId = row[aliasPrefix + "author_id"] ?? row["authorId"];
   }
 
@@ -57,8 +60,8 @@ class ManagedPost extends Post implements ManagedEntity {
     Post entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -210,19 +213,24 @@ class ManagedPost extends Post implements ManagedEntity {
   }
 
   @override
-  Future<User?>? get author async {
-    if (_loadedAuthor == null &&
-        authorId != null &&
-        $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<User, dynamic>();
-      final mapper = $relationshipContext!.getMapper<User>();
-      final result = await ops.findById(authorId);
-      if (result.isNotEmpty) {
-        _loadedAuthor = Future.value(mapper.mapRow(
-            result.rows.first, $database!, $relationshipContext!));
+  Future<User?>? get author {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedAuthor == null && context != null && db != null) {
+      final ops = context.getOperations<User, dynamic>();
+      final mapper = context.getMapper<User>();
+      if (authorId == null) {
+        _loadedAuthor = Future<User?>.value(null);
+      } else {
+        _loadedAuthor = ops.findById(authorId).then<User?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
       }
     }
-    return await _loadedAuthor;
+    return _loadedAuthor;
   }
 
   @override
@@ -234,15 +242,23 @@ class ManagedPost extends Post implements ManagedEntity {
   }
 
   @override
-  Future<List<Comment>>? get comments async {
-    if (_loadedComments == null && id != null && $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<Comment, dynamic>();
-      final mapper = $relationshipContext!.getMapper<Comment>();
-      final result = await (ops as dynamic).findByPostId(id!);
-      _loadedComments = Future.value(
-          mapper.mapRows(result.rows, $database!, $relationshipContext!));
+  Future<List<Comment>>? get comments {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedComments == null && context != null && db != null) {
+      final ops = context.getOperations<Comment, dynamic>();
+      final mapper = context.getMapper<Comment>();
+      if (id == null) {
+        _loadedComments = Future<List<Comment>>.value([]);
+      } else {
+        _loadedComments = (ops as dynamic)
+            .findByPostId(id!)
+            .then<List<Comment>>((result) {
+              return mapper.mapRows(result.rows, db, context);
+            });
+      }
     }
-    return await _loadedComments ?? <Comment>[];
+    return _loadedComments;
   }
 
   @override
@@ -262,7 +278,11 @@ class PostMapperImpl extends EntityMapper<Post> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedPost.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedPost.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

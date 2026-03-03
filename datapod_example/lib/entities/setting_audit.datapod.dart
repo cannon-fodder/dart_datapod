@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'setting_audit.dart';
 
@@ -19,8 +20,8 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.action = row[aliasPrefix + "action"];
@@ -34,8 +35,8 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
     SettingAudit entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -130,19 +131,24 @@ class ManagedSettingAudit extends SettingAudit implements ManagedEntity {
   }
 
   @override
-  Future<Setting?>? get setting async {
-    if (_loadedSetting == null &&
-        settingId != null &&
-        $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<Setting, dynamic>();
-      final mapper = $relationshipContext!.getMapper<Setting>();
-      final result = await ops.findById(settingId);
-      if (result.isNotEmpty) {
-        _loadedSetting = Future.value(mapper.mapRow(
-            result.rows.first, $database!, $relationshipContext!));
+  Future<Setting?>? get setting {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedSetting == null && context != null && db != null) {
+      final ops = context.getOperations<Setting, dynamic>();
+      final mapper = context.getMapper<Setting>();
+      if (settingId == null) {
+        _loadedSetting = Future<Setting?>.value(null);
+      } else {
+        _loadedSetting = ops.findById(settingId).then<Setting?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
       }
     }
-    return await _loadedSetting;
+    return _loadedSetting;
   }
 
   @override
@@ -162,7 +168,11 @@ class SettingAuditMapperImpl extends EntityMapper<SettingAudit> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedSettingAudit.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedSettingAudit.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

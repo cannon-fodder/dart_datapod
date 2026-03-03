@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'setting_audit_repository.dart';
 
@@ -12,10 +13,7 @@ part of 'setting_audit_repository.dart';
 
 class SettingAuditRepositoryOperationsImpl
     implements DatabaseOperations<SettingAudit, int> {
-  SettingAuditRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  SettingAuditRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -35,7 +33,7 @@ class SettingAuditRepositoryOperationsImpl
     'id': 'id',
     'action': 'action',
     'timestamp': 'timestamp',
-    'setting': 'setting_id'
+    'setting': 'setting_id',
   };
 
   @override
@@ -43,8 +41,10 @@ class SettingAuditRepositoryOperationsImpl
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -84,11 +84,13 @@ class SettingAuditRepositoryOperationsImpl
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM setting_audits''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM setting_audits''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -160,11 +162,17 @@ class SettingAuditRepositoryImpl extends SettingAuditRepository {
   @override
   Future<Page<SettingAudit>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM setting_audits''',
-            fieldToColumn: SettingAuditRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM setting_audits''',
+        fieldToColumn: SettingAuditRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,

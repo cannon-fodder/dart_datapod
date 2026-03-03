@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'test_entities.dart';
 
@@ -19,13 +20,14 @@ class ManagedTestEntity extends TestEntity implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.duration = row[aliasPrefix + "duration"] != null
-        ? const DurationConverter()
-            .convertToEntityAttribute(row[aliasPrefix + "duration"])
+        ? const DurationConverter().convertToEntityAttribute(
+            row[aliasPrefix + "duration"],
+          )
         : null;
     super.name = row[aliasPrefix + "name"];
     super.value = row[aliasPrefix + "value"];
@@ -44,15 +46,15 @@ class ManagedTestEntity extends TestEntity implements ManagedEntity {
         : super.type;
     super.data = row[aliasPrefix + "data"] is String
         ? (jsonDecode(row[aliasPrefix + "data"]) as Map?)
-            ?.cast<String, dynamic>()
+              ?.cast<String, dynamic>()
         : (row[aliasPrefix + "data"] != null
-            ? Map<String, dynamic>.from(row[aliasPrefix + "data"])
-            : null);
+              ? Map<String, dynamic>.from(row[aliasPrefix + "data"])
+              : null);
     super.tags = row[aliasPrefix + "tags"] is String
         ? (jsonDecode(row[aliasPrefix + "tags"]) as List?)?.cast<String>()
         : (row[aliasPrefix + "tags"] != null
-            ? List<String>.from(row[aliasPrefix + "tags"])
-            : null);
+              ? List<String>.from(row[aliasPrefix + "tags"])
+              : null);
     parentId = row[aliasPrefix + "parent_id"] ?? row["parentId"];
   }
 
@@ -60,8 +62,8 @@ class ManagedTestEntity extends TestEntity implements ManagedEntity {
     TestEntity entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -228,19 +230,24 @@ class ManagedTestEntity extends TestEntity implements ManagedEntity {
   }
 
   @override
-  Future<TestEntity?>? get parent async {
-    if (_loadedParent == null &&
-        parentId != null &&
-        $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<TestEntity, dynamic>();
-      final mapper = $relationshipContext!.getMapper<TestEntity>();
-      final result = await ops.findById(parentId);
-      if (result.isNotEmpty) {
-        _loadedParent = Future.value(mapper.mapRow(
-            result.rows.first, $database!, $relationshipContext!));
+  Future<TestEntity?>? get parent {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedParent == null && context != null && db != null) {
+      final ops = context.getOperations<TestEntity, dynamic>();
+      final mapper = context.getMapper<TestEntity>();
+      if (parentId == null) {
+        _loadedParent = Future<TestEntity?>.value(null);
+      } else {
+        _loadedParent = ops.findById(parentId).then<TestEntity?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
       }
     }
-    return await _loadedParent;
+    return _loadedParent;
   }
 
   @override
@@ -260,8 +267,12 @@ class TestEntityMapperImpl extends EntityMapper<TestEntity> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedTestEntity.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedTestEntity.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }
 
@@ -278,8 +289,8 @@ class ManagedUniqueEntity extends UniqueEntity implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.code = row[aliasPrefix + "code"];
@@ -291,8 +302,8 @@ class ManagedUniqueEntity extends UniqueEntity implements ManagedEntity {
     UniqueEntity entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -396,7 +407,11 @@ class UniqueEntityMapperImpl extends EntityMapper<UniqueEntity> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedUniqueEntity.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedUniqueEntity.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }

@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'post_repository.dart';
 
@@ -11,10 +12,7 @@ part of 'post_repository.dart';
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
 class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
-  PostRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  PostRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -41,7 +39,7 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
     'metadata': 'metadata',
     'tags': 'tags',
     'author': 'author_id',
-    'comments': ''
+    'comments': '',
   };
 
   @override
@@ -49,8 +47,10 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -73,8 +73,9 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
       r'id': managed.id,
       r'title': managed.title,
       r'readingTime': managed.readingTime != null
-          ? const DurationConverter()
-              .convertToDatabaseColumn(managed.readingTime!)
+          ? const DurationConverter().convertToDatabaseColumn(
+              managed.readingTime!,
+            )
           : null,
       r'createdAt': managed.createdAt,
       r'updatedAt': managed.updatedAt,
@@ -99,13 +100,16 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
     if (comments != null && comments.isNotEmpty) {
       for (var child in comments) {
         if (child is! ManagedEntity) {
-          child =
-              ManagedComment.fromEntity(child, database, relationshipContext);
+          child = ManagedComment.fromEntity(
+            child,
+            database,
+            relationshipContext,
+          );
         }
         (child as dynamic).postId = managed.id;
-        await relationshipContext
-            .getOperations<Comment, dynamic>()
-            .saveEntity(child);
+        await relationshipContext.getOperations<Comment, dynamic>().saveEntity(
+          child,
+        );
       }
     }
     return managed;
@@ -117,11 +121,13 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM posts''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM posts''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -135,19 +141,65 @@ class PostRepositoryOperationsImpl implements DatabaseOperations<Post, int> {
     return database.connection.execute(_findByIdSql, {'id': id});
   }
 
+  Future<QueryResult> countByAuthor(int authorId) async {
+    final params = <String, dynamic>{'authorId': authorId};
+    final sql = applyPagination(
+      '''SELECT COUNT(*) FROM posts WHERE author_id = @authorId''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
+    return database.connection.execute(sql, params);
+  }
+
+  Future<QueryResult> existsByTitle(String title) async {
+    final params = <String, dynamic>{'title': title};
+    final sql = applyPagination(
+      '''SELECT EXISTS(SELECT 1 FROM posts WHERE title = @title)''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
+    return database.connection.execute(sql, params);
+  }
+
+  Future<QueryResult> findByReadingTimeGreaterThan(Duration duration) async {
+    final params = <String, dynamic>{
+      'duration': const DurationConverter().convertToDatabaseColumn(duration),
+    };
+    final sql = applyPagination(
+      '''SELECT * FROM posts WHERE reading_time > @duration''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
+    return database.connection.execute(sql, params);
+  }
+
   Future<QueryResult> findByTitleContains(String title) async {
     final params = <String, dynamic>{'title': '%$title%'};
     final sql = applyPagination(
-        '''SELECT * FROM posts WHERE title LIKE @title''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+      '''SELECT * FROM posts WHERE title LIKE @title''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 
   Future<QueryResult> countByTitle(String title) async {
     final params = <String, dynamic>{'title': title};
     final sql = applyPagination(
-        '''SELECT COUNT(*) FROM posts WHERE title = @title''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+      '''SELECT COUNT(*) FROM posts WHERE title = @title''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 
@@ -195,9 +247,9 @@ class PostRepositoryImpl extends PostRepository {
       final comments = await entity.comments;
       if (comments != null) {
         for (final child in comments) {
-          await relationshipContext
-              .getOperations<Comment, dynamic>()
-              .delete((child as dynamic).id);
+          await relationshipContext.getOperations<Comment, dynamic>().delete(
+            (child as dynamic).id,
+          );
         }
       }
     }
@@ -220,17 +272,42 @@ class PostRepositoryImpl extends PostRepository {
   @override
   Future<Page<Post>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM posts''',
-            fieldToColumn: PostRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM posts''',
+        fieldToColumn: PostRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,
       pageNumber: pageable.page,
       pageSize: pageable.size,
     );
+  }
+
+  @override
+  Future<int> countByAuthor(int authorId) async {
+    final result = await operations.countByAuthor(authorId);
+    return result.rows.first.values.first as int;
+  }
+
+  @override
+  Future<bool> existsByTitle(String title) async {
+    final result = await operations.existsByTitle(title);
+    final val = result.rows.first.values.first;
+    return val is bool ? val : val != 0;
+  }
+
+  @override
+  Future<List<Post>> findByReadingTimeGreaterThan(Duration duration) async {
+    final result = await operations.findByReadingTimeGreaterThan(duration);
+    return mapper.mapRows(result.rows, database, relationshipContext);
   }
 
   @override

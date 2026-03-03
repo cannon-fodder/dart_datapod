@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'setting_repository.dart';
 
@@ -12,10 +13,7 @@ part of 'setting_repository.dart';
 
 class SettingRepositoryOperationsImpl
     implements DatabaseOperations<Setting, int> {
-  SettingRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  SettingRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -35,7 +33,7 @@ class SettingRepositoryOperationsImpl
     'id': 'id',
     'key': 'key',
     'value': 'value',
-    'auditTrail': ''
+    'auditTrail': '',
   };
 
   @override
@@ -43,8 +41,10 @@ class SettingRepositoryOperationsImpl
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -73,7 +73,10 @@ class SettingRepositoryOperationsImpl
       for (var child in auditTrail) {
         if (child is! ManagedEntity) {
           child = ManagedSettingAudit.fromEntity(
-              child, database, relationshipContext);
+            child,
+            database,
+            relationshipContext,
+          );
         }
         (child as dynamic).settingId = managed.id;
         await relationshipContext
@@ -90,11 +93,13 @@ class SettingRepositoryOperationsImpl
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM settings''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM settings''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -110,8 +115,13 @@ class SettingRepositoryOperationsImpl
 
   Future<QueryResult> findByKey(String key) async {
     final params = <String, dynamic>{'key': key};
-    final sql = applyPagination('''SELECT * FROM settings WHERE key = @key''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM settings WHERE key = @key''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 }
@@ -179,11 +189,17 @@ class SettingRepositoryImpl extends SettingRepository {
   @override
   Future<Page<Setting>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM settings''',
-            fieldToColumn: SettingRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM settings''',
+        fieldToColumn: SettingRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,

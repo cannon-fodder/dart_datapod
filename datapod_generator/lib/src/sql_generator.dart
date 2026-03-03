@@ -106,13 +106,12 @@ class ColumnMetadata {
 
 class SqlGenerator {
   static EntitySqlMetadata parseEntity(ClassElement element) {
-    final entityAnnotation = const TypeChecker.fromRuntime(
-      api.Entity,
+    final entityAnnotation = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#Entity',
     ).firstAnnotationOf(element);
     final reader = ConstantReader(entityAnnotation);
     final tableName =
-        reader.peek('tableName')?.stringValue ??
-        _camelToSnake(element.name);
+        reader.peek('tableName')?.stringValue ?? _camelToSnake(element.name!);
 
     final columns = <ColumnMetadata>[];
     ColumnMetadata? idColumn;
@@ -120,8 +119,8 @@ class SqlGenerator {
     final indexes = <IndexMetadata>[];
 
     // Class-level unique constraints
-    final classUniqueAnns = const TypeChecker.fromRuntime(
-      api.Unique,
+    final classUniqueAnns = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#Unique',
     ).annotationsOf(element).map((a) => ConstantReader(a));
     for (final ann in classUniqueAnns) {
       final columns = ann
@@ -142,29 +141,29 @@ class SqlGenerator {
     for (final field in element.fields) {
       if (field.isStatic || field.isSynthetic) continue;
 
-      final columnAnn = const TypeChecker.fromRuntime(
-        api.Column,
+      final columnAnn = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#Column',
       ).firstAnnotationOf(field);
-      final idAnn = const TypeChecker.fromRuntime(
-        api.Id,
+      final idAnn = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#Id',
       ).firstAnnotationOf(field);
-      final manyToOne = const TypeChecker.fromRuntime(
-        api.ManyToOne,
+      final manyToOne = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#ManyToOne',
       ).firstAnnotationOf(field);
-      final oneToOne = const TypeChecker.fromRuntime(
-        api.OneToOne,
+      final oneToOne = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#OneToOne',
       ).firstAnnotationOf(field);
-      final oneToMany = const TypeChecker.fromRuntime(
-        api.OneToMany,
+      final oneToMany = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#OneToMany',
       ).firstAnnotationOf(field);
-      final createdAt = const TypeChecker.fromRuntime(
-        api.CreatedAt,
+      final createdAt = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#CreatedAt',
       ).firstAnnotationOf(field);
-      final updatedAt = const TypeChecker.fromRuntime(
-        api.UpdatedAt,
+      final updatedAt = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#UpdatedAt',
       ).firstAnnotationOf(field);
-      final convertAnn = const TypeChecker.fromRuntime(
-        api.Convert,
+      final convertAnn = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#Convert',
       ).firstAnnotationOf(field);
 
       if (columnAnn == null &&
@@ -183,8 +182,7 @@ class SqlGenerator {
       final idReader = ConstantReader(idAnn);
 
       final colName =
-          colReader.peek('name')?.stringValue ??
-          _camelToSnake(field.name);
+          colReader.peek('name')?.stringValue ?? _camelToSnake(field.name!);
       final isId = idAnn != null;
       final autoIncrement = isId
           ? (idReader.peek('autoIncrement')?.boolValue ?? true)
@@ -208,17 +206,15 @@ class SqlGenerator {
         // Extract related entity type
         final type = field.type;
         if (type is InterfaceType) {
-          if (type.isDartCoreList ||
-              (type.isDartAsyncFuture &&
-                  type.typeArguments.first is InterfaceType &&
-                  (type.typeArguments.first as InterfaceType).isDartCoreList)) {
-            // List<T> or Future<List<T>>
-            final listType = type.isDartCoreList
-                ? type
-                : type.typeArguments.first as InterfaceType;
-            relatedEntityType = listType.typeArguments.first.element?.name;
-          } else if (type.isDartAsyncFuture) {
+          if (type.isDartCoreList) {
             relatedEntityType = type.typeArguments.first.element?.name;
+          } else if (type.isDartAsyncFuture) {
+            final futureType = type.typeArguments.first;
+            if (futureType is InterfaceType && futureType.isDartCoreList) {
+              relatedEntityType = futureType.typeArguments.first.element?.name;
+            } else {
+              relatedEntityType = futureType.element?.name;
+            }
           } else {
             relatedEntityType = type.element.name;
           }
@@ -244,9 +240,9 @@ class SqlGenerator {
       // OneToMany doesn't have a column in this table
       if (relationType == 'OneToMany') {
         final metadata = ColumnMetadata(
-          fieldName: field.name,
+          fieldName: field.name!,
           columnName: '', // No column
-          fieldType: field.type.getDisplayString(withNullability: true),
+          fieldType: field.type.getDisplayString().replaceAll('?', ''),
           relationType: relationType,
           relatedEntityType: relatedEntityType,
           mappedBy: mappedBy,
@@ -263,14 +259,14 @@ class SqlGenerator {
       bool isList = false;
       bool isJson = false;
       List<String>? enumValues;
-      String fieldTypeStr = type.getDisplayString(withNullability: true);
+      String fieldTypeStr = type.getDisplayString().replaceAll('?', '');
 
       if (type is InterfaceType) {
         if (type.element is EnumElement) {
           final enumElement = type.element as EnumElement;
           enumValues = enumElement.fields
               .where((f) => f.isEnumConstant)
-              .map((f) => f.name)
+              .map((f) => f.name!)
               .toList();
         } else if (type.isDartCoreList || type.isDartCoreMap) {
           isJson = true;
@@ -284,7 +280,7 @@ class SqlGenerator {
       }
 
       ColumnMetadata metadata = ColumnMetadata(
-        fieldName: field.name,
+        fieldName: field.name!,
         columnName: isId
             ? colName
             : (relationType != null ? '${colName}_id' : colName),
@@ -306,10 +302,9 @@ class SqlGenerator {
         isCreatedAt: createdAt != null,
         isUpdatedAt: updatedAt != null,
         converterType: convertAnn != null
-            ? ConstantReader(convertAnn)
-                  .peek('converter')
-                  ?.typeValue
-                  .getDisplayString(withNullability: true)
+            ? ConstantReader(
+                convertAnn,
+              ).peek('converter')?.typeValue.getDisplayString()
             : null,
       );
 
@@ -321,9 +316,9 @@ class SqlGenerator {
           final converterBase = convertType.allSupertypes.firstWhere(
             (s) => s.element.name == 'AttributeConverter',
           );
-          final dbType = converterBase.typeArguments[1].getDisplayString(
-            withNullability: true,
-          );
+          final dbType = converterBase.typeArguments[1]
+              .getDisplayString()
+              .replaceAll('?', '');
 
           // Update metadata with the database type
           final updated = ColumnMetadata(
@@ -354,28 +349,28 @@ class SqlGenerator {
         columns.add(metadata);
       }
 
-      final uniqueAnn = const TypeChecker.fromRuntime(
-        api.Unique,
+      final uniqueAnn = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#Unique',
       ).firstAnnotationOf(field);
       if (uniqueAnn != null) {
         final reader = ConstantReader(uniqueAnn);
         uniqueConstraints.add(
           UniqueConstraintMetadata(
             name: reader.peek('name')?.stringValue,
-            columns: [_camelToSnake(field.name)],
+            columns: [_camelToSnake(field.name!)],
           ),
         );
       }
 
-      final indexAnn = const TypeChecker.fromRuntime(
-        api.Index,
+      final indexAnn = TypeChecker.fromUrl(
+        'package:datapod_api/annotations.dart#Index',
       ).firstAnnotationOf(field);
       if (indexAnn != null) {
         final reader = ConstantReader(indexAnn);
         indexes.add(
           IndexMetadata(
             name: reader.peek('name')?.stringValue,
-            columns: [_camelToSnake(field.name)],
+            columns: [_camelToSnake(field.name!)],
             unique: reader.peek('unique')?.boolValue ?? false,
           ),
         );
@@ -385,8 +380,8 @@ class SqlGenerator {
     }
 
     // Class-level indexes
-    final classIndexAnns = const TypeChecker.fromRuntime(
-      api.Index,
+    final classIndexAnns = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#Index',
     ).annotationsOf(element).map((a) => ConstantReader(a));
     for (final ann in classIndexAnns) {
       final cols = ann
@@ -700,24 +695,24 @@ class SqlGenerator {
   }
 
   static ColumnMetadata parseColumn(FieldElement field) {
-    final columnAnn = const TypeChecker.fromRuntime(
-      api.Column,
+    final columnAnn = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#Column',
     ).firstAnnotationOf(field);
-    final idAnn = const TypeChecker.fromRuntime(
-      api.Id,
+    final idAnn = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#Id',
     ).firstAnnotationOf(field);
-    final manyToOne = const TypeChecker.fromRuntime(
-      api.ManyToOne,
+    final manyToOne = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#ManyToOne',
     ).firstAnnotationOf(field);
-    final oneToOne = const TypeChecker.fromRuntime(
-      api.OneToOne,
+    final oneToOne = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#OneToOne',
     ).firstAnnotationOf(field);
 
     final colReader = ConstantReader(columnAnn);
     final idReader = ConstantReader(idAnn);
 
     final colName =
-        colReader.peek('name')?.stringValue ?? _camelToSnake(field.name);
+        colReader.peek('name')?.stringValue ?? _camelToSnake(field.name!);
     final isId = idAnn != null;
     final autoIncrement = idReader.peek('autoIncrement')?.boolValue ?? true;
 
@@ -726,11 +721,11 @@ class SqlGenerator {
     if (oneToOne != null) relationType = 'OneToOne';
 
     return ColumnMetadata(
-      fieldName: field.name,
+      fieldName: field.name!,
       columnName: isId
           ? colName
           : (relationType != null ? '${colName}_id' : colName),
-      fieldType: field.type.getDisplayString(withNullability: true),
+      fieldType: field.type.getDisplayString().replaceAll('?', ''),
       isId: isId,
       autoIncrement: autoIncrement,
       relationType: relationType,
@@ -742,6 +737,6 @@ class SqlGenerator {
         type.isDartCoreDouble ||
         type.isDartCoreString ||
         type.isDartCoreBool ||
-        type.getDisplayString(withNullability: true) == 'DateTime';
+        type.getDisplayString().replaceAll('?', '') == 'DateTime';
   }
 }

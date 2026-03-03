@@ -107,8 +107,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
               ..symbol = 'DatabaseOperations'
               ..url = 'package:datapod_api/datapod_api.dart'
               ..types.addAll([
-                refer(entityClass.name),
-                refer(keyType.getDisplayString(withNullability: true)),
+                refer(entityClass.name!),
+                refer(keyType.getDisplayString()),
               ]),
           ),
         )
@@ -209,7 +209,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     final repoClass = Class(
       (b) => b
         ..name = className
-        ..extend = refer(repoInterface.name)
+        ..extend = refer(repoInterface.name!)
         ..fields.addAll([
           Field(
             (f) => f
@@ -266,7 +266,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
               )
               ..body = Block.of([
                 Code(
-                  'relationshipContext.registerOperations<${entityClass.name}, ${keyType.getDisplayString(withNullability: true)}>(operations);',
+                  'relationshipContext.registerOperations<${entityClass.name}, ${keyType.getDisplayString()}>(operations);',
                 ),
                 Code(
                   'relationshipContext.registerMapper<${entityClass.name}>(mapper);',
@@ -387,7 +387,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     final methods = repoInterface.methods.where((m) => m.name == 'findById');
     final method = methods.isNotEmpty ? methods.first : null;
     final fetchJoinAnns = method != null
-        ? const TypeChecker.fromRuntime(api.FetchJoin).annotationsOf(method)
+        ? TypeChecker.fromUrl(
+            'package:datapod_api/annotations.dart#FetchJoin',
+          ).annotationsOf(method)
         : <DartObject>[];
 
     return Method(
@@ -600,7 +602,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           Parameter(
             (p) => p
               ..name = 'id'
-              ..type = refer(keyType.getDisplayString(withNullability: true)),
+              ..type = refer(keyType.getDisplayString()),
           ),
         )
         ..body = Block.of([
@@ -624,7 +626,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           Parameter(
             (p) => p
               ..name = 'id'
-              ..type = refer(keyType.getDisplayString(withNullability: true)),
+              ..type = refer(keyType.getDisplayString()),
           ),
         )
         ..body = Block.of([
@@ -649,11 +651,12 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       if (seen.contains((method.name))) continue;
       if (recomputeMethod(method)) continue;
 
-      if ((method.name).startsWith('findBy') ||
-          (method.name).startsWith('countBy') ||
-          (method.name).startsWith('existsBy') ||
-          (method.name).startsWith('deleteBy')) {
-        seen.add((method.name));
+      if ((method.name!).startsWith('findBy') ||
+          (method.name!).startsWith('countBy') ||
+          (method.name!).startsWith('existsBy') ||
+          (method.name!).startsWith('deleteBy') ||
+          (method.name!).startsWith('streamBy')) {
+        seen.add((method.name!));
         methods.add(_generateOperationsDslMethod(method, metadata));
       }
     }
@@ -699,13 +702,15 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     MethodElement method,
     EntitySqlMetadata metadata,
   ) {
-    final components = DSLParser.parse((method.name));
-    final type = (method.name).startsWith('count')
+    final components = DSLParser.parse((method.name!));
+    final type = (method.name!).startsWith('count')
         ? 'count'
-        : (method.name).startsWith('exists')
+        : (method.name!).startsWith('exists')
         ? 'exists'
-        : (method.name).startsWith('delete')
+        : (method.name!).startsWith('delete')
         ? 'delete'
+        : (method.name!).startsWith('stream')
+        ? 'stream'
         : 'find';
 
     final pageableChecker = TypeChecker.fromUrl(
@@ -718,7 +723,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     String? pageableVar;
     String? sortVar;
 
-    for (final param in method.parameters) {
+    for (final param in method.formalParameters) {
       if (pageableChecker.isAssignableFromType(param.type)) {
         pageableVar = param.name;
       } else if (sortChecker.isAssignableFromType(param.type) ||
@@ -730,7 +735,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       }
     }
 
-    final otherParams = method.parameters
+    final otherParams = method.formalParameters
         .where(
           (p) =>
               !pageableChecker.isAssignableFromType(p.type) &&
@@ -754,7 +759,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         paramNames.add('');
       } else {
         if (paramIdx < otherParams.length) {
-          paramNames.add(otherParams[paramIdx].name);
+          paramNames.add(otherParams[paramIdx].name!);
           paramIdx++;
         } else {
           paramNames.add('');
@@ -762,8 +767,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       }
     }
 
-    final fetchJoinAnns = const TypeChecker.fromRuntime(
-      api.FetchJoin,
+    final fetchJoinAnns = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#FetchJoin',
     ).annotationsOf(method);
     final joinMetadata = <JoinMetadata>[];
     int joinIdx = 1;
@@ -815,7 +820,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
     return Method(
       (m) => m
-        ..name = (method.name)
+        ..name = method.name!
         ..returns = isStream
             ? refer('Stream<Map<String, dynamic>>')
             : refer(
@@ -824,35 +829,31 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
               )
         ..modifier = isStream ? null : MethodModifier.async
         ..requiredParameters.addAll(
-          method.parameters
+          method.formalParameters
               .where((p) => !p.isNamed)
               .map(
                 (p) => Parameter(
                   (b) => b
-                    ..name = p.name
-                    ..type = refer(
-                      p.type.getDisplayString(withNullability: true),
-                    ),
+                    ..name = p.name!
+                    ..type = refer(p.type.getDisplayString()),
                 ),
               ),
         )
         ..optionalParameters.addAll(
-          method.parameters
+          method.formalParameters
               .where((p) => p.isNamed)
               .map(
                 (p) => Parameter(
                   (b) => b
-                    ..name = p.name
+                    ..name = p.name!
                     ..named = true
-                    ..type = refer(
-                      p.type.getDisplayString(withNullability: true),
-                    ),
+                    ..type = refer(p.type.getDisplayString()),
                 ),
               ),
         )
         ..body = Block.of([
           Code(
-            'final params = ${_generateDslParamMap(components, otherParams)};',
+            'final params = ${_generateDslParamMap(metadata, components, otherParams)};',
           ),
           Code(
             "final sql = applyPagination('''${SqlGenerator.generateDslQuery(metadata, components, type, paramNames, joins: joinMetadata.isNotEmpty ? joinMetadata : null)}''', sort: ${sortVar ?? (pageableVar != null ? '$pageableVar.sort' : 'null')}, limit: ${pageableVar != null ? '$pageableVar.size' : 'null'}, offset: ${pageableVar != null ? '$pageableVar.offset' : 'null'}, fieldToColumn: _fieldToColumn);",
@@ -884,13 +885,13 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         ..returns = TypeReference(
           (tr) => tr
             ..symbol = 'Future'
-            ..types.add(refer(entityClass.name)),
+            ..types.add(refer(entityClass.name!)),
         )
         ..requiredParameters.add(
           Parameter(
             (p) => p
               ..name = 'entity'
-              ..type = refer(entityClass.name),
+              ..type = refer(entityClass.name!),
           ),
         )
         ..modifier = MethodModifier.async
@@ -1020,14 +1021,15 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     ];
 
     for (final method in allMethods) {
-      if (seen.contains((method.name))) continue;
+      if (seen.contains(method.name!)) continue;
       if (recomputeMethod(method)) continue;
 
-      if ((method.name).startsWith('findBy') ||
-          (method.name).startsWith('countBy') ||
-          (method.name).startsWith('existsBy') ||
-          (method.name).startsWith('deleteBy')) {
-        seen.add((method.name));
+      if (method.name!.startsWith('findBy') ||
+          method.name!.startsWith('countBy') ||
+          method.name!.startsWith('existsBy') ||
+          method.name!.startsWith('deleteBy') ||
+          method.name!.startsWith('streamBy')) {
+        seen.add(method.name!);
         methods.add(
           _generateRepoDslMethod(repoInterface, method, entityClass, metadata),
         );
@@ -1069,19 +1071,16 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
     ClassElement entityClass,
     EntitySqlMetadata metadata,
   ) {
-    final type = (method.name).startsWith('count')
+    final type = method.name!.startsWith('count')
         ? 'count'
-        : (method.name).startsWith('exists')
+        : method.name!.startsWith('exists')
         ? 'exists'
-        : (method.name).startsWith('delete')
+        : method.name!.startsWith('delete')
         ? 'delete'
         : 'find';
-
-    final isCore =
-        (method.name) == 'findAll' || (method.name) == 'findAllPaged';
-    final components = isCore
-        ? <QueryComponent>[]
-        : DSLParser.parse((method.name));
+    final dsl = type == 'find' && !method.name!.startsWith('find')
+        ? DSLParser.parse('findBy')
+        : DSLParser.parse((method.name!));
 
     final pageableChecker = TypeChecker.fromUrl(
       'package:datapod_api/pagination.dart#Pageable',
@@ -1092,7 +1091,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
     String? pageableVar;
 
-    final otherParams = method.parameters
+    final otherParams = method.formalParameters
         .where(
           (p) =>
               !pageableChecker.isAssignableFromType(p.type) &&
@@ -1104,7 +1103,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         )
         .toList();
 
-    for (final param in method.parameters) {
+    for (final param in method.formalParameters) {
       if (pageableChecker.isAssignableFromType(param.type)) {
         pageableVar = param.name;
       }
@@ -1112,7 +1111,8 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
 
     final dslParamNames = <String>[];
     int paramIdx = 0;
-    for (final comp in components) {
+    for (final comp in dsl) {
+      // Changed from `components` to `dsl`
       if (comp.operator == 'IsNull' ||
           comp.operator == 'IsNotNull' ||
           comp.operator == 'IsEmpty' ||
@@ -1122,7 +1122,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
         dslParamNames.add('');
       } else {
         if (paramIdx < otherParams.length) {
-          dslParamNames.add(otherParams[paramIdx].name);
+          dslParamNames.add(otherParams[paramIdx].name!);
           paramIdx++;
         } else {
           dslParamNames.add('');
@@ -1130,71 +1130,67 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       }
     }
 
-    final fetchJoinAnns = const TypeChecker.fromRuntime(
-      api.FetchJoin,
+    final fetchJoinAnns = TypeChecker.fromUrl(
+      'package:datapod_api/annotations.dart#FetchJoin',
     ).annotationsOf(method);
 
     final isStream =
         method.returnType is InterfaceType &&
         (method.returnType as InterfaceType).isDartAsyncStream;
 
-    final returnTypeStr = method.returnType.getDisplayString(
-      withNullability: true,
-    );
+    final returnTypeStr = method.returnType.getDisplayString();
     final isPage =
         returnTypeStr.startsWith('Future<Page<') ||
         returnTypeStr.startsWith('Page<');
 
     return Method(
       (m) => m
-        ..name = (method.name)
+        ..name = method.name!
         ..annotations.add(refer('override'))
         ..returns = refer(returnTypeStr)
         ..modifier = isStream ? null : MethodModifier.async
         ..requiredParameters.addAll(
-          method.parameters
+          method.formalParameters
               .where((p) => !p.isNamed)
               .map(
                 (p) => Parameter(
                   (b) => b
-                    ..name = p.name
-                    ..type = refer(
-                      p.type.getDisplayString(withNullability: true),
-                    ),
+                    ..name = p.name!
+                    ..type = refer(p.type.getDisplayString()),
                 ),
               ),
         )
         ..optionalParameters.addAll(
-          method.parameters
+          method.formalParameters
               .where((p) => p.isNamed)
               .map(
                 (p) => Parameter(
                   (b) => b
-                    ..name = p.name
+                    ..name = p.name!
                     ..named = true
-                    ..type = refer(
-                      p.type.getDisplayString(withNullability: true),
-                    ),
+                    ..type = refer(p.type.getDisplayString()),
                 ),
               ),
         )
         ..body = Block.of([
           if (isPage) ...[
-            if ((method.name) == 'findAllPaged')
+            if ((method.name!) == 'findAllPaged')
               Code(
                 'final result = await operations.findAll(limit: $pageableVar.size, offset: $pageableVar.offset, sort: $pageableVar.sort);',
               )
             else
               Code(
-                'final result = ${isStream ? '' : 'await '}operations.${(method.name)}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
+                'final result = ${isStream ? '' : 'await '}operations.${method.name!}(${method.formalParameters.map((p) => p.isNamed ? '${p.name!}: ${p.name!}' : p.name!).join(', ')});',
               ),
             Code(
               "final totalElements = await operations.database.connection.execute(",
             ),
             Code(
-              "  applyPagination('''${SqlGenerator.generateDslQuery(metadata, components, 'count', dslParamNames)}''', fieldToColumn: ${repoInterface.name}OperationsImpl._fieldToColumn),",
+              "  applyPagination('''${SqlGenerator.generateDslQuery(metadata, dsl, 'count', dslParamNames)}''', fieldToColumn: ${repoInterface.name}OperationsImpl._fieldToColumn),", // Changed from `components` to `dsl`
             ),
-            Code('  ${_generateDslParamMap(components, otherParams)}'),
+            Code(
+              '  ${_generateDslParamMap(metadata, dsl, otherParams)}',
+            ), // Changed from `components` to `dsl`
             Code(');'),
             Code('return Page('),
             Code(
@@ -1207,13 +1203,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
             Code('  pageSize: $pageableVar.size,'),
             Code(');'),
           ] else ...[
-            isStream
-                ? Code(
-                    'final stream = operations.${method.name}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
-                  )
-                : Code(
-                    'final result = await operations.${(method.name)}(${method.parameters.map((p) => p.isNamed ? '${p.name}: ${p.name}' : p.name).join(', ')});',
-                  ),
+            Code(
+              'final result = ${isStream ? '' : 'await '}operations.${method.name!}(${method.formalParameters.map((p) => p.isNamed ? '${p.name!}: ${p.name!}' : p.name!).join(', ')});',
+            ),
             _generateRepoDslReturn(
               type,
               method,
@@ -1227,6 +1219,7 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
   }
 
   String _generateDslParamMap(
+    EntitySqlMetadata metadata,
     List<QueryComponent> components,
     List<dynamic> otherParams,
   ) {
@@ -1246,6 +1239,19 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
           final param = otherParams[paramIdx];
           paramIdx++;
           String val = param.name;
+
+          // Apply converter if exists
+          final column = metadata.columns.firstWhere(
+            (c) => c.fieldName == comp.field,
+            orElse: () => throw Exception(
+              'Field ${comp.field} not found in entity for table ${metadata.tableName}',
+            ),
+          );
+          if (column.converterType != null) {
+            val =
+                'const ${column.converterType}().convertToDatabaseColumn($val)';
+          }
+
           if (comp.operator == 'StartsWith') {
             val = "'\$$val%'";
           } else if (comp.operator == 'EndsWith') {
@@ -1281,7 +1287,9 @@ class RepositoryGenerator extends GeneratorForAnnotation<api.Repository> {
       case 'count':
         return Code('return result.rows.first.values.first as int;');
       case 'exists':
-        return Code('return result.rows.first.values.first as bool;');
+        return Code(
+          'final val = result.rows.first.values.first; return val is bool ? val : val != 0;',
+        );
       case 'delete':
         return Code('return;');
       default:

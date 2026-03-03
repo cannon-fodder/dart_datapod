@@ -1,7 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format width=80
 
-part of 'todo_repository.dart';
+part of 'user_profile_repository.dart';
 
 // **************************************************************************
 // RepositoryGenerator
@@ -11,27 +11,29 @@ part of 'todo_repository.dart';
 //
 // This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement.
 
-class TodoRepositoryOperationsImpl implements DatabaseOperations<Todo, int> {
-  TodoRepositoryOperationsImpl(this.database, this.relationshipContext);
+class UserProfileRepositoryOperationsImpl
+    implements DatabaseOperations<UserProfile, int> {
+  UserProfileRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
   final RelationshipContext relationshipContext;
 
   static const _insertSql =
-      '''INSERT INTO todo (title, is_done) VALUES (@title, @isDone) RETURNING id''';
+      '''INSERT INTO user_profiles (bio, website, user_id) VALUES (@bio, @website, @userId) RETURNING id''';
 
   static const _updateSql =
-      '''UPDATE todo SET title = @title, is_done = @isDone WHERE id = @id''';
+      '''UPDATE user_profiles SET bio = @bio, website = @website, user_id = @userId WHERE id = @id''';
 
-  static const _deleteSql = '''DELETE FROM todo WHERE id = @id''';
+  static const _deleteSql = '''DELETE FROM user_profiles WHERE id = @id''';
 
-  static const _findByIdSql = '''SELECT * FROM todo WHERE id = @id''';
+  static const _findByIdSql = '''SELECT * FROM user_profiles WHERE id = @id''';
 
   static const _fieldToColumn = {
     'id': 'id',
-    'title': 'title',
-    'isDone': 'is_done',
+    'bio': 'bio',
+    'website': 'website',
+    'user': 'user_id',
   };
 
   @override
@@ -46,14 +48,21 @@ class TodoRepositoryOperationsImpl implements DatabaseOperations<Todo, int> {
   }
 
   @override
-  Future<Todo> saveEntity(Todo entity) async {
-    final ManagedTodo managed = entity is ManagedEntity
-        ? (entity as ManagedTodo)
-        : ManagedTodo.fromEntity(entity, database, relationshipContext);
+  Future<UserProfile> saveEntity(UserProfile entity) async {
+    final ManagedUserProfile managed = entity is ManagedEntity
+        ? (entity as ManagedUserProfile)
+        : ManagedUserProfile.fromEntity(entity, database, relationshipContext);
+    final user = await managed.user;
+    if (user != null) {
+      if (user is ManagedEntity) {
+        managed.userId = (user as dynamic).id;
+      }
+    }
     final params = <String, dynamic>{
       r'id': managed.id,
-      r'title': managed.title,
-      r'isDone': managed.isDone,
+      r'bio': managed.bio,
+      r'website': managed.website,
+      'userId': managed.userId,
     };
     if (managed.isPersistent) {
       if (managed.isDirty) {
@@ -76,7 +85,7 @@ class TodoRepositoryOperationsImpl implements DatabaseOperations<Todo, int> {
     int? offset,
   }) async {
     final sql = applyPagination(
-      '''SELECT * FROM todo''',
+      '''SELECT * FROM user_profiles''',
       sort: sort,
       limit: limit,
       offset: offset,
@@ -94,33 +103,38 @@ class TodoRepositoryOperationsImpl implements DatabaseOperations<Todo, int> {
   Future<QueryResult> findById(int id) async {
     return database.connection.execute(_findByIdSql, {'id': id});
   }
+
+  Future<QueryResult> findByUserId(dynamic id) {
+    final sql = 'SELECT * FROM user_profiles WHERE user_id = @id';
+    return database.connection.execute(sql, {'id': id});
+  }
 }
 
-class TodoRepositoryImpl extends TodoRepository {
-  TodoRepositoryImpl(
+class UserProfileRepositoryImpl extends UserProfileRepository {
+  UserProfileRepositoryImpl(
     this.database,
     this.operations,
     this.mapper,
     RelationshipContext relationshipContext,
   ) : super(relationshipContext) {
-    relationshipContext.registerOperations<Todo, int>(operations);
-    relationshipContext.registerMapper<Todo>(mapper);
+    relationshipContext.registerOperations<UserProfile, int>(operations);
+    relationshipContext.registerMapper<UserProfile>(mapper);
   }
 
   final DatapodDatabase database;
 
-  final TodoRepositoryOperationsImpl operations;
+  final UserProfileRepositoryOperationsImpl operations;
 
-  final TodoMapperImpl mapper;
+  final UserProfileMapperImpl mapper;
 
   @override
-  Future<Todo> save(entity) async {
+  Future<UserProfile> save(entity) async {
     return await operations.saveEntity(entity);
   }
 
   @override
-  Future<List<Todo>> saveAll(entities) async {
-    final saved = <Todo>[];
+  Future<List<UserProfile>> saveAll(entities) async {
+    final saved = <UserProfile>[];
     for (final entity in entities) {
       saved.add(await save(entity));
     }
@@ -133,20 +147,20 @@ class TodoRepositoryImpl extends TodoRepository {
   }
 
   @override
-  Future<Todo?> findById(id) async {
+  Future<UserProfile?> findById(id) async {
     final result = await operations.findById(id);
     if (result.isEmpty) return null;
     return mapper.mapRow(result.rows.first, database, relationshipContext);
   }
 
   @override
-  Future<List<Todo>> findAll({List<Sort>? sort}) async {
+  Future<List<UserProfile>> findAll({List<Sort>? sort}) async {
     final result = await operations.findAll(sort: sort);
     return mapper.mapRows(result.rows, database, relationshipContext);
   }
 
   @override
-  Future<Page<Todo>> findAllPaged(Pageable pageable) async {
+  Future<Page<UserProfile>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
       limit: pageable.size,
       offset: pageable.offset,
@@ -154,8 +168,8 @@ class TodoRepositoryImpl extends TodoRepository {
     );
     final totalElements = await operations.database.connection.execute(
       applyPagination(
-        '''SELECT COUNT(*) FROM todo''',
-        fieldToColumn: TodoRepositoryOperationsImpl._fieldToColumn,
+        '''SELECT COUNT(*) FROM user_profiles''',
+        fieldToColumn: UserProfileRepositoryOperationsImpl._fieldToColumn,
       ),
       <String, dynamic>{},
     );
@@ -165,5 +179,10 @@ class TodoRepositoryImpl extends TodoRepository {
       pageNumber: pageable.page,
       pageSize: pageable.size,
     );
+  }
+
+  Future<List<UserProfile>> findByUserId(id) async {
+    final result = await operations.findByUserId(id);
+    return mapper.mapRows(result.rows, database, relationshipContext);
   }
 }

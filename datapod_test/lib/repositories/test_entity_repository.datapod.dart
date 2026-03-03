@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'test_entity_repository.dart';
 
@@ -12,10 +13,7 @@ part of 'test_entity_repository.dart';
 
 class TestEntityRepositoryOperationsImpl
     implements DatabaseOperations<TestEntity, int> {
-  TestEntityRepositoryOperationsImpl(
-    this.database,
-    this.relationshipContext,
-  );
+  TestEntityRepositoryOperationsImpl(this.database, this.relationshipContext);
 
   final DatapodDatabase database;
 
@@ -43,7 +41,7 @@ class TestEntityRepositoryOperationsImpl
     'type': 'type',
     'data': 'data',
     'tags': 'tags',
-    'parent': 'parent_id'
+    'parent': 'parent_id',
   };
 
   @override
@@ -51,8 +49,10 @@ class TestEntityRepositoryOperationsImpl
     Map<String, dynamic> params, {
     bool isUpdate = false,
   }) async {
-    return database.connection
-        .execute(isUpdate ? _updateSql : _insertSql, params);
+    return database.connection.execute(
+      isUpdate ? _updateSql : _insertSql,
+      params,
+    );
   }
 
   @override
@@ -107,11 +107,13 @@ class TestEntityRepositoryOperationsImpl
     int? limit,
     int? offset,
   }) async {
-    final sql = applyPagination('''SELECT * FROM test_entities''',
-        sort: sort,
-        limit: limit,
-        offset: offset,
-        fieldToColumn: _fieldToColumn);
+    final sql = applyPagination(
+      '''SELECT * FROM test_entities''',
+      sort: sort,
+      limit: limit,
+      offset: offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, {});
   }
 
@@ -128,8 +130,12 @@ class TestEntityRepositoryOperationsImpl
   Future<QueryResult> findByName(String name) async {
     final params = <String, dynamic>{'name': name};
     final sql = applyPagination(
-        '''SELECT * FROM test_entities WHERE name = @name''',
-        sort: null, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+      '''SELECT * FROM test_entities WHERE name = @name''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 
@@ -139,19 +145,36 @@ class TestEntityRepositoryOperationsImpl
   ) async {
     final params = <String, dynamic>{'part': '%$part%'};
     final sql = applyPagination(
-        '''SELECT * FROM test_entities WHERE name LIKE @part''',
-        sort: pageable.sort,
-        limit: pageable.size,
-        offset: pageable.offset,
-        fieldToColumn: _fieldToColumn);
+      '''SELECT * FROM test_entities WHERE name LIKE @part''',
+      sort: pageable.sort,
+      limit: pageable.size,
+      offset: pageable.offset,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
+  }
+
+  Stream<Map<String, dynamic>> streamByNameContaining(String part) {
+    final params = <String, dynamic>{'part': '%$part%'};
+    final sql = applyPagination(
+      '''SELECT * FROM test_entities WHERE name LIKE @part''',
+      sort: null,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
+    return database.connection.stream(sql, params);
   }
 
   Future<QueryResult> findByFlagTrue(List<Sort> sort) async {
     final params = <String, dynamic>{};
     final sql = applyPagination(
-        '''SELECT * FROM test_entities WHERE flag = TRUE''',
-        sort: sort, limit: null, offset: null, fieldToColumn: _fieldToColumn);
+      '''SELECT * FROM test_entities WHERE flag = TRUE''',
+      sort: sort,
+      limit: null,
+      offset: null,
+      fieldToColumn: _fieldToColumn,
+    );
     return database.connection.execute(sql, params);
   }
 
@@ -208,9 +231,14 @@ class TestEntityRepositoryImpl extends TestEntityRepository {
     final entity = mapper.mapRow(row, database, relationshipContext);
     final managed = entity as ManagedTestEntity;
     if (row['t1_id'] != null) {
-      managed.parent = Future.value(ManagedTestEntity.fromRow(
-          row, database, relationshipContext,
-          aliasPrefix: 't1_'));
+      managed.parent = Future.value(
+        ManagedTestEntity.fromRow(
+          row,
+          database,
+          relationshipContext,
+          aliasPrefix: 't1_',
+        ),
+      );
     }
     return entity;
   }
@@ -224,11 +252,17 @@ class TestEntityRepositoryImpl extends TestEntityRepository {
   @override
   Future<Page<TestEntity>> findAllPaged(Pageable pageable) async {
     final result = await operations.findAll(
-        limit: pageable.size, offset: pageable.offset, sort: pageable.sort);
+      limit: pageable.size,
+      offset: pageable.offset,
+      sort: pageable.sort,
+    );
     final totalElements = await operations.database.connection.execute(
-        applyPagination('''SELECT COUNT(*) FROM test_entities''',
-            fieldToColumn: TestEntityRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{});
+      applyPagination(
+        '''SELECT COUNT(*) FROM test_entities''',
+        fieldToColumn: TestEntityRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,
@@ -251,15 +285,25 @@ class TestEntityRepositoryImpl extends TestEntityRepository {
   ) async {
     final result = await operations.findByNameContaining(part, pageable);
     final totalElements = await operations.database.connection.execute(
-        applyPagination(
-            '''SELECT COUNT(*) FROM test_entities WHERE name LIKE @part''',
-            fieldToColumn: TestEntityRepositoryOperationsImpl._fieldToColumn),
-        <String, dynamic>{'part': '%$part%'});
+      applyPagination(
+        '''SELECT COUNT(*) FROM test_entities WHERE name LIKE @part''',
+        fieldToColumn: TestEntityRepositoryOperationsImpl._fieldToColumn,
+      ),
+      <String, dynamic>{'part': '%$part%'},
+    );
     return Page(
       items: mapper.mapRows(result.rows, database, relationshipContext),
       totalElements: totalElements.rows.first.values.first as int,
       pageNumber: pageable.page,
       pageSize: pageable.size,
+    );
+  }
+
+  @override
+  Stream<TestEntity> streamByNameContaining(String part) {
+    final result = operations.streamByNameContaining(part);
+    return result.map(
+      (row) => mapper.mapRow(row, database, relationshipContext),
     );
   }
 

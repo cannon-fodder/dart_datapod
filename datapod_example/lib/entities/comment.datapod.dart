@@ -1,4 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format width=80
 
 part of 'comment.dart';
 
@@ -19,8 +20,8 @@ class ManagedComment extends Comment implements ManagedEntity {
     DatapodDatabase database,
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
-  })  : _database = database,
-        _relationshipContext = relationshipContext {
+  }) : _database = database,
+       _relationshipContext = relationshipContext {
     _isPersistent = true;
     super.id = row[aliasPrefix + "id"];
     super.content = row[aliasPrefix + "content"];
@@ -31,8 +32,8 @@ class ManagedComment extends Comment implements ManagedEntity {
     Comment entity,
     DatapodDatabase database,
     RelationshipContext relationshipContext,
-  )   : _database = database,
-        _relationshipContext = relationshipContext {
+  ) : _database = database,
+      _relationshipContext = relationshipContext {
     _isPersistent = entity is ManagedEntity
         ? (entity as ManagedEntity).isPersistent
         : false;
@@ -118,17 +119,24 @@ class ManagedComment extends Comment implements ManagedEntity {
   }
 
   @override
-  Future<Post?>? get post async {
-    if (_loadedPost == null && postId != null && $relationshipContext != null) {
-      final ops = $relationshipContext!.getOperations<Post, dynamic>();
-      final mapper = $relationshipContext!.getMapper<Post>();
-      final result = await ops.findById(postId);
-      if (result.isNotEmpty) {
-        _loadedPost = Future.value(mapper.mapRow(
-            result.rows.first, $database!, $relationshipContext!));
+  Future<Post?>? get post {
+    final context = $relationshipContext;
+    final db = $database;
+    if (_loadedPost == null && context != null && db != null) {
+      final ops = context.getOperations<Post, dynamic>();
+      final mapper = context.getMapper<Post>();
+      if (postId == null) {
+        _loadedPost = Future<Post?>.value(null);
+      } else {
+        _loadedPost = ops.findById(postId).then<Post?>((result) {
+          if (result.isNotEmpty) {
+            return mapper.mapRow(result.rows.first, db, context);
+          }
+          return null;
+        });
       }
     }
-    return await _loadedPost;
+    return _loadedPost;
   }
 
   @override
@@ -148,7 +156,11 @@ class CommentMapperImpl extends EntityMapper<Comment> {
     RelationshipContext relationshipContext, {
     String aliasPrefix = '',
   }) {
-    return ManagedComment.fromRow(row, database, relationshipContext,
-        aliasPrefix: aliasPrefix);
+    return ManagedComment.fromRow(
+      row,
+      database,
+      relationshipContext,
+      aliasPrefix: aliasPrefix,
+    );
   }
 }
