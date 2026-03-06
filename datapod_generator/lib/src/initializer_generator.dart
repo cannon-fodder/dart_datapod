@@ -138,9 +138,9 @@ class InitializerGenerator extends Builder {
           contexts.add({
             'name': element.name!,
             'import': asset.uri.toString(),
-            'part': asset.uri.toString().replaceAll('.dart', '.datapod.dart'),
             'repositories': repositories,
             'database': dbName,
+            'isAbstract': element.isAbstract,
           });
         }
       }
@@ -320,8 +320,11 @@ class InitializerGenerator extends Builder {
             .toList();
         for (final context in dbContexts) {
           final contextName = context['name'] as String;
+          final isAbstract = context['isAbstract'] as bool? ?? false;
           final contextVar = _toCamelCase(contextName);
-          final generatedContextName = '${contextName}Impl';
+          final generatedContextName = isAbstract
+              ? '${contextName}Impl'
+              : contextName;
           final scopedContextVar = '${contextVar}ScopedContext';
 
           result.writeln("    // Initialize $contextName");

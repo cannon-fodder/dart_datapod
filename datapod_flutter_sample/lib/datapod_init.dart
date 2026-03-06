@@ -54,7 +54,7 @@ class DatapodInitializer {
     final databaseSampleDb = await pluginSampleDb.createDatabase(dbConfigSampleDb, connConfigSampleDb, migrationConnConfig: migrationConnSampleDb);
 
     databaseSampleDb.schemaManager.setSchema(const SchemaDefinition(tables: [
-      TableDefinition(name: 'todo', columns: [ColumnDefinition(name: 'id', type: 'int?', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String?', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'is_done', type: 'bool', isNullable: false, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
+      TableDefinition(name: 'todo', columns: [ColumnDefinition(name: 'id', type: 'int', isNullable: true, isAutoIncrement: true, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'title', type: 'String', isNullable: true, isAutoIncrement: false, enumValues: null, isJson: false, isList: false), ColumnDefinition(name: 'is_done', type: 'bool', isNullable: false, isAutoIncrement: false, enumValues: null, isJson: false, isList: false)], primaryKey: ['id'], foreignKeys: [], uniqueConstraints: [], indexes: []),
     ]));
 
     final todoRepositoryOps = TodoRepositoryOperationsImpl(databaseSampleDb, sharedContext);

@@ -7,8 +7,8 @@ part of 'test_database_context.dart';
 // DatabaseContextGenerator
 // **************************************************************************
 
-class TestDatabaseContextImpl {
-  TestDatabaseContextImpl(RelationshipContext relationshipContext)
+class _$TestDatabaseContext {
+  _$TestDatabaseContext(RelationshipContext relationshipContext)
     : testEntityRepository = TestEntityRepositoryImpl(
         relationshipContext.database!,
         TestEntityRepositoryOperationsImpl(
@@ -31,4 +31,9 @@ class TestDatabaseContextImpl {
   final TestEntityRepository testEntityRepository;
 
   final UniqueEntityRepository uniqueEntityRepository;
+}
+
+class TestDatabaseContextImpl extends _$TestDatabaseContext {
+  TestDatabaseContextImpl(RelationshipContext relationshipContext)
+    : super(relationshipContext);
 }

@@ -7,8 +7,8 @@ part of 'database_contexts.dart';
 // DatabaseContextGenerator
 // **************************************************************************
 
-class IdentityContextImpl {
-  IdentityContextImpl(RelationshipContext relationshipContext)
+class _$IdentityContext {
+  _$IdentityContext(RelationshipContext relationshipContext)
     : userRepository = UserRepositoryImpl(
         relationshipContext.database!,
         UserRepositoryOperationsImpl(
@@ -33,8 +33,13 @@ class IdentityContextImpl {
   final RoleRepository roleRepository;
 }
 
-class ContentContextImpl {
-  ContentContextImpl(RelationshipContext relationshipContext)
+class IdentityContextImpl extends _$IdentityContext {
+  IdentityContextImpl(RelationshipContext relationshipContext)
+    : super(relationshipContext);
+}
+
+class _$ContentContext {
+  _$ContentContext(RelationshipContext relationshipContext)
     : postRepository = PostRepositoryImpl(
         relationshipContext.database!,
         PostRepositoryOperationsImpl(
@@ -59,8 +64,13 @@ class ContentContextImpl {
   final CommentRepository commentRepository;
 }
 
-class ConfigContextImpl {
-  ConfigContextImpl(RelationshipContext relationshipContext)
+class ContentContextImpl extends _$ContentContext {
+  ContentContextImpl(RelationshipContext relationshipContext)
+    : super(relationshipContext);
+}
+
+class _$ConfigContext {
+  _$ConfigContext(RelationshipContext relationshipContext)
     : settingRepository = SettingRepositoryImpl(
         relationshipContext.database!,
         SettingRepositoryOperationsImpl(
@@ -83,4 +93,9 @@ class ConfigContextImpl {
   final SettingRepository settingRepository;
 
   final SettingAuditRepository settingAuditRepository;
+}
+
+class ConfigContextImpl extends _$ConfigContext {
+  ConfigContextImpl(RelationshipContext relationshipContext)
+    : super(relationshipContext);
 }

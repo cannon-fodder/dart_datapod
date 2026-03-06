@@ -33,7 +33,7 @@ class DatabaseContextGenerator
     final className = element.name!;
     final repositories = annotation.read('repositories').listValue;
 
-    final generatedClassName = '${className}Impl';
+    final generatedClassName = '_\$${className}';
     final classBuilder = Class(
       (c) => c
         ..name = generatedClassName
@@ -82,9 +82,37 @@ class DatabaseContextGenerator
     );
 
     final emitter = DartEmitter(allocator: Allocator.none);
+    final baseClassCode = classBuilder.accept(emitter).toString();
+
+    String extraCode = '';
+    if (element.isAbstract) {
+      final implClass = Class(
+        (c) => c
+          ..name = '${className}Impl'
+          ..extend = refer(generatedClassName)
+          ..constructors.add(
+            Constructor(
+              (con) => con
+                ..requiredParameters.add(
+                  Parameter(
+                    (p) => p
+                      ..name = 'relationshipContext'
+                      ..type = refer(
+                        'RelationshipContext',
+                        'package:datapod_api/datapod_api.dart',
+                      ),
+                  ),
+                )
+                ..initializers.add(const Code('super(relationshipContext)')),
+            ),
+          ),
+      );
+      extraCode = '\n\n${implClass.accept(emitter)}';
+    }
+
     return DartFormatter(
       languageVersion: Version(3, 0, 0),
-    ).format('${classBuilder.accept(emitter)}');
+    ).format('$baseClassCode$extraCode');
   }
 
   String _toCamelCase(String s) {
