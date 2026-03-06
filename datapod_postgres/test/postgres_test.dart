@@ -25,7 +25,7 @@ void main() {
           name: 'test_conn',
           attributes: {
             'host': '127.0.0.1',
-            'port': 5434,
+            'port': 5433,
             'username': 'datapod',
             'password': 'datapod',
             'database': 'datapod_test',

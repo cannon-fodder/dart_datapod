@@ -24,10 +24,10 @@ void main() {
           name: 'test_conn',
           attributes: {
             'host': '127.0.0.1',
-            'port': 3308,
+            'port': 3307,
             'username': 'datapod',
-            'password': 'datapod_dba',
-            'database': 'datapod',
+            'password': 'datapod',
+            'database': 'datapod_test',
           },
         ),
       );
